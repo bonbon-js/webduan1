@@ -15,6 +15,15 @@ match ($action) {
     // Checkout routes
     'checkout'       => (new CheckoutController)->index(),
     'checkout-process' => (new CheckoutController)->process(),
+
+    // Routes đơn hàng cho user
+    'order-history'  => (new OrderController)->history(),
+    'order-detail'   => (new OrderController)->detail(),
+    'order-cancel'   => (new OrderController)->cancel(),
+
+    // Routes quản trị đơn hàng
+    'admin-orders'       => (new AdminOrderController)->index(),
+    'admin-order-update' => (new AdminOrderController)->updateStatus(),
     
     // Auth routes (Temporarily disabled)
     // 'show-login'     => (new AuthController)->showLogin(),

@@ -209,7 +209,10 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="#">Thông tin cá nhân</a></li>
-                            <li><a class="dropdown-item" href="#">Đơn hàng của tôi</a></li>
+                            <li><a class="dropdown-item" href="<?= BASE_URL ?>?action=order-history">Đơn hàng của tôi</a></li>
+                            <?php if (($_SESSION['user']['role'] ?? null) === 'admin'): ?>
+                                <li><a class="dropdown-item" href="<?= BASE_URL ?>?action=admin-orders">Quản lý đơn hàng</a></li>
+                            <?php endif; ?>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="<?= BASE_URL ?>?action=logout">Đăng xuất</a></li>
                         </ul>
@@ -233,6 +236,16 @@
             </div>
         </div>
     </header>
+
+    <?php $flash = get_flash(); ?>
+    <!-- Hiển thị flash message 1 lần -->
+    <?php if ($flash): ?>
+        <div class="container mt-3">
+            <div class="alert alert-<?= htmlspecialchars($flash['type']) ?>">
+                <?= htmlspecialchars($flash['message']) ?>
+            </div>
+        </div>
+    <?php endif; ?>
 
     <main>
         <?php
