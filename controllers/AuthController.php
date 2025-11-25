@@ -66,10 +66,10 @@ class AuthController
 
         if (empty($errors)) {
             try {
-                // Determine role: default 'user', allow 'admin' only when correct admin key is provided
+                // Xác định vai trò: mặc định 'user', chỉ cho 'admin' khi cung cấp đúng khóa quản trị
                 $role = 'user';
                 if (!empty($_POST['admin_key']) && defined('ADMIN_CREATION_KEY') && ADMIN_CREATION_KEY) {
-                    // compare trimmed values
+                    // so sánh giá trị đã được trim
                     if (trim($_POST['admin_key']) === ADMIN_CREATION_KEY) {
                         $role = 'admin';
                     }
@@ -362,7 +362,7 @@ class AuthController
     // Hiển thị trang thông tin cá nhân
     public function showProfile()
     {
-        // Require authenticated session and verify session token from DB
+        // Yêu cầu phiên đã xác thực và xác minh session token từ DB
         if (!isset($_SESSION['user_id']) || !isset($_SESSION['session_token'])) {
             header('Location: ' . BASE_URL . '?action=login');
             exit;
@@ -370,7 +370,7 @@ class AuthController
 
         $sessionUser = $this->userModel->getUserBySessionToken($_SESSION['session_token']);
         if (!$sessionUser || $sessionUser['user_id'] != $_SESSION['user_id']) {
-            // Token invalid or does not match - force logout
+            // Token không hợp lệ hoặc không khớp - buộc đăng xuất
             if (isset($_SESSION['user_id'])) {
                 $this->userModel->clearSessionToken($_SESSION['user_id']);
             }
@@ -391,7 +391,7 @@ class AuthController
     // Cập nhật thông tin cá nhân
     public function updateProfile()
     {
-        // Require authenticated session and verify session token from DB
+        // Yêu cầu phiên đã xác thực và xác minh session token từ DB
         if (!isset($_SESSION['user_id']) || !isset($_SESSION['session_token'])) {
             header('Location: ' . BASE_URL . '?action=login');
             exit;

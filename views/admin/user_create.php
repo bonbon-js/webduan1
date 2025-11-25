@@ -1,5 +1,5 @@
 <?php
-// Create user form
+// Biểu mẫu tạo người dùng
 ?>
 
 <div class="container py-4">

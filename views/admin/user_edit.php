@@ -1,5 +1,5 @@
 <?php
-// $user is provided by controller
+// Biến $user được controller cung cấp
 ?>
 
 <div class="container py-4">

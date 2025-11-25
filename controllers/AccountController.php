@@ -25,7 +25,7 @@ class AccountController
     {
         $this->ensureAdmin();
 
-        // ensure CSRF token exists for admin forms
+        // đảm bảo token CSRF tồn tại cho các form admin
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
@@ -33,7 +33,7 @@ class AccountController
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         }
 
-        // handle search and pagination
+        // xử lý tìm kiếm và phân trang
         $q = trim($_GET['q'] ?? '');
         $page = max(1, (int)($_GET['page'] ?? 1));
         $perPage = 10;
@@ -68,7 +68,7 @@ class AccountController
             exit;
         }
 
-        // Ensure CSRF
+        // đảm bảo token CSRF
         if (empty($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         }
@@ -163,7 +163,7 @@ class AccountController
             exit;
         }
 
-        // CSRF check
+        // Kiểm tra CSRF
         $token = $_POST['csrf_token'] ?? '';
         if (empty($token) || !hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
             $_SESSION['error'] = 'Yêu cầu không hợp lệ (CSRF).';
@@ -205,7 +205,7 @@ class AccountController
             exit;
         }
 
-        // CSRF check
+        // Kiểm tra CSRF
         $token = $_POST['csrf_token'] ?? '';
         if (empty($token) || !hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
             $_SESSION['error'] = 'Yêu cầu không hợp lệ (CSRF).';
