@@ -1,0 +1,20 @@
+# Folders
+.git/
+.vscode/
+.idea/
+node_modules/
+vendor/
+
+# Files
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.bak
+
+# Uploads (không đẩy ảnh upload lên)
+assets/uploads/*
+!assets/uploads/.gitignore
+
+# Config (nếu có thông tin nhạy cảm)
+# configs/env.php
