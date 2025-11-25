@@ -1,6 +1,6 @@
 <?php
 
-define('BASE_URL',          'http://localhost/webduan1/');
+define('BASE_URL',          'http://localhost/base-duanmau/base-duanmau/');
 
 define('PATH_ROOT',         __DIR__ . '/../');
 
@@ -20,18 +20,8 @@ define('DB_HOST',     'localhost');
 define('DB_PORT',     '3306');
 define('DB_USERNAME', 'root');
 define('DB_PASSWORD', '');
-define('DB_NAME',     'bonbon_shop');
+define('DB_NAME',     'bonbon');
 define('DB_OPTIONS', [
     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
 ]);
-
-
-define('SMTP_HOST', 'smtp.gmail.com');
-define('SMTP_PORT', 587);
-define('SMTP_SECURE', 'tls'); // hoặc 'ssl' nếu dùng 465
-define('SMTP_USERNAME', 'le3221981@gmail.com');
-define('SMTP_PASSWORD', 'krru szms mnyw awvm'); // App password nếu dùng Gmail + 2FA
-define('SMTP_FROM_EMAIL', 'le3221981@gmail.com');
-define('SMTP_FROM_NAME', 'bonbon_shop');
-define('SMTP_DEBUG', false);

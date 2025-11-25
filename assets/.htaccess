@@ -1,0 +1,7 @@
+# Allow direct access to assets
+<IfModule mod_rewrite.c>
+    RewriteEngine Off
+</IfModule>
+
+# Allow access to all files in this directory
+Options +Indexes
