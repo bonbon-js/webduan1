@@ -25,12 +25,17 @@ match ($action) {
     'admin-orders'       => (new AdminOrderController)->index(),
     'admin-order-update' => (new AdminOrderController)->updateStatus(),
     
-    // Auth routes (Temporarily disabled)
-    // 'show-login'     => (new AuthController)->showLogin(),
-    // 'show-register'  => (new AuthController)->showRegister(),
-    // 'login'          => (new AuthController)->login(),
-    // 'register'       => (new AuthController)->register(),
-    // 'logout'         => (new AuthController)->logout(),
+    // Auth routes
+    'show-login'            => (new AuthController)->showLogin(),
+    'show-register'         => (new AuthController)->showRegister(),
+    'show-forgot'           => (new AuthController)->showForgotPassword(),
+    'login'                 => (new AuthController)->login(),
+    'register'              => (new AuthController)->register(),
+    'logout'                => (new AuthController)->logout(),
+    'forgot-password'       => (new AuthController)->handleForgotPassword(),
+    'verify-account'        => (new AuthController)->verifyAccount(),
+    'reset-password'        => (new AuthController)->showResetPassword(),
+    'reset-password-submit' => (new AuthController)->resetPassword(),
     
     default          => (new HomeController)->index(),
 };
