@@ -25,7 +25,9 @@ class ProductController
             'search' => $_GET['search'] ?? null,
             'min_price' => $_GET['min_price'] ?? null,
             'max_price' => $_GET['max_price'] ?? null,
-            'order_by' => $_GET['order_by'] ?? 'p.id',
+            'in_stock' => $_GET['in_stock'] ?? null,
+            'attributes' => $_GET['attr'] ?? [],
+            'order_by' => $_GET['order_by'] ?? 'p.product_id',
             'order_dir' => $_GET['order_dir'] ?? 'DESC'
         ];
         
@@ -34,6 +36,7 @@ class ProductController
         $totalPages = ceil($totalProducts / $limit);
         
         $categories = $this->categoryModel->getAllCategories();
+        $filterableAttributes = $this->productModel->getFilterableAttributes();
         
         $title = 'Sản phẩm';
         $view = 'products/list';
@@ -386,5 +389,167 @@ class ProductController
             header('Location: ' . BASE_URL . '?action=admin-products');
         }
         
+        exit;
+    }
+
+    // Admin: Quản lý hình ảnh sản phẩm
+    public function adminImages()
+    {
+        $productId = $_GET['product_id'] ?? 0;
+        
+        $product = $this->productModel->getProductById($productId);
+        
+        if (!$product) {
+            header('Location: ' . BASE_URL . '?action=admin-products');
+            exit;
+        }
+        
+        $images = $this->productModel->getProductImages($productId);
+        
+        $title = 'Quản lý hình ảnh - ' . $product['product_name'];
+        $view = 'admin/products/images';
+        
+        require_once PATH_VIEW . 'admin/layout.php';
+    }
+
+    // Admin: Upload hình ảnh
+    public function adminUploadImage()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . BASE_URL . '?action=admin-products');
+            exit;
+        }
+        
+        $productId = $_POST['product_id'] ?? 0;
+        
+        if (isset($_FILES['images']) && !empty($_FILES['images']['name'][0])) {
+            try {
+                $uploadedCount = 0;
+                foreach ($_FILES['images']['tmp_name'] as $key => $tmpName) {
+                    if ($_FILES['images']['error'][$key] === 0) {
+                        $file = [
+                            'name' => $_FILES['images']['name'][$key],
+                            'type' => $_FILES['images']['type'][$key],
+                            'tmp_name' => $tmpName,
+                            'error' => $_FILES['images']['error'][$key],
+                            'size' => $_FILES['images']['size'][$key]
+                        ];
+                        
+                        $imageUrl = upload_file('products', $file);
+                        $this->productModel->addProductImage($productId, $imageUrl, 0);
+                        $uploadedCount++;
+                    }
+                }
+                $_SESSION['success'] = "Đã upload $uploadedCount hình ảnh thành công!";
+            } catch (Exception $e) {
+                $_SESSION['error'] = 'Có lỗi xảy ra: ' . $e->getMessage();
+            }
+        }
+        
+        header('Location: ' . BASE_URL . '?action=admin-product-images&product_id=' . $productId);
+        exit;
+    }
+
+    // Admin: Xóa hình ảnh
+    public function adminDeleteImage()
+    {
+        $imageId = $_GET['image_id'] ?? 0;
+        $productId = $_GET['product_id'] ?? 0;
+        
+        // Lấy thông tin ảnh để xóa file
+        $sql = "SELECT * FROM product_images WHERE image_id = :id";
+        $stmt = $this->productModel->pdo->prepare($sql);
+        $stmt->execute([':id' => $imageId]);
+        $image = $stmt->fetch();
+        
+        if ($image) {
+            // Xóa file
+            if (file_exists(PATH_ASSETS_UPLOADS . $image['image_url'])) {
+                unlink(PATH_ASSETS_UPLOADS . $image['image_url']);
+            }
+            
+            // Xóa khỏi database
+            $this->productModel->deleteProductImage($imageId);
+            $_SESSION['success'] = 'Xóa hình ảnh thành công!';
+        }
+        
+        header('Location: ' . BASE_URL . '?action=admin-product-images&product_id=' . $productId);
+        exit;
+    }
+
+    // Admin: Đặt ảnh chính
+    public function adminSetPrimaryImage()
+    {
+        $imageId = $_GET['image_id'] ?? 0;
+        $productId = $_GET['product_id'] ?? 0;
+        
+        $this->productModel->setPrimaryImage($productId, $imageId);
+        $_SESSION['success'] = 'Đã đặt ảnh chính!';
+        
+        header('Location: ' . BASE_URL . '?action=admin-product-images&product_id=' . $productId);
+        exit;
+    }
+
+    // Admin: Quản lý thuộc tính sản phẩm
+    public function adminAttributes()
+    {
+        $productId = $_GET['product_id'] ?? 0;
+        
+        $product = $this->productModel->getProductById($productId);
+        
+        if (!$product) {
+            header('Location: ' . BASE_URL . '?action=admin-products');
+            exit;
+        }
+        
+        $assignedAttributes = $this->productModel->getProductAttributes($productId);
+        
+        // Lấy tất cả thuộc tính và giá trị
+        $attributeModel = new Attribute();
+        $allAttributes = $attributeModel->getAll();
+        foreach ($allAttributes as &$attr) {
+            $attr['values'] = $attributeModel->getValues($attr['attribute_id']);
+        }
+        
+        $title = 'Quản lý thuộc tính - ' . $product['product_name'];
+        $view = 'admin/products/attributes';
+        
+        require_once PATH_VIEW . 'admin/layout.php';
+    }
+
+    // Admin: Gán thuộc tính cho sản phẩm
+    public function adminAssignAttribute()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: ' . BASE_URL . '?action=admin-products');
+            exit;
+        }
+        
+        $productId = $_POST['product_id'] ?? 0;
+        $valueIds = $_POST['value_ids'] ?? [];
+        
+        try {
+            foreach ($valueIds as $valueId) {
+                $this->productModel->assignAttribute($productId, $valueId);
+            }
+            $_SESSION['success'] = 'Gán thuộc tính thành công!';
+        } catch (Exception $e) {
+            $_SESSION['error'] = 'Có lỗi xảy ra: ' . $e->getMessage();
+        }
+        
+        header('Location: ' . BASE_URL . '?action=admin-product-attributes&product_id=' . $productId);
+        exit;
+    }
+
+    // Admin: Xóa thuộc tính của sản phẩm
+    public function adminRemoveAttribute()
+    {
+        $productId = $_GET['product_id'] ?? 0;
+        $valueId = $_GET['value_id'] ?? 0;
+        
+        $this->productModel->removeAttribute($productId, $valueId);
+        $_SESSION['success'] = 'Xóa thuộc tính thành công!';
+        
+        header('Location: ' . BASE_URL . '?action=admin-product-attributes&product_id=' . $productId);
         exit;
     }

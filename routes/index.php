@@ -43,6 +43,17 @@ match ($action) {
     'admin-attribute-add-value'   => (new AttributeController)->adminAddValue(),
     'admin-attribute-delete-value' => (new AttributeController)->adminDeleteValue(),
     
+    // Admin Product Images routes (BB-03 - Quản lý nhiều hình ảnh)
+    'admin-product-images'        => (new ProductController)->adminImages(),
+    'admin-product-upload-image'  => (new ProductController)->adminUploadImage(),
+    'admin-product-delete-image'  => (new ProductController)->adminDeleteImage(),
+    'admin-product-set-primary'   => (new ProductController)->adminSetPrimaryImage(),
+    
+    // Admin Product Attributes routes (BB-03 - Gán thuộc tính cho sản phẩm)
+    'admin-product-attributes'    => (new ProductController)->adminAttributes(),
+    'admin-product-assign-attribute' => (new ProductController)->adminAssignAttribute(),
+    'admin-product-remove-attribute' => (new ProductController)->adminRemoveAttribute(),
+    
     // Cart routes
     'cart-list'      => (new CartController)->index(),
     'cart-add'       => (new CartController)->add(),

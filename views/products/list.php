@@ -8,9 +8,10 @@
     
     .filter-title {
         font-weight: 700;
-        margin-bottom: 20px;
+        margin-bottom: 10px;
         text-transform: uppercase;
         letter-spacing: 1px;
+        font-size: 0.85rem;
     }
     
     .product-grid {
@@ -24,6 +25,20 @@
         justify-content: center;
         margin-top: 40px;
     }
+    
+    .form-check {
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-check-label {
+        cursor: pointer;
+        user-select: none;
+    }
+    
+    .form-check-input:checked + .form-check-label {
+        font-weight: 600;
+        color: #000;
+    }
 </style>
 
 <div class="container py-5">
@@ -31,7 +46,7 @@
     
     <!-- Filter Section -->
     <div class="filter-section">
-        <form method="GET" action="">
+        <form method="GET" action="" id="filterForm">
             <input type="hidden" name="action" value="products">
             
             <div class="row g-3">
@@ -69,22 +84,58 @@
             
             <div class="row mt-3">
                 <div class="col-md-3">
+                    <label class="form-label filter-title">Trạng thái</label>
+                    <select name="in_stock" class="form-select">
+                        <option value="">Tất cả</option>
+                        <option value="1" <?= (isset($_GET['in_stock']) && $_GET['in_stock'] == '1') ? 'selected' : '' ?>>Còn hàng</option>
+                        <option value="0" <?= (isset($_GET['in_stock']) && $_GET['in_stock'] == '0') ? 'selected' : '' ?>>Hết hàng</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-3">
                     <label class="form-label filter-title">Sắp xếp</label>
-                    <select name="order_by" class="form-select" onchange="this.form.submit()">
-                        <option value="p.id" <?= (isset($_GET['order_by']) && $_GET['order_by'] == 'p.id') ? 'selected' : '' ?>>Mới nhất</option>
+                    <select name="order_by" class="form-select">
+                        <option value="p.product_id" <?= (isset($_GET['order_by']) && $_GET['order_by'] == 'p.product_id') ? 'selected' : '' ?>>Mới nhất</option>
                         <option value="p.price" <?= (isset($_GET['order_by']) && $_GET['order_by'] == 'p.price') ? 'selected' : '' ?>>Giá</option>
-                        <option value="p.name" <?= (isset($_GET['order_by']) && $_GET['order_by'] == 'p.name') ? 'selected' : '' ?>>Tên</option>
+                        <option value="p.product_name" <?= (isset($_GET['order_by']) && $_GET['order_by'] == 'p.product_name') ? 'selected' : '' ?>>Tên</option>
                     </select>
                 </div>
                 
                 <div class="col-md-2">
                     <label class="form-label filter-title">Thứ tự</label>
-                    <select name="order_dir" class="form-select" onchange="this.form.submit()">
+                    <select name="order_dir" class="form-select">
                         <option value="DESC" <?= (isset($_GET['order_dir']) && $_GET['order_dir'] == 'DESC') ? 'selected' : '' ?>>Giảm dần</option>
                         <option value="ASC" <?= (isset($_GET['order_dir']) && $_GET['order_dir'] == 'ASC') ? 'selected' : '' ?>>Tăng dần</option>
                     </select>
                 </div>
             </div>
+            
+            <!-- Lọc theo thuộc tính -->
+            <?php if (!empty($filterableAttributes)): ?>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <label class="form-label filter-title">Lọc theo thuộc tính</label>
+                    </div>
+                    <?php foreach ($filterableAttributes as $attribute): ?>
+                        <div class="col-md-3 mb-2">
+                            <label class="form-label small"><?= htmlspecialchars($attribute['attribute_name']) ?></label>
+                            <div class="d-flex flex-wrap gap-2">
+                                <?php foreach ($attribute['values'] as $value): ?>
+                                    <?php 
+                                    $isChecked = isset($_GET['attr']) && in_array($value['value_id'], $_GET['attr']);
+                                    ?>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="attr[]" value="<?= $value['value_id'] ?>" id="attr_<?= $value['value_id'] ?>" <?= $isChecked ? 'checked' : '' ?>>
+                                        <label class="form-check-label small" for="attr_<?= $value['value_id'] ?>">
+                                            <?= htmlspecialchars($value['value_name']) ?>
+                                        </label>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
         </form>
     </div>
     

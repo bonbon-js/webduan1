@@ -58,7 +58,7 @@
                             <th>Danh mục</th>
                             <th width="120">Giá</th>
                             <th width="80">Tồn kho</th>
-                            <th width="150" class="text-center">Thao tác</th>
+                            <th width="250" class="text-center">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -91,24 +91,38 @@
                                     <?php endif; ?>
                                 </td>
                                 <td class="table-actions text-center">
-                                    <a href="<?= BASE_URL ?>?action=product-detail&id=<?= $product['product_id'] ?>" 
-                                       class="btn btn-sm btn-info btn-action" 
-                                       title="Xem" 
-                                       target="_blank">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-                                    <a href="<?= BASE_URL ?>?action=admin-product-variants&product_id=<?= $product['product_id'] ?>" 
-                                       class="btn btn-sm btn-secondary btn-action" 
-                                       title="Biến thể">
-                                        <i class="bi bi-list-ul"></i>
-                                    </a>
-                                    <a href="<?= BASE_URL ?>?action=admin-product-edit&id=<?= $product['product_id'] ?>" 
-                                       class="btn btn-sm btn-warning btn-action" 
-                                       title="Sửa">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
+                                    <div class="btn-group" role="group">
+                                        <a href="<?= BASE_URL ?>?action=product-detail&id=<?= $product['product_id'] ?>" 
+                                           class="btn btn-sm btn-info" 
+                                           title="Xem" 
+                                           target="_blank">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="<?= BASE_URL ?>?action=admin-product-edit&id=<?= $product['product_id'] ?>" 
+                                           class="btn btn-sm btn-warning" 
+                                           title="Sửa">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    </div>
+                                    <div class="btn-group ms-1" role="group">
+                                        <a href="<?= BASE_URL ?>?action=admin-product-images&product_id=<?= $product['product_id'] ?>" 
+                                           class="btn btn-sm btn-primary" 
+                                           title="Hình ảnh">
+                                            <i class="bi bi-images"></i>
+                                        </a>
+                                        <a href="<?= BASE_URL ?>?action=admin-product-attributes&product_id=<?= $product['product_id'] ?>" 
+                                           class="btn btn-sm btn-success" 
+                                           title="Thuộc tính">
+                                            <i class="bi bi-tags"></i>
+                                        </a>
+                                        <a href="<?= BASE_URL ?>?action=admin-product-variants&product_id=<?= $product['product_id'] ?>" 
+                                           class="btn btn-sm btn-secondary" 
+                                           title="Biến thể">
+                                            <i class="bi bi-list-ul"></i>
+                                        </a>
+                                    </div>
                                     <button onclick="confirmDelete('<?= BASE_URL ?>?action=admin-product-delete&id=<?= $product['product_id'] ?>', '<?= htmlspecialchars($product['product_name']) ?>')" 
-                                            class="btn btn-sm btn-danger btn-action" 
+                                            class="btn btn-sm btn-danger ms-1" 
                                             title="Xóa">
                                         <i class="bi bi-trash"></i>
                                     </button>
