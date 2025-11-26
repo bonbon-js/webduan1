@@ -754,7 +754,7 @@ $banner2Path = PATH_ROOT . 'assets/images/banner2.jpg';
 // Nếu chưa có banner2, dùng tạm banner1 hoặc placeholder
 $banner2 = file_exists($banner2Path) ? getBase64Image($banner2Path) : $banner1;
 // Sử dụng đường dẫn tương đối để tránh lỗi BASE_URL
-$videoUrl = 'assets/images/vdbanner.mp4';
+$videoUrl = './assets/images/vdbanner.mp4';
 $footerLogo = getBase64Image(PATH_ROOT . 'assets/images/logo.png');
 ?>
 
