@@ -57,6 +57,8 @@ class AuthController
         $lastname  = trim($_POST['lastname'] ?? '');
         $gender    = $_POST['gender'] ?? 'female';
         $birthday  = $_POST['birthday'] ?? '';
+        $phone     = trim($_POST['phone'] ?? '');
+        $address   = trim($_POST['address'] ?? '');
         $email     = trim($_POST['email'] ?? '');
         $password  = $_POST['password'] ?? '';
 
@@ -76,6 +78,25 @@ class AuthController
 
         if ($birthday === '') {
             $errors[] = 'Vui lòng chọn ngày sinh.';
+        } else {
+            // Kiểm tra tuổi trên 18
+            $birthdayDate = new DateTime($birthday);
+            $today = new DateTime();
+            $age = $today->diff($birthdayDate)->y;
+            
+            if ($age < 18) {
+                $errors[] = 'Bạn phải trên 18 tuổi để đăng ký tài khoản.';
+            }
+        }
+
+        if ($phone === '') {
+            $errors[] = 'Vui lòng nhập số điện thoại.';
+        } elseif (!preg_match('/^[0-9]{10,11}$/', $phone)) {
+            $errors[] = 'Số điện thoại phải có 10 hoặc 11 chữ số.';
+        }
+
+        if ($address === '') {
+            $errors[] = 'Vui lòng nhập địa chỉ.';
         }
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -101,6 +122,8 @@ class AuthController
                 'last_name'  => $lastname,
                 'gender'     => $gender,
                 'birthday'   => $birthday,
+                'phone'      => $phone,
+                'address'    => $address,
                 'email'      => $email,
                 'password'   => password_hash($password, PASSWORD_BCRYPT),
             ]);

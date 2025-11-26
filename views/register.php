@@ -59,7 +59,8 @@
     .register-form input[type="text"],
     .register-form input[type="email"],
     .register-form input[type="password"],
-    .register-form input[type="date"] {
+    .register-form input[type="date"],
+    .register-form input[type="tel"] {
         width: 100%;
         border: none;
         border-radius: 6px;
@@ -179,7 +180,14 @@
                 </div>
 
                 <label for="birthday">Ngày sinh</label>
-                <input type="date" id="birthday" name="birthday" required>
+                <input type="date" id="birthday" name="birthday" max="<?= date('Y-m-d', strtotime('-18 years')) ?>" required>
+                <small id="age-error" style="color: #dc3545; display: none; font-size: 0.8rem; margin-top: -15px; margin-bottom: 10px;">Bạn phải trên 18 tuổi để đăng ký tài khoản.</small>
+
+                <label for="phone">Số điện thoại</label>
+                <input type="tel" id="phone" name="phone" placeholder="0123456789" pattern="[0-9]{10,11}" required>
+
+                <label for="address">Địa chỉ</label>
+                <input type="text" id="address" name="address" placeholder="Nhập địa chỉ của bạn" required>
 
                 <label for="email">Gmail</label>
                 <input type="email" id="email" name="email" placeholder="tennguoidung@gmail.com" required>
@@ -191,6 +199,30 @@
 
                 <button class="register-button" type="submit">Đăng ký</button>
             </form>
+            
+            <script>
+                document.getElementById('birthday').addEventListener('change', function() {
+                    const birthday = new Date(this.value);
+                    const today = new Date();
+                    const age = today.getFullYear() - birthday.getFullYear();
+                    const monthDiff = today.getMonth() - birthday.getMonth();
+                    const dayDiff = today.getDate() - birthday.getDate();
+                    
+                    let actualAge = age;
+                    if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+                        actualAge--;
+                    }
+                    
+                    const ageError = document.getElementById('age-error');
+                    if (actualAge < 18) {
+                        ageError.style.display = 'block';
+                        this.setCustomValidity('Bạn phải trên 18 tuổi để đăng ký tài khoản.');
+                    } else {
+                        ageError.style.display = 'none';
+                        this.setCustomValidity('');
+                    }
+                });
+            </script>
 
             <a href="<?= BASE_URL ?>" class="back-link">← Quay lại trang chủ</a>
         </div>
