@@ -25,3 +25,12 @@ define('DB_OPTIONS', [
     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
 ]);
+
+// SMTP configuration (cập nhật bằng thông tin Gmail/app password của bạn)
+define('MAIL_HOST', 'smtp.gmail.com');
+define('MAIL_PORT', 587);
+define('MAIL_ENCRYPTION', 'tls');
+define('MAIL_USERNAME', 'le3221981@gmail.com');
+define('MAIL_PASSWORD', 'pslo nbcf htvf ftij'); // App Password của Gmail
+define('MAIL_FROM_ADDRESS', 'le3221981@gmail.com');
+define('MAIL_FROM_NAME', 'bonbon_shop');
