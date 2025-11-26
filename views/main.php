@@ -208,9 +208,10 @@
                             <span class="ms-1 small"><?= $_SESSION['user']['fullname'] ?? 'User' ?></span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#">Thông tin cá nhân</a></li>
+                            <li><a class="dropdown-item" href="<?= BASE_URL ?>?action=profile">Thông tin cá nhân</a></li>
                             <li><a class="dropdown-item" href="<?= BASE_URL ?>?action=order-history">Đơn hàng của tôi</a></li>
                             <?php if (($_SESSION['user']['role'] ?? null) === 'admin'): ?>
+                                <li><a class="dropdown-item" href="<?= BASE_URL ?>?action=admin-users">Quản lý người dùng</a></li>
                                 <li><a class="dropdown-item" href="<?= BASE_URL ?>?action=admin-orders">Quản lý đơn hàng</a></li>
                             <?php endif; ?>
                             <li><hr class="dropdown-divider"></li>
