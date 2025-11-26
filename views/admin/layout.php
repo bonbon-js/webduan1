@@ -135,14 +135,15 @@
                     <i class="bi bi-gear"></i>
                     <span>Quản lý danh mục</span>
                 </a>
+                 <a href="<?= BASE_URL ?>?action=admin-users" class="nav-item active">
+                    <i class="bi bi-people"></i>
+                    <span>Quản lý người dùng</span>
+                </a>
                 <a href="#" class="nav-item">
                     <i class="bi bi-briefcase"></i>
                     <span>Quản lý sản phẩm</span>
                 </a>
-                <a href="<?= BASE_URL ?>?action=admin-users" class="nav-item active">
-                    <i class="bi bi-people"></i>
-                    <span>Quản lý người dùng</span>
-                </a>
+                
                 <a href="#" class="nav-item">
                     <i class="bi bi-chat-dots"></i>
                     <span>Quản lý bình luận</span>
