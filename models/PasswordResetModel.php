@@ -4,27 +4,30 @@ class PasswordResetModel extends BaseModel
 {
     protected $table = 'password_resets';
 
-    public function createToken(int $userId, string $token, string $expiresAt): void
+    public function create(int $userId, string $token, string $otp, string $expiresAt): int
     {
-        $sql = "INSERT INTO {$this->table} (user_id, token, expires_at, is_used, created_at) 
-                VALUES (:user_id, :token, :expires_at, 0, NOW())";
+        $sql = "INSERT INTO {$this->table} (user_id, token, otp_code, expires_at, is_used, created_at)
+                VALUES (:user_id, :token, :otp_code, :expires_at, 0, NOW())";
+
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'user_id'    => $userId,
             'token'      => $token,
+            'otp_code'   => $otp,
             'expires_at' => $expiresAt,
         ]);
+
+        return (int)$this->pdo->lastInsertId();
     }
 
     public function findValidToken(string $token): ?array
     {
-        $sql = "SELECT * FROM {$this->table} 
-                WHERE token = :token AND is_used = 0 AND expires_at >= NOW() 
-                LIMIT 1";
+        $sql = "SELECT * FROM {$this->table} WHERE token = :token AND (is_used = 0 OR is_used IS NULL) LIMIT 1";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['token' => $token]);
-        $reset = $stmt->fetch(PDO::FETCH_ASSOC);
-        return $reset ?: null;
+
+        $record = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $record ?: null;
     }
 
     public function markUsed(int $resetId): void

@@ -24,18 +24,22 @@ match ($action) {
     // Routes quản trị đơn hàng
     'admin-orders'       => (new AdminOrderController)->index(),
     'admin-order-update' => (new AdminOrderController)->updateStatus(),
+    // Quản lý tài khoản
+    'admin-users'        => (new AdminUserController)->index(),
+    'admin-user-role'    => (new AdminUserController)->updateRole(),
+    'admin-user-delete' => (new AdminUserController)->delete(),
     
     // Auth routes
-    'show-login'            => (new AuthController)->showLogin(),
-    'show-register'         => (new AuthController)->showRegister(),
-    'show-forgot'           => (new AuthController)->showForgotPassword(),
-    'login'                 => (new AuthController)->login(),
-    'register'              => (new AuthController)->register(),
-    'logout'                => (new AuthController)->logout(),
-    'forgot-password'       => (new AuthController)->handleForgotPassword(),
-    'verify-account'        => (new AuthController)->verifyAccount(),
-    'reset-password'        => (new AuthController)->showResetPassword(),
-    'reset-password-submit' => (new AuthController)->resetPassword(),
+    'show-login'         => (new AuthController)->showLogin(),
+    'show-register'      => (new AuthController)->showRegister(),
+    'show-forgot'        => (new AuthController)->showForgotPassword(),
+    'show-reset-password'=> (new AuthController)->showResetPassword(),
+    'verify-account'     => (new AuthController)->verifyAccount(),
+    'login'              => (new AuthController)->login(),
+    'register'           => (new AuthController)->register(),
+    'logout'             => (new AuthController)->logout(),
+    'forgot-password'    => (new AuthController)->handleForgotPassword(),
+    'reset-password'     => (new AuthController)->resetPassword(),
     
     default          => (new HomeController)->index(),
 };
