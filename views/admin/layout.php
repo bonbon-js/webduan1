@@ -131,11 +131,17 @@
         <aside class="admin-sidebar">
             <div class="brand">BonBon</div>
             <nav>
+                <?php
+                $currentAction = $_GET['action'] ?? '';
+                $isActive = function($action) use ($currentAction) {
+                    return $currentAction === $action ? 'active' : '';
+                };
+                ?>
                 <a href="#" class="nav-item">
                     <i class="bi bi-gear"></i>
                     <span>Quản lý danh mục</span>
                 </a>
-                 <a href="<?= BASE_URL ?>?action=admin-users" class="nav-item active">
+                <a href="<?= BASE_URL ?>?action=admin-users" class="nav-item <?= $isActive('admin-users') ?>">
                     <i class="bi bi-people"></i>
                     <span>Quản lý người dùng</span>
                 </a>
@@ -148,9 +154,13 @@
                     <i class="bi bi-chat-dots"></i>
                     <span>Quản lý bình luận</span>
                 </a>
-                <a href="<?= BASE_URL ?>?action=admin-orders" class="nav-item">
+                <a href="<?= BASE_URL ?>?action=admin-orders" class="nav-item <?= $isActive('admin-orders') ?>">
                     <i class="bi bi-cart"></i>
                     <span>Quản lý đơn hàng</span>
+                </a>
+                <a href="<?= BASE_URL ?>?action=admin-coupons" class="nav-item <?= $isActive('admin-coupons') ?>">
+                    <i class="bi bi-ticket-perforated"></i>
+                    <span>Quản lý mã giảm giá</span>
                 </a>
                 <a href="#" class="nav-item">
                     <i class="bi bi-bar-chart"></i>

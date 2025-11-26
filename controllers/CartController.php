@@ -1,9 +1,26 @@
 <?php
 
+require_once PATH_MODEL . 'ProductModel.php';
+require_once PATH_MODEL . 'CartModel.php';
+
 class CartController
 {
+    private ProductModel $productModel;
+    private CartModel $cartModel;
+
+    public function __construct()
+    {
+        $this->productModel = new ProductModel();
+        $this->cartModel = new CartModel();
+    }
     public function index()
     {
+        // Nếu user đã đăng nhập, load giỏ hàng từ database
+        if (isset($_SESSION['user']) && isset($_SESSION['user']['id'])) {
+            $userId = (int)$_SESSION['user']['id'];
+            $this->cartModel->loadCartToSession($userId);
+        }
+        
         // Lấy giỏ hàng từ session
         $cart = $_SESSION['cart'] ?? [];
         $total = 0;
@@ -26,6 +43,8 @@ class CartController
 
     public function add()
     {
+        header('Content-Type: application/json; charset=utf-8');
+        
         // Nhận dữ liệu JSON từ fetch
         $data = json_decode(file_get_contents('php://input'), true);
         
@@ -33,47 +52,125 @@ class CartController
             // Fallback cho form submit thường (nếu có)
             $productId = $_POST['product_id'] ?? null;
             $quantity = $_POST['quantity'] ?? 1;
-            $size = $_POST['size'] ?? 'M';
-            $color = $_POST['color'] ?? 'Black';
+            $size = $_POST['size'] ?? null;
+            $color = $_POST['color'] ?? null;
         } else {
             $productId = $data['product_id'] ?? null;
             $quantity = $data['quantity'] ?? 1;
-            $size = $data['size'] ?? 'M';
-            $color = $data['color'] ?? 'Black';
+            $size = $data['size'] ?? null;
+            $color = $data['color'] ?? null;
         }
 
-        if ($productId) {
+        if (!$productId) {
+            echo json_encode(['success' => false, 'message' => 'Thiếu ID sản phẩm']);
+            exit;
+        }
+
+        // Kiểm tra đăng nhập trước
+        if (!isset($_SESSION['user']) || !isset($_SESSION['user']['id'])) {
+            echo json_encode([
+                'success' => false, 
+                'require_login' => true,
+                'message' => 'Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng'
+            ]);
+            exit;
+        }
+
+        try {
+            // Lấy thông tin sản phẩm từ DB
+            $product = $this->productModel->getProductById($productId);
+            if (!$product) {
+                echo json_encode(['success' => false, 'message' => 'Sản phẩm không tồn tại']);
+                exit;
+            }
+
+            // Tìm variant_id từ size và color
+            $variantId = null;
+            $variant = null;
+            if ($size || $color) {
+                $variant = $this->productModel->getVariantByValueNames($productId, $size, $color);
+                if ($variant) {
+                    $variantId = (int)$variant['variant_id'];
+                }
+            }
+
+            // Tính giá cuối cùng (giá sản phẩm + additional_price của variant nếu có)
+            $finalPrice = (float)$product['price'];
+            if ($variant && isset($variant['additional_price']) && $variant['additional_price'] !== null) {
+                $finalPrice += (float)$variant['additional_price'];
+            }
+
+            // Lấy ảnh sản phẩm
+            $productImage = $product['image'] ?? '';
+            if (!$productImage) {
+                $images = $this->productModel->getProductImages($productId);
+                if (!empty($images)) {
+                    $productImage = $images[0]['image_url'] ?? '';
+                }
+            }
+
+            // Lưu vào database TRƯỚC (user đã đăng nhập)
+            $userId = (int)$_SESSION['user']['id'];
+            $cartId = $this->cartModel->getOrCreateCartIdByUserId($userId);
+            
+            error_log("Attempting to add item to cart. User: $userId, Cart: $cartId, Product: $productId, Variant: " . ($variantId ?? 'NULL') . ", Size: " . ($size ?? 'NULL') . ", Color: " . ($color ?? 'NULL') . ", Quantity: $quantity");
+            
+            // Lưu vào database trước, nếu thành công mới lưu vào session
+            try {
+                $saved = $this->cartModel->addOrIncrementItem($cartId, $productId, $variantId, $quantity);
+                if (!$saved) {
+                    error_log("Failed to save cart item to database. User: $userId, Product: $productId, Variant: " . ($variantId ?? 'NULL') . ", Size: " . ($size ?? 'NULL') . ", Color: " . ($color ?? 'NULL'));
+                    echo json_encode([
+                        'success' => false, 
+                        'message' => 'Không thể lưu vào giỏ hàng. Vui lòng thử lại.',
+                        'debug' => [
+                            'user_id' => $userId,
+                            'cart_id' => $cartId,
+                            'product_id' => $productId,
+                            'variant_id' => $variantId,
+                            'size' => $size,
+                            'color' => $color,
+                            'quantity' => $quantity
+                        ]
+                    ]);
+                    exit;
+                }
+            } catch (Exception $e) {
+                error_log("Exception when saving cart item: " . $e->getMessage() . " | Stack: " . $e->getTraceAsString());
+                echo json_encode([
+                    'success' => false, 
+                    'message' => 'Có lỗi xảy ra khi lưu vào giỏ hàng: ' . $e->getMessage(),
+                    'debug' => [
+                        'user_id' => $userId,
+                        'cart_id' => $cartId,
+                        'product_id' => $productId,
+                        'variant_id' => $variantId,
+                        'size' => $size,
+                        'color' => $color,
+                        'error' => $e->getMessage()
+                    ]
+                ]);
+                exit;
+            }
+
+            // Sau khi lưu vào database thành công, mới lưu vào session
+            // Tạo key duy nhất cho session cart
+            $cartKey = $productId . '_' . ($size ?? 'null') . '_' . ($color ?? 'null');
+
+            // Lưu vào session
             if (!isset($_SESSION['cart'])) {
                 $_SESSION['cart'] = [];
             }
 
-            // Giả lập thông tin sản phẩm (Trong thực tế sẽ query DB)
-            $products = [
-                1 => ['name' => 'Áo Thun Basic', 'price' => 350000, 'image' => 'assets/images/banner-hero.jpg'], 
-                2 => ['name' => 'Quần Jean Slim', 'price' => 550000, 'image' => 'assets/images/banner-hero.jpg'],
-                3 => ['name' => 'Áo Khoác Bomber', 'price' => 850000, 'image' => 'assets/images/banner-hero.jpg'],
-                4 => ['name' => 'Váy Dạ Hội', 'price' => 1200000, 'image' => 'assets/images/banner-hero.jpg'],
-            ];
-            
-            $product = $products[$productId] ?? [
-                'name' => 'Sản phẩm ' . $productId, 
-                'price' => 500000, 
-                'image' => 'assets/images/banner-hero.jpg'
-            ];
-
-            // Tạo key duy nhất cho sản phẩm dựa trên ID + Size + Color
-            $cartKey = $productId . '_' . $size . '_' . $color;
-
-            // Nếu sản phẩm đã có trong giỏ -> tăng số lượng
             if (isset($_SESSION['cart'][$cartKey])) {
                 $_SESSION['cart'][$cartKey]['quantity'] += $quantity;
             } else {
-                // Thêm mới
                 $_SESSION['cart'][$cartKey] = [
                     'id' => $productId,
+                    'variant_id' => $variantId,
                     'name' => $product['name'],
-                    'price' => $product['price'],
-                    'image' => $product['image'],
+                    'price' => $finalPrice,
+                    'image' => $productImage,
                     'quantity' => $quantity,
                     'size' => $size,
                     'color' => $color
@@ -82,38 +179,182 @@ class CartController
 
             echo json_encode(['success' => true, 'message' => 'Đã thêm vào giỏ hàng']);
             exit;
+        } catch (Exception $e) {
+            error_log("CartController::add error: " . $e->getMessage() . " | Stack trace: " . $e->getTraceAsString());
+            echo json_encode([
+                'success' => false, 
+                'message' => 'Có lỗi xảy ra khi thêm vào giỏ hàng: ' . $e->getMessage()
+            ]);
+            exit;
         }
-        
-        echo json_encode(['success' => false, 'message' => 'Thiếu ID sản phẩm']);
-        exit;
     }
 
     public function update()
     {
+        header('Content-Type: application/json; charset=utf-8');
+        
         $data = json_decode(file_get_contents('php://input'), true);
-        $productId = $data['product_id'] ?? null;
+        $cartKey = $data['cart_key'] ?? null;
         $quantity = $data['quantity'] ?? 1;
 
-        if ($productId && isset($_SESSION['cart'][$productId])) {
-            if ($quantity > 0) {
-                $_SESSION['cart'][$productId]['quantity'] = $quantity;
-            } else {
-                unset($_SESSION['cart'][$productId]);
+        if (!$cartKey || !isset($_SESSION['cart'][$cartKey])) {
+            echo json_encode(['success' => false, 'message' => 'Sản phẩm không tồn tại trong giỏ hàng']);
+            exit;
+        }
+
+        $item = $_SESSION['cart'][$cartKey];
+        $productId = (int)$item['id'];
+        $variantId = isset($item['variant_id']) ? (int)$item['variant_id'] : null;
+
+        if ($quantity > 0) {
+            // Cập nhật số lượng trong session
+            $_SESSION['cart'][$cartKey]['quantity'] = $quantity;
+            
+            // Cập nhật trong database nếu user đã đăng nhập (BẮT BUỘC)
+            if (isset($_SESSION['user']) && isset($_SESSION['user']['id'])) {
+                $userId = (int)$_SESSION['user']['id'];
+                $cartId = $this->cartModel->getOrCreateCartIdByUserId($userId);
+                
+                $updated = $this->cartModel->updateItemQuantity($cartId, $productId, $variantId, $quantity);
+                if (!$updated) {
+                    error_log("Failed to update cart item quantity in database for user $userId");
+                    echo json_encode(['success' => false, 'message' => 'Không thể cập nhật số lượng. Vui lòng thử lại.']);
+                    exit;
+                }
             }
+            
             echo json_encode(['success' => true]);
         } else {
-            echo json_encode(['success' => false]);
+            // Xóa khỏi session
+            unset($_SESSION['cart'][$cartKey]);
+            
+            // Xóa khỏi database nếu user đã đăng nhập (BẮT BUỘC)
+            if (isset($_SESSION['user']) && isset($_SESSION['user']['id'])) {
+                $userId = (int)$_SESSION['user']['id'];
+                $cartId = $this->cartModel->getOrCreateCartIdByUserId($userId);
+                
+                // Truyền variant_id từ session để tìm chính xác hơn
+                $cartItemId = $this->cartModel->findCartItemIdByKey($cartId, $cartKey, $variantId);
+                if ($cartItemId) {
+                    $deleted = $this->cartModel->deleteItem($cartItemId);
+                    if (!$deleted) {
+                        error_log("Failed to delete cart item from database for user $userId");
+                        echo json_encode(['success' => false, 'message' => 'Không thể xóa sản phẩm. Vui lòng thử lại.']);
+                        exit;
+                    }
+                }
+            }
+            
+            echo json_encode(['success' => true]);
         }
         exit;
     }
 
     public function delete()
     {
-        $id = $_GET['id'] ?? null;
-        if ($id && isset($_SESSION['cart'][$id])) {
-            unset($_SESSION['cart'][$id]);
+        $cartKey = $_GET['id'] ?? null;
+        if (!$cartKey || !isset($_SESSION['cart'][$cartKey])) {
+            header('Location: ' . BASE_URL . '?action=cart-list');
+            exit;
         }
+
+        // Xóa khỏi session
+        unset($_SESSION['cart'][$cartKey]);
+
+        // Xóa khỏi database nếu user đã đăng nhập (BẮT BUỘC)
+        if (isset($_SESSION['user']) && isset($_SESSION['user']['id'])) {
+            $userId = (int)$_SESSION['user']['id'];
+            $cartId = $this->cartModel->getOrCreateCartIdByUserId($userId);
+            
+            $cartItemId = $this->cartModel->findCartItemIdByKey($cartId, $cartKey);
+            if ($cartItemId) {
+                $deleted = $this->cartModel->deleteItem($cartItemId);
+                if (!$deleted) {
+                    error_log("Failed to delete cart item from database for user $userId");
+                }
+            }
+        }
+
         header('Location: ' . BASE_URL . '?action=cart-list');
+        exit;
+    }
+
+    /**
+     * Xóa nhiều sản phẩm cùng lúc
+     */
+    public function deleteMultiple()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        
+        $data = json_decode(file_get_contents('php://input'), true);
+        $cartKeys = $data['cart_keys'] ?? [];
+
+        if (empty($cartKeys) || !is_array($cartKeys)) {
+            echo json_encode(['success' => false, 'message' => 'Không có sản phẩm nào được chọn']);
+            exit;
+        }
+
+        $deletedCount = 0;
+        $errors = [];
+        $userId = null;
+        $cartId = null;
+
+        // Lấy userId và cartId nếu user đã đăng nhập
+        if (isset($_SESSION['user']) && isset($_SESSION['user']['id'])) {
+            $userId = (int)$_SESSION['user']['id'];
+            $cartId = $this->cartModel->getOrCreateCartIdByUserId($userId);
+        }
+
+        foreach ($cartKeys as $cartKey) {
+            if (!isset($_SESSION['cart'][$cartKey])) {
+                continue;
+            }
+            
+            $item = $_SESSION['cart'][$cartKey];
+            $variantIdFromSession = isset($item['variant_id']) ? (int)$item['variant_id'] : null;
+            
+            // Xóa khỏi session trước
+            unset($_SESSION['cart'][$cartKey]);
+            $deletedCount++;
+
+            // Xóa khỏi database nếu user đã đăng nhập
+            if ($userId && $cartId) {
+                try {
+                    // Truyền variant_id từ session để tìm chính xác hơn
+                    $cartItemId = $this->cartModel->findCartItemIdByKey($cartId, $cartKey, $variantIdFromSession);
+                    if ($cartItemId) {
+                        $deleted = $this->cartModel->deleteItem($cartItemId);
+                        if (!$deleted) {
+                            $errors[] = "Không thể xóa sản phẩm $cartKey khỏi database";
+                            error_log("Failed to delete cart item $cartItemId from database for user $userId");
+                        }
+                    } else {
+                        // Nếu không tìm thấy trong DB, vẫn OK vì đã xóa khỏi session
+                        error_log("Cart item not found in DB for cartKey: $cartKey, variant_id: " . ($variantIdFromSession ?? 'null') . ", user: $userId");
+                    }
+                } catch (Exception $e) {
+                    $errors[] = "Lỗi khi xóa sản phẩm $cartKey: " . $e->getMessage();
+                    error_log("Error deleting cart item from database: " . $e->getMessage());
+                    // Tiếp tục xóa các item khác
+                }
+            }
+        }
+
+        // Trả về success nếu đã xóa được ít nhất 1 item (dù có lỗi DB)
+        if ($deletedCount > 0) {
+            echo json_encode([
+                'success' => true, 
+                'message' => "Đã xóa {$deletedCount} sản phẩm",
+                'deleted_count' => $deletedCount,
+                'errors' => $errors
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false, 
+                'message' => 'Không thể xóa sản phẩm',
+                'errors' => $errors
+            ]);
+        }
         exit;
     }
     
@@ -125,6 +366,28 @@ class CartController
             }
         }
         echo json_encode(['count' => $count]);
+        exit;
+    }
+
+    /**
+     * Lưu danh sách sản phẩm đã chọn để mua vào session
+     */
+    public function setSelected()
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        
+        $data = json_decode(file_get_contents('php://input'), true);
+        $selectedItems = $data['selected_items'] ?? [];
+
+        if (empty($selectedItems) || !is_array($selectedItems)) {
+            echo json_encode(['success' => false, 'message' => 'Không có sản phẩm nào được chọn']);
+            exit;
+        }
+
+        // Lưu vào session
+        $_SESSION['selected_cart_items'] = $selectedItems;
+
+        echo json_encode(['success' => true, 'message' => 'Đã lưu danh sách sản phẩm đã chọn']);
         exit;
     }
 }

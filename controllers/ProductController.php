@@ -1,0 +1,227 @@
+<?php
+
+class ProductController
+{
+	public function index()
+	{
+		$title = 'Tất cả sản phẩm';
+		$view  = 'products/index';
+
+		$page     = max(1, (int)($_GET['page'] ?? 1));
+		$perPage  = max(1, min(36, (int)($_GET['per_page'] ?? 12)));
+		$category = isset($_GET['category_id']) ? (int)$_GET['category_id'] : null;
+		$keyword  = trim((string)($_GET['q'] ?? ''));
+		$priceKey = (string)($_GET['price'] ?? '');
+
+		// Parse price range
+		$priceMin = null; $priceMax = null;
+		switch ($priceKey) {
+			case 'under300':
+				$priceMax = 300000;
+				break;
+			case '300-500':
+				$priceMin = 300000; $priceMax = 500000;
+				break;
+			case '500-800':
+				$priceMin = 500000; $priceMax = 800000;
+				break;
+			case 'above800':
+				$priceMin = 800000;
+				break;
+			default:
+				// allow custom price_min, price_max if provided
+				if (isset($_GET['price_min'])) $priceMin = max(0, (float)$_GET['price_min']);
+				if (isset($_GET['price_max'])) $priceMax = max(0, (float)$_GET['price_max']);
+		}
+
+		require_once PATH_MODEL . 'ProductModel.php';
+		require_once PATH_MODEL . 'CategoryModel.php';
+
+		$productModel  = new ProductModel();
+		$categoryModel = new CategoryModel();
+
+		$totalProducts = $productModel->countAllProducts($category, $keyword ?: null, $priceMin, $priceMax);
+		$products      = $productModel->getProductsPage($page, $perPage, $category, $keyword ?: null, $priceMin, $priceMax);
+		$categories    = $categoryModel->getAllCategories();
+
+		$hasMore = ($page * $perPage) < $totalProducts;
+
+		// Pass filters to view
+		$_GET['q'] = $keyword;
+		$_GET['price'] = $priceKey;
+
+		require_once PATH_VIEW . 'main.php';
+	}
+
+	public function detail()
+	{
+		$id = (int)($_GET['id'] ?? 0);
+		if ($id <= 0) {
+			header('Location: ' . BASE_URL . '?action=products');
+			exit;
+		}
+
+		require_once PATH_MODEL . 'ProductModel.php';
+		$productModel = new ProductModel();
+		$product = $productModel->getProductById($id);
+
+		if (!$product) {
+			header('Location: ' . BASE_URL . '?action=products');
+			exit;
+		}
+
+		// Optional: get gallery images
+		$images = $productModel->getProductImages($id);
+		$attributes = $productModel->getProductAttributes($id);
+		$similarProducts = $productModel->getSimilarProducts((int)$product['category_id'], (int)$product['id'], 8);
+
+		$title = $product['name'] ?? 'Chi tiết sản phẩm';
+		$view  = 'products/detail';
+
+		require_once PATH_VIEW . 'main.php';
+	}
+
+	// Trả về JSON danh sách thuộc tính (size, color) cho sản phẩm
+	public function attributes()
+	{
+		header('Content-Type: application/json; charset=utf-8');
+		$productId = (int)($_GET['product_id'] ?? 0);
+		if ($productId <= 0) {
+			echo json_encode(['success' => false, 'message' => 'Thiếu product_id']);
+			exit;
+		}
+		require_once PATH_MODEL . 'ProductModel.php';
+		$model = new ProductModel();
+		$data = $model->getProductAttributes($productId);
+		echo json_encode(['success' => true, 'data' => $data]);
+		exit;
+	}
+
+	// Trả về ảnh theo biến thể từ size/color
+	public function variantImages()
+	{
+		header('Content-Type: application/json; charset=utf-8');
+		$productId = (int)($_GET['product_id'] ?? 0);
+		$size = isset($_GET['size']) ? trim((string)$_GET['size']) : null;
+		$color = isset($_GET['color']) ? trim((string)$_GET['color']) : null;
+		if ($productId <= 0) {
+			echo json_encode(['success' => false, 'message' => 'Thiếu product_id']);
+			exit;
+		}
+		require_once PATH_MODEL . 'ProductModel.php';
+		$model = new ProductModel();
+
+		// 1) Cố gắng lấy ảnh theo biến thể cụ thể (size + color nếu có)
+		$imagesUrls = [];
+		$variant = $model->getVariantByValueNames($productId, $size, $color);
+		if ($variant) {
+			$images = $model->getVariantImages((int)$variant['variant_id']);
+			if (!empty($images)) {
+				$imagesUrls = array_map(fn($r) => $r['image_url'], $images);
+			}
+		}
+
+		// 2) Nếu không có ảnh cho biến thể cụ thể, fallback theo Color (gom ảnh của mọi variant cùng màu)
+		if (empty($imagesUrls) && $color) {
+			$imagesUrls = $model->getVariantImagesByColor($productId, $color);
+		}
+
+		// 3) Nếu vẫn trống, fallback cuối cùng: ảnh sản phẩm chung
+		if (empty($imagesUrls)) {
+			$common = $model->getProductImages($productId);
+			$imagesUrls = array_map(fn($r) => $r['image_url'], $common);
+		}
+
+		echo json_encode(['success' => true, 'data' => $imagesUrls]);
+		exit;
+	}
+
+	/**
+	 * API tìm kiếm sản phẩm (cho autocomplete)
+	 */
+	public function searchApi()
+	{
+		header('Content-Type: application/json; charset=utf-8');
+		$keyword = trim((string)($_GET['q'] ?? ''));
+		
+		if (empty($keyword) || strlen($keyword) < 2) {
+			echo json_encode(['success' => false, 'message' => 'Từ khóa quá ngắn', 'products' => []]);
+			exit;
+		}
+		
+		require_once PATH_MODEL . 'ProductModel.php';
+		$productModel = new ProductModel();
+		
+		// Tìm kiếm tối đa 20 sản phẩm cho autocomplete
+		$products = $productModel->searchProducts($keyword, 20);
+		
+		echo json_encode([
+			'success' => true,
+			'products' => $products,
+			'count' => count($products)
+		]);
+		exit;
+	}
+
+	/**
+	 * Tìm kiếm thông minh: sản phẩm hoặc danh mục
+	 * - Nếu tìm thấy đúng 1 sản phẩm → trả về product_id
+	 * - Nếu tìm thấy danh mục → trả về category_id
+	 * - Nếu nhiều kết quả → trả về type: 'multiple'
+	 */
+	public function searchSmart()
+	{
+		header('Content-Type: application/json; charset=utf-8');
+		$keyword = trim((string)($_GET['q'] ?? ''));
+		
+		if (empty($keyword)) {
+			echo json_encode(['success' => false, 'message' => 'Thiếu từ khóa']);
+			exit;
+		}
+		
+		require_once PATH_MODEL . 'ProductModel.php';
+		require_once PATH_MODEL . 'CategoryModel.php';
+		
+		$productModel = new ProductModel();
+		$categoryModel = new CategoryModel();
+		
+		// Tìm kiếm sản phẩm
+		$products = $productModel->searchProducts($keyword, 10);
+		
+		// Tìm kiếm danh mục
+		$matchedCategories = $categoryModel->searchCategories($keyword);
+		$matchedCategory = !empty($matchedCategories) ? $matchedCategories[0] : null;
+		
+		// Logic: Ưu tiên danh mục nếu tìm thấy
+		if ($matchedCategory) {
+			echo json_encode([
+				'success' => true,
+				'type' => 'category',
+				'category_id' => (int)$matchedCategory['category_id'],
+				'category_name' => $matchedCategory['category_name']
+			]);
+			exit;
+		}
+		
+		// Nếu tìm thấy đúng 1 sản phẩm → trả về product_id
+		if (count($products) === 1) {
+			echo json_encode([
+				'success' => true,
+				'type' => 'product',
+				'product_id' => (int)$products[0]['id'],
+				'product_name' => $products[0]['name']
+			]);
+			exit;
+		}
+		
+		// Nếu nhiều sản phẩm hoặc không tìm thấy
+		echo json_encode([
+			'success' => true,
+			'type' => 'multiple',
+			'count' => count($products)
+		]);
+		exit;
+	}
+}
+
+

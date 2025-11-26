@@ -612,129 +612,6 @@
         .info-columns {
             gap: 30px;
         }
-        
-        .footer-grid {
-            grid-template-columns: 1fr;
-            gap: 40px;
-        }
-    }
-
-    /* Modern Footer Styles */
-    .modern-footer {
-        background-color: #000;
-        color: #fff;
-        padding: 80px 0 30px;
-        margin-top: 80px;
-        font-size: 0.9rem;
-    }
-
-    .footer-grid {
-        display: grid;
-        grid-template-columns: 1.5fr 1fr 1fr 1.5fr;
-        gap: 60px;
-        margin-bottom: 60px;
-    }
-
-    .footer-brand p {
-        color: #999;
-        line-height: 1.8;
-        margin-bottom: 20px;
-        max-width: 300px;
-    }
-
-    .footer-logo-img {
-        height: 80px;
-        width: auto;
-        margin-bottom: 25px;
-        filter: brightness(0) invert(1); /* Chuyển logo sang màu trắng */
-    }
-
-    .footer-heading {
-        font-family: 'Playfair Display', serif;
-        font-size: 1.1rem;
-        margin-bottom: 25px;
-        font-weight: 600;
-        letter-spacing: 1px;
-    }
-
-    .footer-links {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    .footer-links li {
-        margin-bottom: 15px;
-    }
-
-    .footer-links a {
-        color: #999;
-        text-decoration: none;
-        transition: all 0.3s;
-        position: relative;
-    }
-
-    .footer-links a:hover {
-        color: #fff;
-        padding-left: 5px;
-    }
-
-    .newsletter-form {
-        position: relative;
-        margin-top: 20px;
-    }
-
-    .newsletter-input {
-        width: 100%;
-        background: transparent;
-        border: none;
-        border-bottom: 1px solid #333;
-        padding: 10px 0;
-        color: #fff;
-        outline: none;
-        transition: border-color 0.3s;
-    }
-
-    .newsletter-input:focus {
-        border-color: #fff;
-    }
-
-    .newsletter-btn {
-        position: absolute;
-        right: 0;
-        top: 10px;
-        background: none;
-        border: none;
-        color: #fff;
-        text-transform: uppercase;
-        font-size: 0.8rem;
-        letter-spacing: 1px;
-        cursor: pointer;
-    }
-
-    .footer-bottom {
-        border-top: 1px solid #222;
-        padding-top: 30px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        color: #666;
-        font-size: 0.8rem;
-    }
-
-    .social-links {
-        display: flex;
-        gap: 20px;
-    }
-
-    .social-links a {
-        color: #fff;
-        font-size: 1.2rem;
-        transition: opacity 0.3s;
-    }
-
-    .social-links a:hover {
-        opacity: 0.7;
     }
 </style>
 
@@ -1045,8 +922,23 @@ document.addEventListener('DOMContentLoaded', function() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(res => {
+            if (res.require_login) {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('quickAddModal'));
+                modal.hide();
+                showToast('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng', 'warning');
+                setTimeout(() => {
+                    window.location.href = '<?= BASE_URL ?>?action=show-login';
+                }, 1500);
+                return;
+            }
+            
             if (res.success) {
                 const modal = bootstrap.Modal.getInstance(document.getElementById('quickAddModal'));
                 modal.hide();
@@ -1062,10 +954,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     window.location.href = '<?= BASE_URL ?>?action=checkout';
                 }
             } else {
-                alert('Có lỗi xảy ra: ' + res.message);
+                showToast(res.message || 'Có lỗi xảy ra', 'error');
+                console.error('Add to cart error:', res);
             }
         })
-        .catch(err => console.error(err));
+        .catch(err => {
+            console.error('Add to cart error:', err);
+            showToast('Có lỗi xảy ra khi thêm vào giỏ hàng', 'error');
+        });
     }
 
     // Toast Notification Function
@@ -1099,9 +995,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Hàm xem nhanh sản phẩm
     function quickView(productId) {
-        // Chức năng xem nhanh sản phẩm (có thể implement sau)
-        console.log('Quick view product:', productId);
-        alert('Chức năng xem nhanh đang được phát triển!');
+        window.location.href = '<?= BASE_URL ?>?action=product-detail&id=' + productId;
     }
 </script>
 
@@ -1135,7 +1029,7 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 
     <div class="text-center mt-4">
-        <button class="btn btn-outline-dark">Xem thêm</button>
+    <a href="<?= BASE_URL ?>?action=products" class="btn btn-outline-dark">Xem thêm</a>
     </div>
 </section>
 
@@ -1156,67 +1050,9 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 
     <div class="text-center mt-4">
-        <button class="btn btn-outline-dark">Xem tiếp</button>
+        <a href="<?= BASE_URL ?>?action=posts" class="btn btn-outline-dark">Xem thêm</a>
     </div>
 </section>
-
-<footer class="modern-footer">
-    <div class="container">
-        <div class="footer-grid">
-            <!-- Brand Column -->
-            <div class="footer-brand">
-                <img src="<?= $footerLogo ?>" alt="BonBonWear Logo" class="footer-logo-img">
-                <p>Định hình phong cách thời trang đương đại. Sự kết hợp hoàn hảo giữa tính ứng dụng và vẻ đẹp nghệ thuật.</p>
-                <div class="social-links">
-                    <a href="#"><i class="bi bi-facebook"></i></a>
-                    <a href="#"><i class="bi bi-instagram"></i></a>
-                    <a href="#"><i class="bi bi-tiktok"></i></a>
-                    <a href="#"><i class="bi bi-youtube"></i></a>
-                </div>
-            </div>
-
-            <!-- Links Column 1 -->
-            <div>
-                <h4 class="footer-heading">MUA SẮM</h4>
-                <ul class="footer-links">
-                    <li><a href="#">Sản Phẩm Mới</a></li>
-                    <li><a href="#">Bán Chạy Nhất</a></li>
-                    <li><a href="#">Bộ Sưu Tập</a></li>
-                    <li><a href="#">Khuyến Mãi</a></li>
-                </ul>
-            </div>
-
-            <!-- Links Column 2 -->
-            <div>
-                <h4 class="footer-heading">HỖ TRỢ</h4>
-                <ul class="footer-links">
-                    <li><a href="#">Trạng Thái Đơn Hàng</a></li>
-                    <li><a href="#">Chính Sách Đổi Trả</a></li>
-                    <li><a href="#">Hướng Dẫn Chọn Size</a></li>
-                    <li><a href="#">Liên Hệ</a></li>
-                </ul>
-            </div>
-
-            <!-- Newsletter Column -->
-            <div>
-                <h4 class="footer-heading">BẢN TIN</h4>
-                <p style="color: #999; margin-bottom: 20px;">Đăng ký để nhận thông tin về bộ sưu tập mới và ưu đãi độc quyền.</p>
-                <form class="newsletter-form">
-                    <input type="email" class="newsletter-input" placeholder="Email của bạn">
-                    <button type="submit" class="newsletter-btn">GỬI</button>
-                </form>
-            </div>
-        </div>
-
-        <div class="footer-bottom">
-            <p>© <?= date('Y') ?> BonBonWear. All rights reserved.</p>
-            <div class="payment-methods">
-                <span class="me-3">Privacy Policy</span>
-                <span>Terms of Service</span>
-            </div>
-        </div>
-    </div>
-</footer>
 
 <!-- Quick Add Modal -->
 <div class="modal fade" id="quickAddModal" tabindex="-1" aria-hidden="true">
@@ -1240,7 +1076,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             
                             <!-- Size Selector -->
                             <div class="mb-4">
-                                <label class="form-label small text-uppercase fw-bold text-muted mb-2">Kích thước</label>
+                                <label class="form-label small text-uppercase fw-bold text-muted mb-2" id="qaSizeLabel">Kích thước</label>
                                 <div class="d-flex gap-2">
                                     <input type="radio" class="btn-check" name="qaSize" id="sizeS" value="S" checked>
                                     <label class="btn btn-outline-dark rounded-0 px-3" for="sizeS">S</label>
@@ -1258,7 +1094,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             
                             <!-- Color Selector -->
                             <div class="mb-4">
-                                <label class="form-label small text-uppercase fw-bold text-muted mb-2">Màu sắc</label>
+                                <label class="form-label small text-uppercase fw-bold text-muted mb-2" id="qaColorLabel">Màu sắc</label>
                                 <div class="d-flex gap-2">
                                     <input type="radio" class="btn-check" name="qaColor" id="colorBlack" value="Black" checked>
                                     <label class="btn rounded-circle p-0 border border-2 border-white shadow-sm" for="colorBlack" style="width: 30px; height: 30px; background-color: #000; cursor: pointer;"></label>
@@ -1273,11 +1109,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             
                             <!-- Quantity -->
                             <div class="mb-4">
-                                <label class="form-label small text-uppercase fw-bold text-muted mb-2">Số lượng</label>
+                                <label for="qaQuantity" class="form-label small text-uppercase fw-bold text-muted mb-2">Số lượng</label>
                                 <div class="input-group" style="width: 120px;">
-                                    <button class="btn btn-outline-secondary rounded-0" type="button" onclick="changeQaQty(-1)">-</button>
-                                    <input type="number" class="form-control text-center border-secondary border-start-0 border-end-0" id="qaQuantity" value="1" min="1" readonly>
-                                    <button class="btn btn-outline-secondary rounded-0" type="button" onclick="changeQaQty(1)">+</button>
+                                    <button class="btn btn-outline-secondary rounded-0" type="button" onclick="changeQaQty(-1)" aria-label="Giảm số lượng">-</button>
+                                    <input type="number" class="form-control text-center border-secondary border-start-0 border-end-0" id="qaQuantity" name="quantity" value="1" min="1" readonly aria-label="Số lượng sản phẩm">
+                                    <button class="btn btn-outline-secondary rounded-0" type="button" onclick="changeQaQty(1)" aria-label="Tăng số lượng">+</button>
                                 </div>
                             </div>
                             
