@@ -1,3 +1,4 @@
+
 <?php
 
 use PHPMailer\PHPMailer\PHPMailer;
@@ -21,15 +22,15 @@ class MailHelper
             $mail->SMTPAuth   = true;
 
             // Thay bằng email & app password của bạn
-            $mail->Username   = 'yourgmail@gmail.com';
-            $mail->Password   = 'your_app_password';
+            $mail->Username   = 'le3221981@gmail.com';
+            $mail->Password   = 'pslo nbcf htvf ftij';
 
             $mail->SMTPSecure = 'tls';
             $mail->Port       = 587;
             $mail->CharSet    = 'UTF-8';
 
             // From
-            $mail->setFrom('yourgmail@gmail.com', 'Bon Bon Shop');
+            $mail->setFrom('le3221981@gmail.com', 'Bon Bon Shop');
 
             // To
             $mail->addAddress($toEmail, $toName);
