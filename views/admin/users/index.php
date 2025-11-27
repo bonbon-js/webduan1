@@ -26,42 +26,49 @@
     }
     .users-stats {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 2rem;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 1rem;
     }
     .stat-card {
         background: #fff;
-        border-radius: 12px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border-radius: 4px;
+        padding: 0.35rem;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
         transition: transform 0.2s, box-shadow 0.2s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        min-height: 70px;
     }
     .stat-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
     }
     .stat-card .stat-value {
-        font-size: 2rem;
+        font-size: 0.8rem;
         font-weight: 700;
         color: #1e293b;
-        margin: 0.5rem 0;
+        margin: 0.1rem 0;
+        line-height: 1.1;
     }
     .stat-card .stat-label {
         color: #64748b;
-        font-size: 0.875rem;
+        font-size: 0.55rem;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.2px;
+        line-height: 1.1;
     }
     .stat-card .stat-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 10px;
+        width: 18px;
+        height: 18px;
+        border-radius: 3px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.5rem;
-        margin-bottom: 1rem;
+        font-size: 0.7rem;
+        margin-bottom: 0.2rem;
     }
     .stat-card.total .stat-icon { background: #dbeafe; color: #3b82f6; }
     .stat-card.admin .stat-icon { background: #fee2e2; color: #ef4444; }
@@ -84,10 +91,10 @@
         font-weight: 600;
         color: #1e293b;
         border-bottom: 2px solid #e2e8f0;
-        padding: 1.25rem 1rem;
-        font-size: 0.875rem;
+        padding: 0.75rem 0.5rem;
+        font-size: 0.7rem;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.3px;
     }
     .admin-table tbody tr {
         transition: all 0.2s;
@@ -101,12 +108,13 @@
         border-bottom: none;
     }
     .admin-table td {
-        padding: 1.25rem 1rem;
+        padding: 0.75rem 0.5rem;
         vertical-align: middle;
+        font-size: 0.8rem;
     }
     .user-avatar {
-        width: 40px;
-        height: 40px;
+        width: 28px;
+        height: 28px;
         border-radius: 50%;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         display: inline-flex;
@@ -114,8 +122,8 @@
         justify-content: center;
         color: #fff;
         font-weight: 600;
-        font-size: 0.875rem;
-        margin-right: 0.75rem;
+        font-size: 0.7rem;
+        margin-right: 0.5rem;
     }
     .user-info {
         display: flex;
@@ -124,23 +132,24 @@
     .user-name {
         font-weight: 600;
         color: #1e293b;
-        margin-bottom: 0.25rem;
+        margin-bottom: 0.15rem;
+        font-size: 0.8rem;
     }
     .user-email {
-        font-size: 0.875rem;
+        font-size: 0.7rem;
         color: #64748b;
     }
     .role-badge {
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
-        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem;
+        border-radius: 12px;
+        font-size: 0.65rem;
         font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.3px;
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        gap: 0.3rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
     .role-badge.user {
         background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
@@ -167,13 +176,13 @@
     .current-user-badge {
         background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         color: #fff;
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
-        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem;
+        border-radius: 12px;
+        font-size: 0.65rem;
         font-weight: 600;
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.3rem;
     }
     .empty-state {
         text-align: center;
@@ -276,7 +285,13 @@ foreach ($users ?? [] as $user) {
                     $isCurrentUser = $currentUserId && (int)$userId === (int)$currentUserId;
                     $fullName = $user['full_name'] ?? trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? ''));
                     $initials = strtoupper(substr($fullName, 0, 1) . substr($fullName, strrpos($fullName, ' ') + 1, 1));
-                    $isLocked = isset($user['is_locked']) && (bool)$user['is_locked'];
+                    // Kiểm tra trạng thái khóa - xử lý cả trường hợp NULL hoặc chưa có cột
+                    $isLocked = false;
+                    if (isset($user['is_locked'])) {
+                        $isLocked = (bool)$user['is_locked'];
+                    } elseif (array_key_exists('is_locked', $user) && $user['is_locked'] !== null) {
+                        $isLocked = (bool)$user['is_locked'];
+                    }
                 ?>
                     <tr>
                         <td><strong class="text-muted">#<?= htmlspecialchars($userId) ?></strong></td>
