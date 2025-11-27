@@ -48,7 +48,7 @@ match ($action) {
     // Quản lý tài khoản
     'admin-users'        => (new AdminUserController)->index(),
     'admin-user-role'    => (new AdminUserController)->updateRole(),
-    'admin-user-delete' => (new AdminUserController)->delete(),
+    'admin-user-toggle-lock' => (new AdminUserController)->toggleLock(),
     
     // Quản lý mã giảm giá
     'admin-coupons'      => (new AdminCouponController)->index(),

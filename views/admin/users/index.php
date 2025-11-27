@@ -256,13 +256,14 @@ foreach ($users ?? [] as $user) {
                 <th>Số điện thoại</th>
                 <th>Ngày tạo</th>
                 <th>Vai trò</th>
+                <th>Trạng thái</th>
                 <th>Thao tác</th>
             </tr>
         </thead>
         <tbody>
             <?php if (empty($users)): ?>
                 <tr>
-                    <td colspan="8" class="empty-state">
+                    <td colspan="9" class="empty-state">
                         <i class="bi bi-inbox"></i>
                         <div>Chưa có tài khoản nào</div>
                     </td>
@@ -275,6 +276,7 @@ foreach ($users ?? [] as $user) {
                     $isCurrentUser = $currentUserId && (int)$userId === (int)$currentUserId;
                     $fullName = $user['full_name'] ?? trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? ''));
                     $initials = strtoupper(substr($fullName, 0, 1) . substr($fullName, strrpos($fullName, ' ') + 1, 1));
+                    $isLocked = isset($user['is_locked']) && (bool)$user['is_locked'];
                 ?>
                     <tr>
                         <td><strong class="text-muted">#<?= htmlspecialchars($userId) ?></strong></td>
@@ -305,16 +307,28 @@ foreach ($users ?? [] as $user) {
                             </span>
                         </td>
                         <td>
+                            <?php if ($isLocked): ?>
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-lock-fill"></i> Đã khóa
+                                </span>
+                            <?php else: ?>
+                                <span class="badge bg-success">
+                                    <i class="bi bi-unlock-fill"></i> Hoạt động
+                                </span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
                             <?php if ($isCurrentUser): ?>
                                 <span class="current-user-badge">
                                     <i class="bi bi-check-circle"></i>
                                     Tài khoản hiện tại
                                 </span>
                             <?php else: ?>
-                                <form method="POST" action="<?= BASE_URL ?>?action=admin-user-delete" style="display: inline;" onsubmit="return confirm('Bạn có chắc muốn xóa tài khoản này?');">
+                                <form method="POST" action="<?= BASE_URL ?>?action=admin-user-toggle-lock" style="display: inline;" onsubmit="return confirm('<?= $isLocked ? 'Bạn có chắc muốn mở khóa tài khoản này?' : 'Bạn có chắc muốn khóa tài khoản này?' ?>');">
                                     <input type="hidden" name="user_id" value="<?= htmlspecialchars($userId) ?>">
-                                    <button type="submit" class="btn-delete" title="Xóa tài khoản">
-                                        <i class="bi bi-trash"></i>
+                                    <button type="submit" class="btn <?= $isLocked ? 'btn-success' : 'btn-warning' ?>" title="<?= $isLocked ? 'Mở khóa tài khoản' : 'Khóa tài khoản' ?>" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">
+                                        <i class="bi bi-<?= $isLocked ? 'unlock-fill' : 'lock-fill' ?>"></i>
+                                        <?= $isLocked ? 'Mở khóa' : 'Khóa' ?>
                                     </button>
                                 </form>
                             <?php endif; ?>

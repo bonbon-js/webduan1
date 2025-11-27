@@ -45,7 +45,7 @@ class AdminUserController
         exit;
     }
 
-    public function delete(): void
+    public function toggleLock(): void
     {
         $this->requireAdmin();
 
@@ -59,16 +59,20 @@ class AdminUserController
         }
 
         if ($currentUserId && (int)$userId === (int)$currentUserId) {
-            set_flash('danger', 'Không thể xóa tài khoản đang đăng nhập.');
+            set_flash('danger', 'Không thể khóa tài khoản đang đăng nhập.');
             header('Location: ' . BASE_URL . '?action=admin-users');
             exit;
         }
 
         try {
-            $this->userModel->delete($userId);
-            set_flash('success', 'Xóa tài khoản thành công.');
+            $isLocked = $this->userModel->toggleLock($userId);
+            if ($isLocked) {
+                set_flash('success', 'Đã khóa tài khoản thành công.');
+            } else {
+                set_flash('success', 'Đã mở khóa tài khoản thành công.');
+            }
         } catch (Throwable $exception) {
-            set_flash('danger', 'Không thể xóa: ' . $exception->getMessage());
+            set_flash('danger', 'Không thể thay đổi trạng thái: ' . $exception->getMessage());
         }
 
         header('Location: ' . BASE_URL . '?action=admin-users');
