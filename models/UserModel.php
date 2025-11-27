@@ -39,6 +39,23 @@ class UserModel extends BaseModel
 
     public function getAll(?string $keyword = null, ?string $role = null, ?string $status = null): array
     {
+        // Kiểm tra xem cột is_locked có tồn tại không
+        try {
+            $checkColumn = $this->pdo->query("SHOW COLUMNS FROM {$this->table} LIKE 'is_locked'");
+            $columnExists = $checkColumn->rowCount() > 0;
+        } catch (PDOException $e) {
+            $columnExists = false;
+        }
+
+        // Nếu cột chưa tồn tại, thêm nó
+        if (!$columnExists) {
+            try {
+                $this->pdo->exec("ALTER TABLE {$this->table} ADD COLUMN is_locked TINYINT(1) DEFAULT 0");
+            } catch (PDOException $e) {
+                // Bỏ qua nếu có lỗi (có thể đã được thêm bởi process khác)
+            }
+        }
+
         $sql = "SELECT * FROM {$this->table} WHERE 1=1";
         $params = [];
 
