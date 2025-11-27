@@ -243,8 +243,6 @@
                     <label class="form-check-label small text-muted" for="remember">Ghi nhớ lần đăng nhập này</label>
                 </div>
 
-                <p class="recaptcha-hint">This site is protected by reCAPTCHA.</p>
-
                 <a href="<?= BASE_URL ?>?action=show-forgot" class="forgot-link">Quên mật khẩu?</a>
 
                 <button type="submit" class="login-button">Đăng nhập</button>
