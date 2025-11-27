@@ -1,0 +1,2073 @@
+/* ============================================
+   BONBONWEAR - COMBINED CSS FILE
+   All styles merged into one file
+   ============================================ */
+
+/* ============================================
+   1. HEADER STYLES (main.php)
+   ============================================ */
+header {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.header-container {
+    padding: 1rem 2rem;
+}
+
+/* Logo Styling - Cân đối */
+.logo-image {
+    height: 72px;
+    width: auto;
+    object-fit: contain;
+    border-radius: 6px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.12));
+    transition: transform 0.3s ease;
+}
+
+.logo-image:hover {
+    transform: scale(1.05);
+}
+
+.logo-text {
+    font-size: 1.9rem;
+    font-weight: 800;
+    color: #000;
+    letter-spacing: 2.5px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Navigation Menu */
+.nav {
+    gap: 2rem !important;
+}
+
+.nav a {
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 0.5rem 0;
+    position: relative;
+    transition: color 0.3s ease;
+}
+
+.nav a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: #000;
+    transition: width 0.3s ease;
+}
+
+.nav a:hover {
+    color: #333 !important;
+}
+
+.nav a:hover::after {
+    width: 100%;
+}
+
+/* Icon Styling */
+.header-icons {
+    gap: 1.5rem !important;
+}
+
+.header-icons a,
+.header-icons .dropdown-toggle {
+    font-size: 20px;
+    transition: all 0.3s ease;
+}
+
+.header-icons a:hover,
+.header-icons .dropdown-toggle:hover {
+    transform: translateY(-2px);
+    color: #333 !important;
+}
+
+/* Dropdown User */
+.dropdown-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.dropdown-toggle i {
+    font-size: 20px;
+}
+
+.dropdown-toggle .small {
+    font-size: 0.9rem !important;
+    font-weight: 600;
+}
+
+/* Cart Badge */
+.cart-icon-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.cart-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: #000;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    height: 18px;
+    width: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #fff;
+}
+
+/* Header Responsive */
+@media (max-width: 992px) {
+    .nav {
+        gap: 1rem !important;
+    }
+
+    .nav a {
+        font-size: 0.85rem;
+    }
+
+    .header-icons {
+        gap: 1rem !important;
+    }
+
+    .logo-image {
+        height: 60px;
+    }
+}
+
+@media (max-width: 768px) {
+    .logo-image {
+        height: 52px;
+    }
+
+    .logo-text {
+        font-size: 1.4rem;
+    }
+
+    .header-container {
+        padding: 0.75rem 1rem;
+    }
+}
+
+/* ============================================
+   2. ADMIN LAYOUT STYLES (admin/layout.php)
+   ============================================ */
+body {
+    background: #f5f7fa;
+}
+
+.admin-header {
+    background: #1e293b;
+    color: #fff;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.admin-sidebar {
+    width: 260px;
+    background: #f8fafc;
+    border-right: 1px solid #e2e8f0;
+    min-height: calc(100vh - 60px);
+    padding: 2rem 0;
+    position: fixed;
+    left: 0;
+    top: 60px;
+}
+
+.admin-sidebar .brand {
+    padding: 0 2rem 2rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    border-bottom: 1px solid #e2e8f0;
+    margin-bottom: 1.5rem;
+}
+
+.admin-sidebar .nav-item {
+    padding: 0.75rem 2rem;
+    color: #64748b;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.2s;
+}
+
+.admin-sidebar .nav-item:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+.admin-sidebar .nav-item.active {
+    background: #e2e8f0;
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.admin-sidebar .nav-item i {
+    width: 20px;
+}
+
+.admin-content {
+    margin-left: 260px;
+    padding: 2rem;
+}
+
+.admin-table {
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.admin-table table {
+    margin: 0;
+}
+
+.admin-table thead {
+    background: #f8fafc;
+}
+
+.admin-table th {
+    font-weight: 600;
+    color: #1e293b;
+    border-bottom: 2px solid #e2e8f0;
+    padding: 1rem;
+}
+
+.admin-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.role-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.role-badge.user {
+    background: #3b82f6;
+    color: #fff;
+}
+
+.role-badge.admin {
+    background: #ef4444;
+    color: #fff;
+}
+
+.btn-delete {
+    background: #ef4444;
+    color: #fff;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-delete:hover {
+    background: #dc2626;
+}
+
+/* ============================================
+   3. HOME PAGE STYLES (home.php)
+   ============================================ */
+body {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    color: #1a1a1a;
+    background: #ffffff;
+    padding: 0;
+    margin: 0;
+}
+
+.container {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding-left: 24px;
+    padding-right: 24px;
+}
+
+/* Hero Slideshow Styles */
+.hero {
+    position: relative;
+    min-height: 85vh;
+    background-color: #000;
+    overflow: hidden;
+}
+
+.hero-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.8s ease-in-out;
+    z-index: 1;
+    display: flex;
+    align-items: flex-end;
+}
+
+.hero-slide.active {
+    opacity: 1;
+    z-index: 2;
+}
+
+/* Video & Image Backgrounds */
+.slide-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -1;
+}
+
+.slide-bg.video-bg {
+    object-fit: cover;
+}
+
+/* Overlay Gradient */
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.2) 40%, transparent 70%);
+    z-index: 0;
+}
+
+/* Content */
+.hero-content {
+    position: relative;
+    z-index: 10;
+    padding: 0 4rem 5rem 4rem;
+    max-width: 95%;
+    width: 100%;
+    color: #fff;
+}
+
+/* Typography & Animations */
+.hero-subtitle {
+    font-size: 0.9rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.8s ease 0.2s;
+}
+
+.hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 4rem;
+    line-height: 1.1;
+    margin-bottom: 2rem;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s ease 0.4s;
+}
+
+/* Large Screens */
+@media (min-width: 1400px) {
+    .hero-title {
+        font-size: 5.5rem;
+    }
+    .hero-content {
+        padding-bottom: 7rem;
+        padding-left: 6rem;
+    }
+}
+
+.hero-description {
+    font-size: 1.15rem;
+    font-weight: 300;
+    line-height: 1.6;
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s ease 0.6s;
+    max-width: 600px;
+}
+
+.hero-cta {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.8s ease 0.8s;
+    display: flex;
+    gap: 1.5rem;
+}
+
+/* Dark Text Variant for Light Backgrounds */
+.hero-content.text-dark {
+    color: #000;
+}
+
+.hero-content.text-dark .btn-hero {
+    border-color: #000;
+    color: #000;
+}
+
+.hero-content.text-dark .btn-hero:hover {
+    background: #000;
+    color: #fff;
+}
+
+.hero-content.text-dark .btn-hero-secondary {
+    color: #000;
+}
+
+.hero-content.text-dark .btn-hero-secondary::after {
+    background: #000;
+}
+
+/* Active State Animations */
+.hero-slide.active .hero-subtitle,
+.hero-slide.active .hero-title,
+.hero-slide.active .hero-description,
+.hero-slide.active .hero-cta {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Buttons */
+.btn-hero {
+    padding: 1.2rem 3.5rem;
+    border: 1px solid #fff;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    background: transparent;
+}
+
+.btn-hero:hover {
+    background: #fff;
+    color: #000;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.btn-hero-secondary {
+    padding: 1rem 0;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 0.8rem;
+    text-decoration: none;
+    position: relative;
+    background: transparent;
+    border: none;
+}
+
+.btn-hero-secondary::after {
+    content: '';
+    position: absolute;
+    bottom: 0.5rem;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: #fff;
+    transition: width 0.3s;
+}
+
+.btn-hero-secondary:hover::after {
+    width: 100%;
+}
+
+.btn-hero-secondary:hover {
+    color: #fff;
+}
+
+/* Gucci Style Controls */
+.hero-controls-gucci {
+    position: absolute;
+    bottom: 3rem;
+    right: 3rem;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.control-item {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.control-btn-circle {
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    padding: 0;
+    outline: none;
+}
+
+/* Play/Pause Button specific */
+#playPauseBtn {
+    background: rgba(0, 0, 0, 0.4);
+    color: #fff;
+    width: 38px;
+    height: 38px;
+    font-size: 18px;
+    backdrop-filter: blur(4px);
+}
+
+#playPauseBtn:hover {
+    background: rgba(0, 0, 0, 0.6);
+    transform: scale(1.05);
+}
+
+/* Progress Ring */
+.progress-ring {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: rotate(-90deg);
+    pointer-events: none;
+}
+
+.progress-ring__circle {
+    transition: stroke-dashoffset 0.1s linear;
+    transform-origin: 50% 50%;
+    stroke: #fff;
+    opacity: 0.9;
+}
+
+.progress-ring__bg {
+    stroke: rgba(255, 255, 255, 0.2);
+}
+
+/* Nav Buttons */
+.nav-btn {
+    background: rgba(255, 255, 255, 0.85);
+    color: #1a1a1a;
+    width: 42px;
+    height: 42px;
+    font-size: 16px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.nav-btn:hover {
+    background: #fff;
+    transform: scale(1.1);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+}
+
+/* Navigation Dots */
+.hero-nav {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    display: flex;
+    gap: 0.8rem;
+}
+
+.nav-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.nav-dot.active {
+    background: #fff;
+    transform: scale(1.2);
+}
+
+.section-title {
+    text-align: center;
+    margin: 0 auto 50px;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    font-weight: 700;
+    font-size: 2rem;
+    color: #000;
+    position: relative;
+    padding-bottom: 20px;
+    max-width: fit-content;
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: #000;
+}
+
+.products-section {
+    background: #fff;
+    padding: 80px 0;
+    margin: 0 auto;
+}
+
+.product-card,
+.news-card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 0;
+    text-align: center;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: none;
+    margin: 0 auto;
+}
+
+.product-card:hover {
+    border-color: #000;
+}
+
+.product-badge {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: #000;
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    z-index: 2;
+}
+
+.product-card-image-wrapper {
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 20px;
+    border-radius: 12px 12px 0 0;
+    background: #f5f5f5;
+}
+
+.product-card img,
+.news-card img {
+    width: 100%;
+    height: 280px;
+    object-fit: cover;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 0;
+}
+
+.product-card:hover img {
+    opacity: 0.2;
+    transform: scale(1.02);
+}
+
+.product-card-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    opacity: 0;
+    transform: translateY(0);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.product-card:hover .product-card-overlay {
+    opacity: 1;
+}
+
+.product-card-icon {
+    width: 56px;
+    height: 56px;
+    background: #000;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 22px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+    border: 2px solid #000;
+}
+
+.product-card-icon:hover {
+    background: #fff;
+    color: #000;
+    transform: scale(1.1);
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+}
+
+.product-card-icon:active {
+    transform: scale(1.0);
+}
+
+.product-card h3 {
+    font-weight: 600;
+    color: #000;
+    margin-bottom: 8px;
+    transition: color 0.3s;
+    padding: 0 20px;
+    letter-spacing: 0.5px;
+}
+
+.product-card:hover h3 {
+    color: #000;
+}
+
+.product-card .text-muted {
+    color: #666 !important;
+    padding: 0 20px;
+}
+
+.product-card .fw-semibold {
+    color: #000;
+    font-size: 1.2rem;
+    font-weight: 700;
+    padding: 0 20px 20px;
+    margin: 0;
+}
+
+.product-card:hover,
+.news-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.row {
+    margin-left: -12px;
+    margin-right: -12px;
+}
+
+.row > * {
+    padding-left: 12px;
+    padding-right: 12px;
+}
+
+.g-4 {
+    --bs-gutter-x: 24px;
+    --bs-gutter-y: 24px;
+}
+
+.btn-outline-dark {
+    border-radius: 30px;
+    padding: 14px 40px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border: 2px solid #000;
+    color: #000;
+    background: transparent;
+    font-weight: 600;
+    font-size: 12px;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-dark:hover {
+    background: #000;
+    color: #fff;
+}
+
+.info-columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 50px;
+    margin-top: 0;
+    font-size: 14px;
+    color: #666;
+    line-height: 1.8;
+}
+
+.info-columns h4 {
+    color: #000;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+footer {
+    margin-top: 0;
+    padding: 40px 0;
+    border-top: 1px solid #e0e0e0;
+    font-size: 13px;
+    color: #666;
+    text-align: center;
+}
+
+.mt-4 {
+    margin-top: 50px !important;
+}
+
+.mb-1 {
+    margin-bottom: 8px !important;
+}
+
+.mb-2 {
+    margin-bottom: 12px !important;
+}
+
+.text-center {
+    text-align: center !important;
+}
+
+.news-card {
+    padding: 0;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.news-card img {
+    height: 240px;
+    margin-bottom: 0;
+    border-radius: 0;
+}
+
+.news-card .small {
+    padding: 0 20px;
+}
+
+.news-card h3 {
+    padding: 0 20px;
+    color: #000;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.news-card p {
+    padding: 0 20px 20px;
+}
+
+.news-card:hover {
+    border-color: #000;
+}
+
+/* Modern Footer Styles */
+.modern-footer {
+    background-color: #000;
+    color: #fff;
+    padding: 80px 0 30px;
+    margin-top: 80px;
+    font-size: 0.9rem;
+}
+
+.footer-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1.5fr;
+    gap: 60px;
+    margin-bottom: 60px;
+}
+
+.footer-brand p {
+    color: #999;
+    line-height: 1.8;
+    margin-bottom: 20px;
+    max-width: 300px;
+}
+
+.footer-logo-img {
+    height: 80px;
+    width: auto;
+    margin-bottom: 25px;
+    filter: brightness(0) invert(1); /* Chuyển logo sang màu trắng */
+}
+
+.footer-heading {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    margin-bottom: 25px;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+.footer-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-links li {
+    margin-bottom: 15px;
+}
+
+.footer-links a {
+    color: #999;
+    text-decoration: none;
+    transition: all 0.3s;
+    position: relative;
+}
+
+.footer-links a:hover {
+    color: #fff;
+    padding-left: 5px;
+}
+
+.newsletter-form {
+    position: relative;
+    margin-top: 20px;
+}
+
+.newsletter-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #333;
+    padding: 10px 0;
+    color: #fff;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.newsletter-input:focus {
+    border-color: #fff;
+}
+
+.newsletter-btn {
+    position: absolute;
+    right: 0;
+    top: 10px;
+    background: none;
+    border: none;
+    color: #fff;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    cursor: pointer;
+}
+
+.footer-bottom {
+    border-top: 1px solid #222;
+    padding-top: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #666;
+    font-size: 0.8rem;
+}
+
+.social-links {
+    display: flex;
+    gap: 20px;
+}
+
+.social-links a {
+    color: #fff;
+    font-size: 1.2rem;
+    transition: opacity 0.3s;
+}
+
+.social-links a:hover {
+    opacity: 0.7;
+}
+
+/* Custom styles for color selector active state */
+.btn-check:checked + label {
+    outline: 2px solid #000;
+    outline-offset: 2px;
+}
+
+/* Home Page Responsive */
+@media (max-width: 768px) {
+    .container {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .products-section {
+        padding: 60px 0;
+    }
+
+    .hero-title { font-size: 2.8rem; }
+    .hero-content { padding: 2rem; padding-bottom: 6rem; }
+    .hero-controls-gucci { bottom: 2rem; right: 1rem; transform: scale(0.8); transform-origin: bottom right; }
+
+    .section-title {
+        font-size: 1.5rem;
+        letter-spacing: 2px;
+    }
+
+    .info-columns {
+        gap: 30px;
+    }
+    
+    .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 40px;
+    }
+}
+
+/* ============================================
+   4. LOGIN PAGE STYLES (login.php)
+   ============================================ */
+.login-page {
+    min-height: calc(100vh - 120px);
+    padding: 60px 20px 80px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 60px;
+    width: 100%;
+    max-width: 1100px;
+    align-items: center;
+}
+
+.login-hero h1 {
+    font-size: clamp(3rem, 6vw, 4.5rem);
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 16px;
+    letter-spacing: -1px;
+    position: relative;
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(25px);
+    animation: heroFloat 0.7s ease-out forwards;
+}
+
+.login-hero h1::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -12px;
+    width: 100%;
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #0f172a, #f97316);
+    transform: scaleY(0);
+    transform-origin: bottom;
+    animation: underlineRise 0.6s ease-out forwards 0.2s;
+}
+
+.login-hero p {
+    color: #64748b;
+    font-size: 1rem;
+    max-width: 380px;
+}
+
+.login-card {
+    border-radius: 24px;
+    border: 1px solid #e2e8f0;
+    padding: 48px 42px;
+    box-shadow: 0 30px 80px rgba(15, 23, 42, 0.08);
+    background: #fff;
+}
+
+.login-card h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 32px;
+}
+
+.form-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #0f172a;
+    margin-bottom: 8px;
+}
+
+.form-control {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-control:focus {
+    border-color: #f97316;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2);
+}
+
+.login-button {
+    width: 100%;
+    border: 2px solid #0f172a;
+    border-radius: 999px;
+    background: #fff;
+    color: #0f172a;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 14px 18px;
+    margin-top: 24px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.login-button:hover {
+    transform: translateY(-1px);
+    background: #0f172a;
+    color: #fff;
+    box-shadow: 0 15px 35px rgba(15, 23, 42, 0.25);
+}
+
+.recaptcha-hint {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-top: 16px;
+}
+
+.register-cta {
+    text-align: center;
+    margin-top: 18px;
+    color: #475569;
+    font-size: 0.85rem;
+}
+
+.register-cta span {
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-weight: 600;
+    color: #0f172a;
+    margin-bottom: 6px;
+}
+
+.register-cta a {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #f97316;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+}
+
+.register-cta a:hover {
+    color: #0f172a;
+}
+
+.forgot-link {
+    display: inline-block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #0f172a;
+    text-decoration: none;
+    margin-top: 8px;
+}
+
+.forgot-link:hover {
+    color: #f97316;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 24px;
+    font-size: 0.9rem;
+    color: #0f172a;
+    text-decoration: none;
+}
+
+.back-link:hover {
+    color: #f97316;
+}
+
+.alert {
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+}
+
+@media (max-width: 768px) {
+    .login-card {
+        padding: 32px;
+    }
+    .login-page {
+        padding-top: 40px;
+    }
+}
+
+@keyframes underlineRise {
+    0% {
+        transform: scaleY(0);
+    }
+    100% {
+        transform: scaleY(1);
+    }
+}
+
+@keyframes heroFloat {
+    0% {
+        opacity: 0;
+        transform: translateY(25px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================
+   5. REGISTER PAGE STYLES (register.php)
+   ============================================ */
+.register-page {
+    min-height: calc(100vh - 120px);
+    padding: 60px 40px 90px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.register-grid {
+    width: 100%;
+    max-width: 1100px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 80px;
+    align-items: center;
+}
+
+.register-hero h1 {
+    font-size: clamp(3rem, 6vw, 4.5rem);
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 12px;
+    letter-spacing: -1px;
+    position: relative;
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(25px);
+    animation: heroFloat 0.7s ease-out forwards;
+}
+
+.register-hero h1::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -12px;
+    width: 100%;
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #0f172a, #f97316);
+    transform: scaleY(0);
+    transform-origin: bottom;
+    animation: underlineRise 0.6s ease-out forwards 0.2s;
+}
+
+.register-form {
+    width: 100%;
+}
+
+.register-form label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #0f172a;
+    margin-bottom: 6px;
+}
+
+.register-form input[type="text"],
+.register-form input[type="email"],
+.register-form input[type="password"],
+.register-form input[type="date"] {
+    width: 100%;
+    border: none;
+    border-radius: 6px;
+    background: #f1f5f9;
+    height: 52px;
+    padding: 0 18px;
+    margin-bottom: 18px;
+    font-size: 0.95rem;
+}
+
+.register-form input:focus {
+    outline: 2px solid #f97316;
+    background: #fff;
+}
+
+.gender-group {
+    display: flex;
+    gap: 30px;
+    align-items: center;
+    margin-bottom: 24px;
+    color: #0f172a;
+    font-size: 0.9rem;
+}
+
+.gender-group label {
+    margin-bottom: 0;
+    font-weight: 500;
+}
+
+.register-button {
+    border: 2px solid #0f172a;
+    border-radius: 999px;
+    background: #fff;
+    color: #0f172a;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 14px 28px;
+    margin-top: 20px;
+    text-transform: uppercase;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.register-button:hover {
+    background: #0f172a;
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+    .register-page {
+        padding: 40px 20px 70px;
+    }
+}
+
+/* ============================================
+   6. CHECKOUT PAGE STYLES (checkout.php)
+   ============================================ */
+.checkout-page {
+    padding: 60px 0;
+    min-height: 80vh;
+    background-color: #f8f9fa;
+}
+
+.checkout-container {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.checkout-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    padding: 30px;
+    height: 100%;
+}
+
+.checkout-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.order-summary-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.order-img {
+    width: 60px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-right: 15px;
+}
+
+.order-info {
+    flex: 1;
+}
+
+.order-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.order-meta {
+    font-size: 0.85rem;
+    color: #777;
+}
+
+.order-price {
+    font-weight: 700;
+}
+
+.checkout-total-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+}
+
+.checkout-final-total {
+    border-top: 2px solid #000;
+    padding-top: 15px;
+    margin-top: 15px;
+    font-weight: 800;
+    font-size: 1.3rem;
+}
+
+.btn-place-order {
+    background: #000;
+    color: #fff;
+    width: 100%;
+    padding: 15px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: none;
+    margin-top: 20px;
+    transition: all 0.3s;
+}
+
+.btn-place-order:hover {
+    background: #333;
+    transform: translateY(-2px);
+}
+
+/* ============================================
+   7. CART PAGE STYLES (cart.php)
+   ============================================ */
+.cart-page {
+    padding: 60px 0;
+    min-height: 60vh;
+}
+
+.cart-header {
+    margin-bottom: 40px;
+    text-align: center;
+}
+
+.cart-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.cart-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.cart-table th {
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    padding: 20px;
+    border-bottom: 2px solid #000;
+    font-weight: 600;
+    text-align: left;
+}
+
+.cart-table td {
+    padding: 25px 20px;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+}
+
+.cart-product-img {
+    width: 80px;
+    height: 100px;
+    object-fit: cover;
+    margin-right: 20px;
+}
+
+.cart-product-name {
+    font-weight: 600;
+    margin-bottom: 5px;
+    display: block;
+    color: #000;
+    text-decoration: none;
+}
+
+.qty-input-group {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ddd;
+    width: fit-content;
+}
+
+.qty-btn {
+    background: none;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    color: #666;
+}
+
+.qty-input {
+    width: 40px;
+    text-align: center;
+    border: none;
+    font-weight: 600;
+    appearance: none;
+    -moz-appearance: textfield;
+}
+
+.qty-input::-webkit-outer-spin-button,
+.qty-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.remove-btn {
+    color: #999;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.remove-btn:hover {
+    color: #dc3545;
+}
+
+.cart-summary {
+    background: #f9f9f9;
+    padding: 30px;
+    border-radius: 4px;
+    margin-top: 20px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    font-size: 0.95rem;
+}
+
+.summary-total {
+    border-top: 1px solid #ddd;
+    padding-top: 15px;
+    margin-top: 15px;
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.btn-checkout {
+    display: block;
+    width: 100%;
+    background: #000;
+    color: #fff;
+    text-align: center;
+    padding: 15px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 600;
+    text-decoration: none;
+    margin-top: 20px;
+    transition: all 0.3s;
+}
+
+.btn-checkout:hover {
+    background: #333;
+    color: #fff;
+}
+
+.empty-cart {
+    text-align: center;
+    padding: 60px 0;
+}
+
+.empty-cart i {
+    font-size: 4rem;
+    color: #ddd;
+    margin-bottom: 20px;
+}
+
+/* ============================================
+   8. FORGOT PASSWORD PAGE STYLES (forgot-password.php)
+   ============================================ */
+.forgot-page {
+    min-height: calc(100vh - 120px);
+    padding: 60px 40px 90px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.forgot-grid {
+    width: 100%;
+    max-width: 1000px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 80px;
+    align-items: center;
+}
+
+.forgot-hero h1 {
+    font-size: clamp(3rem, 6vw, 4.5rem);
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 12px;
+    letter-spacing: -1px;
+    position: relative;
+    display: block;
+    width: 100%;
+    opacity: 0;
+    transform: translateY(25px);
+    animation: heroFloat 0.7s ease-out forwards;
+}
+
+.forgot-hero h1::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -12px;
+    width: 100%;
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #0f172a, #f97316);
+    transform: scaleY(0);
+    transform-origin: bottom;
+    animation: underlineRise 0.6s ease-out forwards 0.2s;
+}
+
+.forgot-card {
+    width: 100%;
+    border-radius: 24px;
+    border: 1px solid #e2e8f0;
+    padding: 52px 44px;
+    box-shadow: 0 30px 80px rgba(15, 23, 42, 0.08);
+    background: #fff;
+}
+
+.forgot-card h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 18px;
+}
+
+.forgot-card label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #0f172a;
+    margin-bottom: 8px;
+}
+
+.forgot-card input[type="email"] {
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+    background: #f1f5f9;
+    height: 54px;
+    padding: 0 18px;
+    font-size: 0.95rem;
+}
+
+.forgot-card input:focus {
+    outline: 2px solid #f97316;
+    background: #fff;
+}
+
+.forgot-button {
+    width: 100%;
+    border: 2px solid #0f172a;
+    border-radius: 999px;
+    background: #fff;
+    color: #0f172a;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 14px 28px;
+    margin-top: 22px;
+    text-transform: uppercase;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.forgot-button:hover {
+    background: #0f172a;
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+    .forgot-page {
+        padding: 40px 20px 70px;
+    }
+    .forgot-card {
+        padding: 36px;
+    }
+}
+
+/* ============================================
+   9. RESET PASSWORD PAGE STYLES (reset-password.php)
+   ============================================ */
+.reset-page {
+    min-height: calc(100vh - 120px);
+    padding: 60px 20px 80px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.reset-grid {
+    width: 100%;
+    max-width: 1000px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 70px;
+    align-items: center;
+}
+
+.reset-hero h1 {
+    font-size: clamp(3rem, 6vw, 4.5rem);
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 12px;
+    letter-spacing: -1px;
+    position: relative;
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(25px);
+    animation: heroFloat 0.7s ease-out forwards;
+}
+
+.reset-hero h1::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -12px;
+    width: 100%;
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #0f172a, #f97316);
+    transform: scaleY(0);
+    transform-origin: bottom;
+    animation: underlineRise 0.6s ease-out forwards 0.2s;
+}
+
+.reset-card {
+    border-radius: 24px;
+    border: 1px solid #e2e8f0;
+    padding: 48px 42px;
+    box-shadow: 0 30px 80px rgba(15, 23, 42, 0.08);
+    background: #fff;
+}
+
+.reset-card h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 24px;
+}
+
+.reset-button {
+    width: 100%;
+    border: 2px solid #0f172a;
+    border-radius: 999px;
+    background: #fff;
+    color: #0f172a;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 14px 18px;
+    margin-top: 20px;
+    text-transform: uppercase;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.reset-button:hover {
+    transform: translateY(-1px);
+    background: #0f172a;
+    color: #fff;
+    box-shadow: 0 15px 35px rgba(15, 23, 42, 0.25);
+}
+
+@media (max-width: 768px) {
+    .reset-card {
+        padding: 32px;
+    }
+}
+
+/* ============================================
+   10. ORDERS HISTORY PAGE STYLES (orders/history.php)
+   ============================================ */
+.orders-page {
+    padding: 60px 0;
+    min-height: 70vh;
+}
+
+.order-card {
+    border-radius: 12px;
+    border: 1px solid #f0f0f0;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+}
+
+.order-card:hover {
+    border-color: #000;
+    transition: border-color 0.2s ease;
+}
+
+.order-code {
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.order-meta {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.order-actions .btn {
+    min-width: 160px;
+}
+
+/* ============================================
+   11. ORDER DETAIL PAGE STYLES (orders/detail.php)
+   ============================================ */
+.order-detail-page {
+    padding: 60px 0;
+}
+
+.order-summary-card,
+.order-items-card {
+    border-radius: 12px;
+    border: 1px solid #f0f0f0;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+}
+
+.status-steps {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.status-steps li {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #d1d5db;
+    margin-right: 10px;
+}
+
+.status-dot.active {
+    background: #000;
+}
+
+/* ============================================
+   12. ADMIN USERS PAGE STYLES (admin/users/index.php)
+   ============================================ */
+.users-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    padding: 2rem;
+    color: #fff;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.users-header h2 {
+    margin: 0;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.users-header .icon-wrapper {
+    width: 56px;
+    height: 56px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.users-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.stat-card .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0.5rem 0;
+}
+
+.stat-card .stat-label {
+    color: #64748b;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-card .stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.stat-card.total .stat-icon { background: #dbeafe; color: #3b82f6; }
+.stat-card.admin .stat-icon { background: #fee2e2; color: #ef4444; }
+.stat-card.user .stat-icon { background: #dbeafe; color: #3b82f6; }
+.stat-card.verified .stat-icon { background: #d1fae5; color: #10b981; }
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin-right: 0.75rem;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+}
+
+.user-name {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.user-email {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.role-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.role-badge.user {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: #fff;
+}
+
+.role-badge.admin {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #fff;
+}
+
+.btn-delete {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: #fff;
+    border: none;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+}
+
+.btn-delete:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(239, 68, 68, 0.4);
+}
+
+.current-user-badge {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #94a3b8;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* ============================================
+   13. ADMIN ORDERS PAGE STYLES (admin/orders/index.php)
+   ============================================ */
+.admin-orders-page {
+    padding: 50px 0;
+}
+
+.admin-card {
+    border-radius: 16px;
+    border: 1px solid #efefef;
+    padding: 30px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.05);
+}
+
