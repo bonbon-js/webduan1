@@ -57,7 +57,13 @@ class AuthController
         $lastname  = trim($_POST['lastname'] ?? '');
         $gender    = $_POST['gender'] ?? 'female';
         $birthday  = $_POST['birthday'] ?? '';
+<<<<<<< Updated upstream
         $email     = trim($_POST['email'] ?? '');
+=======
+        $phone     = trim($_POST['phone'] ?? '');
+        $address   = trim($_POST['address'] ?? '');
+        $email     = strtolower(trim($_POST['email'] ?? '')); // Chuyển email về lowercase
+>>>>>>> Stashed changes
         $password  = $_POST['password'] ?? '';
 
         $errors = [];
@@ -76,18 +82,40 @@ class AuthController
 
         if ($birthday === '') {
             $errors[] = 'Vui lòng chọn ngày sinh.';
+<<<<<<< Updated upstream
+=======
+        } else {
+            // Kiểm tra tuổi trên 18
+            $birthdayDate = new DateTime($birthday);
+            $today = new DateTime();
+            $age = $today->diff($birthdayDate)->y;
+            
+            if ($age < 18) {
+                $errors[] = 'Bạn phải trên 18 tuổi để đăng ký tài khoản.';
+            }
         }
 
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $errors[] = 'Vui lòng nhập Gmail hợp lệ.';
+        if ($phone !== '' && !preg_match('/^[0-9]{10,11}$/', $phone)) {
+            $errors[] = 'Số điện thoại phải có 10 hoặc 11 chữ số.';
         }
 
-        if (strlen($password) < 6) {
+        if ($email === '') {
+            $errors[] = 'Vui lòng nhập email.';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors[] = 'Vui lòng nhập email hợp lệ.';
+        } else {
+            // Kiểm tra email đã tồn tại chưa (case-insensitive)
+            $existingUser = $this->userModel->findByEmail($email);
+            if ($existingUser) {
+                $errors[] = 'Email này đã được sử dụng. Vui lòng sử dụng email khác hoặc đăng nhập.';
+            }
+>>>>>>> Stashed changes
+        }
+
+        if ($password === '') {
+            $errors[] = 'Vui lòng nhập mật khẩu.';
+        } elseif (strlen($password) < 6) {
             $errors[] = 'Mật khẩu phải có ít nhất 6 ký tự.';
-        }
-
-        if ($this->userModel->findByEmail($email)) {
-            $errors[] = 'Gmail đã được sử dụng.';
         }
 
         if ($errors) {
@@ -96,30 +124,75 @@ class AuthController
         }
 
         try {
+            // Kiểm tra lại email một lần nữa trước khi insert (tránh race condition)
+            if ($this->userModel->findByEmail($email)) {
+                $_SESSION['error'] = 'Email này đã được sử dụng. Vui lòng sử dụng email khác.';
+                $this->redirect('show-register');
+            }
+
             $userId = $this->userModel->create([
                 'first_name' => $firstname,
                 'last_name'  => $lastname,
                 'gender'     => $gender,
                 'birthday'   => $birthday,
+<<<<<<< Updated upstream
+=======
+                'phone'      => $phone ?: null,
+                'address'    => $address ?: null,
+>>>>>>> Stashed changes
                 'email'      => $email,
                 'password'   => password_hash($password, PASSWORD_BCRYPT),
             ]);
 
+            if (!$userId || $userId <= 0) {
+                throw new Exception('Không thể tạo tài khoản. Vui lòng thử lại.');
+            }
+
+            // Tạo token xác thực
             $token     = $this->generateToken();
             $expiresAt = date('Y-m-d H:i:s', strtotime('+1 day'));
             $this->userModel->setVerificationToken($userId, $token, $expiresAt);
 
-            $sent = $this->sendVerificationEmail($email, trim("$firstname $lastname"), $token);
-
-            if (!$sent) {
-                $_SESSION['error'] = 'Tạo tài khoản thành công nhưng chưa gửi được email xác thực. Vui lòng thử lại sau.';
-                $this->redirect('show-login');
+            // Thử gửi email (không fail nếu không gửi được)
+            $sent = false;
+            try {
+                $sent = $this->sendVerificationEmail($email, trim("$firstname $lastname"), $token);
+            } catch (Exception $mailException) {
+                error_log('Email sending failed: ' . $mailException->getMessage());
+                // Tiếp tục dù email không gửi được
             }
 
-            $_SESSION['success'] = 'Đăng ký thành công. Vui lòng kiểm tra Gmail để xác thực tài khoản.';
+            if ($sent) {
+                $_SESSION['success'] = 'Đăng ký thành công. Vui lòng kiểm tra Gmail để xác thực tài khoản.';
+            } else {
+                $_SESSION['success'] = 'Đăng ký thành công. Tài khoản đã được tạo. Vui lòng liên hệ admin để kích hoạt tài khoản.';
+            }
+            
             $this->redirect('show-login');
+        } catch (PDOException $e) {
+            error_log('Registration PDO Error: ' . $e->getMessage());
+            $errorMsg = $e->getMessage();
+            // Hiển thị lỗi cụ thể để debug
+            if (strpos($errorMsg, 'Duplicate entry') !== false) {
+                // Kiểm tra xem trường nào bị duplicate
+                if (stripos($errorMsg, 'email') !== false) {
+                    $_SESSION['error'] = 'Email này đã được sử dụng. Vui lòng sử dụng email khác hoặc đăng nhập.';
+                } elseif (stripos($errorMsg, 'phone') !== false) {
+                    $_SESSION['error'] = 'Số điện thoại này đã được sử dụng. Vui lòng sử dụng số điện thoại khác.';
+                } else {
+                    // Hiển thị lỗi chi tiết để debug
+                    $_SESSION['error'] = 'Thông tin đã được sử dụng. Vui lòng kiểm tra lại email và số điện thoại. Lỗi: ' . htmlspecialchars(substr($errorMsg, 0, 150));
+                }
+            } elseif (strpos($errorMsg, 'SQLSTATE') !== false) {
+                // Lỗi SQL - hiển thị thông báo chi tiết để debug
+                $_SESSION['error'] = 'Đăng ký thất bại. Lỗi: ' . htmlspecialchars(substr($errorMsg, 0, 200));
+            } else {
+                $_SESSION['error'] = 'Đăng ký thất bại. Vui lòng kiểm tra lại thông tin và thử lại.';
+            }
+            $this->redirect('show-register');
         } catch (Exception $e) {
-            $_SESSION['error'] = 'Đăng ký thất bại, vui lòng thử lại.';
+            error_log('Registration Error: ' . $e->getMessage());
+            $_SESSION['error'] = 'Đăng ký thất bại: ' . $e->getMessage() . '. Vui lòng thử lại.';
             $this->redirect('show-register');
         }
     }
@@ -175,30 +248,250 @@ class AuthController
         $this->redirect('/');
     }
 
-    public function verifyAccount(): void
+    /**
+     * Hiển thị trang thông tin cá nhân
+     */
+    public function showProfile(): void
     {
-        $token = $_GET['token'] ?? '';
-
-        if ($token === '') {
-            $_SESSION['error'] = 'Liên kết xác thực không hợp lệ.';
+        if (!isset($_SESSION['user'])) {
+            $_SESSION['error'] = 'Vui lòng đăng nhập để xem thông tin cá nhân.';
             $this->redirect('show-login');
         }
 
-        $user = $this->userModel->findByVerificationToken($token);
+        $userId = (int)$_SESSION['user']['id'];
+        $user = $this->userModel->findById($userId);
 
         if (!$user) {
-            $_SESSION['error'] = 'Liên kết xác thực đã hết hạn hoặc không tồn tại.';
+            $_SESSION['error'] = 'Không tìm thấy thông tin người dùng.';
+            $this->redirect('/');
+        }
+
+        $title = 'Thông tin cá nhân';
+        $view  = 'profile';
+
+        require_once PATH_VIEW . 'main.php';
+    }
+
+    /**
+     * Cập nhật thông tin cá nhân
+     */
+    public function updateProfile(): void
+    {
+        if (!isset($_SESSION['user'])) {
+            $_SESSION['error'] = 'Vui lòng đăng nhập.';
             $this->redirect('show-login');
         }
 
-        if (!empty($user['session_expires']) && strtotime($user['session_expires']) < time()) {
-            $_SESSION['error'] = 'Liên kết xác thực đã hết hạn. Vui lòng đăng nhập để gửi lại.';
-            $this->redirect('show-login');
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('profile');
         }
 
-        $this->userModel->markVerified((int)$user['user_id']);
-        $_SESSION['success'] = 'Tài khoản đã được kích hoạt. Vui lòng đăng nhập.';
-        $this->redirect('show-login');
+        $userId = (int)$_SESSION['user']['id'];
+        $user = $this->userModel->findById($userId);
+
+        if (!$user) {
+            $_SESSION['error'] = 'Không tìm thấy thông tin người dùng.';
+            $this->redirect('/');
+        }
+
+        $firstname = trim($_POST['firstname'] ?? '');
+        $lastname  = trim($_POST['lastname'] ?? '');
+        $gender    = $_POST['gender'] ?? 'female';
+        $birthday  = $_POST['birthday'] ?? '';
+        $phone     = trim($_POST['phone'] ?? '');
+        $address   = trim($_POST['address'] ?? '');
+        $email     = trim($_POST['email'] ?? '');
+
+        $errors = [];
+
+        if ($firstname === '') {
+            $errors[] = 'Vui lòng nhập họ.';
+        }
+
+        if ($lastname === '') {
+            $errors[] = 'Vui lòng nhập tên.';
+        }
+
+        if (!in_array($gender, ['female', 'male'], true)) {
+            $errors[] = 'Giới tính không hợp lệ.';
+        }
+
+        if ($birthday === '') {
+            $errors[] = 'Vui lòng chọn ngày sinh.';
+        }
+
+        if ($phone !== '' && !preg_match('/^[0-9]{10,11}$/', $phone)) {
+            $errors[] = 'Số điện thoại phải có 10 hoặc 11 chữ số.';
+        }
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $errors[] = 'Vui lòng nhập email hợp lệ.';
+        }
+
+        // Kiểm tra email đã được sử dụng bởi user khác chưa
+        $existingUser = $this->userModel->findByEmail($email);
+        if ($existingUser && (int)$existingUser['user_id'] !== $userId) {
+            $errors[] = 'Email đã được sử dụng bởi tài khoản khác.';
+        }
+
+        if ($errors) {
+            $_SESSION['error'] = implode('<br>', $errors);
+            $this->redirect('profile');
+        }
+
+        try {
+            $this->userModel->update($userId, [
+                'first_name' => $firstname,
+                'last_name'  => $lastname,
+                'gender'     => $gender,
+                'birthday'   => $birthday,
+                'phone'      => $phone ?: null,
+                'address'    => $address ?: null,
+                'email'      => $email,
+            ]);
+
+            // Cập nhật session
+            $updatedUser = $this->userModel->findById($userId);
+            $_SESSION['user']['fullname'] = $updatedUser['full_name'] ?? trim("$firstname $lastname");
+            $_SESSION['user']['email'] = $email;
+
+            $_SESSION['success'] = 'Cập nhật thông tin cá nhân thành công.';
+            $this->redirect('/');
+        } catch (Exception $e) {
+            $_SESSION['error'] = 'Cập nhật thông tin thất bại, vui lòng thử lại.';
+            $this->redirect('profile');
+        }
+    }
+
+    public function verifyAccount(): void
+    {
+        // Khởi tạo session độc lập (hoạt động trên mọi thiết bị)
+        if (session_status() === PHP_SESSION_NONE) {
+            // Cấu hình session để hoạt động trên mọi thiết bị
+            ini_set('session.cookie_httponly', '1');
+            ini_set('session.use_only_cookies', '1');
+            ini_set('session.cookie_samesite', 'Lax');
+            session_start();
+        }
+        
+        try {
+            // Lấy token từ URL parameter (hoạt động độc lập, không phụ thuộc session)
+            $rawToken = $_GET['token'] ?? '';
+            
+            if (empty($rawToken)) {
+                // Khởi tạo session nếu chưa có để lưu thông báo lỗi
+                if (session_status() === PHP_SESSION_NONE) {
+                    session_start();
+                }
+                $_SESSION['error'] = 'Liên kết xác thực không hợp lệ. Vui lòng kiểm tra lại link trong email.';
+                $this->redirect('show-login');
+                return;
+            }
+
+            // Xử lý token: loại bỏ khoảng trắng và decode URL encoding
+            // Xử lý nhiều cách để đảm bảo hoạt động trên mọi thiết bị
+            $token = trim($rawToken);
+            
+            // Thử các cách decode token (email client có thể encode nhiều lần)
+            $tokenVariants = [
+                $token,                                    // Token gốc
+                urldecode($token),                         // Decode 1 lần
+                urldecode(urldecode($token)),              // Decode 2 lần
+                rawurldecode($token),                      // Raw decode
+                rawurldecode(rawurldecode($token)),        // Raw decode 2 lần
+            ];
+            
+            // Loại bỏ các variant trùng lặp và rỗng
+            $tokenVariants = array_filter(array_unique($tokenVariants));
+            
+            // Tìm user với bất kỳ variant nào của token (hoạt động độc lập với session)
+            $user = null;
+            $validToken = null;
+            
+            foreach ($tokenVariants as $tokenVariant) {
+                // Loại bỏ khoảng trắng và kiểm tra format
+                $tokenVariant = trim($tokenVariant);
+                
+                // Token phải là hex string, độ dài 64 ký tự
+                if (preg_match('/^[0-9a-f]{64}$/i', $tokenVariant)) {
+                    $foundUser = $this->userModel->findByVerificationToken($tokenVariant);
+                    if ($foundUser) {
+                        $user = $foundUser;
+                        $validToken = $tokenVariant;
+                        break;
+                    }
+                }
+            }
+            
+            if (!$user) {
+                error_log('Verification failed - Token not found. Raw token: ' . substr($rawToken, 0, 50) . ', Length: ' . strlen($rawToken));
+                // Khởi tạo session để lưu thông báo lỗi
+                if (session_status() === PHP_SESSION_NONE) {
+                    session_start();
+                }
+                $_SESSION['error'] = 'Liên kết xác thực đã hết hạn hoặc không tồn tại. Vui lòng kiểm tra lại link trong email hoặc đăng nhập để gửi lại email xác thực.';
+                $this->redirect('show-login');
+                return;
+            }
+
+            // Kiểm tra token đã được sử dụng chưa (nếu session_token đã null thì đã verify rồi)
+            if (empty($user['session_token'])) {
+                // Tài khoản đã được xác thực trước đó
+                if (session_status() === PHP_SESSION_NONE) {
+                    session_start();
+                }
+                $_SESSION['success'] = 'Tài khoản của bạn đã được xác thực.';
+                $this->redirect('/');
+                return;
+            }
+
+            // Kiểm tra hết hạn
+            if (!empty($user['session_expires'])) {
+                $expiresTime = strtotime($user['session_expires']);
+                if ($expiresTime < time()) {
+                    if (session_status() === PHP_SESSION_NONE) {
+                        session_start();
+                    }
+                    $_SESSION['error'] = 'Liên kết xác thực đã hết hạn. Vui lòng đăng nhập để gửi lại email xác thực.';
+                    $this->redirect('show-login');
+                    return;
+                }
+            }
+
+            // Xác thực tài khoản (hoạt động độc lập, không phụ thuộc session)
+            try {
+                $this->userModel->markVerified((int)$user['user_id']);
+                
+                error_log('Account verified successfully for user ID: ' . $user['user_id'] . ' - Token: ' . substr($validToken ?? $rawToken, 0, 20));
+                
+                // Khởi tạo session để lưu thông báo thành công
+                if (session_status() === PHP_SESSION_NONE) {
+                    session_start();
+                }
+                $_SESSION['success'] = 'Tài khoản đã được xác thực thành công.';
+                $this->redirect('/');
+                return;
+            } catch (Exception $e) {
+                error_log('Error marking account as verified: ' . $e->getMessage());
+                throw $e; // Re-throw để xử lý ở catch block bên ngoài
+            }
+        } catch (PDOException $e) {
+            error_log('Verification PDO error: ' . $e->getMessage());
+            error_log('Verification PDO error trace: ' . $e->getTraceAsString());
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+            $_SESSION['error'] = 'Có lỗi xảy ra khi xác thực tài khoản. Vui lòng thử lại sau hoặc liên hệ hỗ trợ.';
+            $this->redirect('show-login');
+        } catch (Exception $e) {
+            error_log('Verification error: ' . $e->getMessage());
+            error_log('Verification error trace: ' . $e->getTraceAsString());
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+            $_SESSION['error'] = 'Có lỗi xảy ra khi xác thực tài khoản. Vui lòng thử lại sau.';
+            $this->redirect('show-login');
+        }
     }
 
     /**
@@ -313,9 +606,29 @@ class AuthController
         $this->redirect('show-login');
     }
 
+    /**
+     * Tự động đăng nhập user sau khi xác thực tài khoản
+     */
+    private function autoLogin(array $user): void
+    {
+        $_SESSION['user'] = [
+            'id'       => $user['user_id'] ?? ($user['id'] ?? null),
+            'fullname' => $user['full_name'] ?? trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '')),
+            'email'    => $user['email'],
+            'role'     => $user['role'] ?? 'customer',
+        ];
+    }
+
     private function redirect(string $action): void
     {
-        $url = $action === '/' ? BASE_URL : BASE_URL . '?action=' . $action;
+        if ($action === '/') {
+            $url = BASE_URL;
+        } elseif (strpos($action, '?') !== false || strpos($action, '&') !== false) {
+            // Nếu action đã chứa query string, nối trực tiếp
+            $url = BASE_URL . (strpos($action, '?') === 0 ? $action : '?' . $action);
+        } else {
+            $url = BASE_URL . '?action=' . urlencode($action);
+        }
         header("Location: {$url}");
         exit;
     }
@@ -332,12 +645,17 @@ class AuthController
 
     private function sendVerificationEmail(string $email, string $name, string $token): bool
     {
-        $link = BASE_URL . '?action=verify-account&token=' . urlencode($token);
+        // Tạo link xác thực - đảm bảo token được encode đúng cách
+        // Token là hex string nên urlencode sẽ giữ nguyên các ký tự 0-9a-f
+        $encodedToken = urlencode($token);
+        $link = BASE_URL . '?action=verify-account&token=' . $encodedToken;
 
         $html = "
             <p>Xin chào {$name},</p>
             <p>Cảm ơn bạn đã đăng ký BonBonWear. Nhấn vào nút bên dưới để xác thực tài khoản:</p>
             <p><a href=\"{$link}\" style=\"display:inline-block;padding:12px 20px;background:#000;color:#fff;text-decoration:none;border-radius:4px\">Xác thực tài khoản</a></p>
+            <p>Hoặc copy và dán link sau vào trình duyệt:</p>
+            <p style=\"word-break:break-all;color:#666;font-size:12px\">{$link}</p>
             <p>Nếu bạn không thực hiện đăng ký này, vui lòng bỏ qua email.</p>
         ";
 

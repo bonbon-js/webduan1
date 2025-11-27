@@ -106,12 +106,6 @@
         box-shadow: 0 15px 35px rgba(15, 23, 42, 0.25);
     }
 
-    .recaptcha-hint {
-        font-size: 0.75rem;
-        color: #94a3b8;
-        margin-top: 16px;
-    }
-
     .register-cta {
         text-align: center;
         margin-top: 18px;
@@ -242,8 +236,6 @@
                     <input type="checkbox" class="form-check-input" id="remember" name="remember">
                     <label class="form-check-label small text-muted" for="remember">Ghi nhớ lần đăng nhập này</label>
                 </div>
-
-                <p class="recaptcha-hint">This site is protected by reCAPTCHA.</p>
 
                 <a href="<?= BASE_URL ?>?action=show-forgot" class="forgot-link">Quên mật khẩu?</a>
 

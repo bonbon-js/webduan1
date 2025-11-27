@@ -195,7 +195,6 @@
         <span>Quản lý người dùng</span>
     </h2>
 </div>
-
 <?php
 $totalUsers = count($users ?? []);
 $adminCount = 0;

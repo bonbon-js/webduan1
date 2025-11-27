@@ -129,13 +129,28 @@
 
     <div class="d-flex">
         <aside class="admin-sidebar">
-            <div class="brand">BonBon</div>
+            <div class="brand">
+                <?php 
+                $logoPath = PATH_ROOT . 'assets/images/logo.png';
+                if (file_exists($logoPath)): 
+                    $logoData = base64_encode(file_get_contents($logoPath));
+                    $logoSrc = 'data:image/png;base64,' . $logoData;
+                ?>
+                    <img src="<?= $logoSrc ?>" alt="BonBon" style="height: 80px; width: auto; max-width: 100%; margin-left: 20px;">
+                <?php else: ?>
+                    BonBon
+                <?php endif; ?>
+            </div>
             <nav>
+                <a href="<?= BASE_URL ?>?action=admin-stats" class="nav-item <?= (isset($_GET['action']) && $_GET['action'] === 'admin-stats') ? 'active' : '' ?>">
+                    <i class="bi bi-bar-chart"></i>
+                    <span>Thống kê</span>
+                </a>
                 <a href="#" class="nav-item">
                     <i class="bi bi-gear"></i>
                     <span>Quản lý danh mục</span>
                 </a>
-                 <a href="<?= BASE_URL ?>?action=admin-users" class="nav-item active">
+                 <a href="<?= BASE_URL ?>?action=admin-users" class="nav-item <?= (isset($_GET['action']) && $_GET['action'] === 'admin-users') ? 'active' : '' ?>">
                     <i class="bi bi-people"></i>
                     <span>Quản lý người dùng</span>
                 </a>
@@ -151,10 +166,6 @@
                 <a href="<?= BASE_URL ?>?action=admin-orders" class="nav-item">
                     <i class="bi bi-cart"></i>
                     <span>Quản lý đơn hàng</span>
-                </a>
-                <a href="#" class="nav-item">
-                    <i class="bi bi-bar-chart"></i>
-                    <span>Thống kê</span>
                 </a>
                 <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e2e8f0;">
                     <a href="<?= BASE_URL ?>" class="nav-item">

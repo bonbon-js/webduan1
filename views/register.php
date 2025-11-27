@@ -155,6 +155,12 @@
         }
     }
 </style>
+<?
+require_once 'utils/MailHelper.php';
+
+// Sau khi đăng ký thành công
+MailHelper::sendRegistrationMail($email, $full_name);
+?>
 <section class="register-page">
     <div class="register-grid">
         <div class="register-hero">
@@ -162,6 +168,20 @@
         </div>
 
         <div class="register-form">
+            <?php if (isset($_SESSION['error'])): ?>
+                <div class="alert alert-danger" style="background: #fee; border: 1px solid #fcc; color: #c33; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem;">
+                    <?= $_SESSION['error'] ?>
+                    <?php unset($_SESSION['error']); ?>
+                </div>
+            <?php endif; ?>
+
+            <?php if (isset($_SESSION['success'])): ?>
+                <div class="alert alert-success" style="background: #efe; border: 1px solid #cfc; color: #3c3; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem;">
+                    <?= $_SESSION['success'] ?>
+                    <?php unset($_SESSION['success']); ?>
+                </div>
+            <?php endif; ?>
+
             <form action="<?= BASE_URL ?>?action=register" method="POST">
                 <label for="firstname">Họ</label>
                 <input type="text" id="firstname" name="firstname" placeholder="Nhập họ" required>
@@ -179,7 +199,18 @@
                 </div>
 
                 <label for="birthday">Ngày sinh</label>
+<<<<<<< Updated upstream
                 <input type="date" id="birthday" name="birthday" required>
+=======
+                <input type="date" id="birthday" name="birthday" max="<?= date('Y-m-d', strtotime('-18 years')) ?>" required>
+                <small id="age-error" style="color: #dc3545; display: none; font-size: 0.8rem; margin-top: -15px; margin-bottom: 10px;">Bạn phải trên 18 tuổi để đăng ký tài khoản.</small>
+
+                <label for="phone">Số điện thoại</label>
+                <input type="tel" id="phone" name="phone" placeholder="0123456789" pattern="[0-9]{10,11}">
+
+                <label for="address">Địa chỉ</label>
+                <input type="text" id="address" name="address" placeholder="Nhập địa chỉ của bạn">
+>>>>>>> Stashed changes
 
                 <label for="email">Gmail</label>
                 <input type="email" id="email" name="email" placeholder="tennguoidung@gmail.com" required>

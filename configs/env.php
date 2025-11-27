@@ -1,6 +1,14 @@
 <?php
 
-define('BASE_URL',          'http://localhost/webduan1/');
+// Tự động phát hiện BASE_URL dựa trên server
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+$scriptPath = dirname($_SERVER['SCRIPT_NAME']);
+$baseUrl = $protocol . '://' . $host . $scriptPath;
+// Đảm bảo có dấu / ở cuối
+$baseUrl = rtrim($baseUrl, '/') . '/';
+
+define('BASE_URL', $baseUrl);
 
 define('PATH_ROOT',         __DIR__ . '/../');
 
@@ -16,7 +24,10 @@ define('PATH_CONTROLLER',       PATH_ROOT . 'controllers/');
 
 define('PATH_MODEL',            PATH_ROOT . 'models/');
 
-define('DB_HOST',     'localhost');
+// Database Configuration
+// Có thể kết nối từ máy khác bằng cách thay đổi DB_HOST
+// Ví dụ: '192.168.1.100' hoặc domain name
+define('DB_HOST',     'localhost');  // Thay đổi thành IP máy chủ database nếu kết nối từ xa
 define('DB_PORT',     '3306');
 define('DB_USERNAME', 'root');
 define('DB_PASSWORD', '');
@@ -24,6 +35,7 @@ define('DB_NAME',     'bonbon_shop');
 define('DB_OPTIONS', [
     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_TIMEOUT => 5, // Timeout 5 giây
 ]);
 
 // SMTP configuration (cập nhật bằng thông tin Gmail/app password của bạn)
