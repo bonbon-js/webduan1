@@ -1,6 +1,6 @@
 <?php
 
-define('BASE_URL',          'http://localhost:3000/webduan1/');
+define('BASE_URL',          'http://localhost/webduan1/');
 
 define('PATH_ROOT',         __DIR__ . '/../');
 
