@@ -80,7 +80,7 @@
         border: none;
         font-weight: 600;
         appearance: none;
-        -moz-appearance: textfield;
+        -moz-appeara: textfield;
     }
     
     .qty-input::-webkit-outer-spin-button,
