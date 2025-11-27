@@ -1,14 +1,18 @@
 <?php
 
+require_once PATH_MODEL . 'CartModel.php';
+
 class AuthController
 {
     private UserModel $userModel;
     private PasswordResetModel $passwordResetModel;
+    private CartModel $cartModel;
 
     public function __construct()
     {
         $this->userModel = new UserModel();
         $this->passwordResetModel = new PasswordResetModel();
+        $this->cartModel = new CartModel();
     }
 
     /**
@@ -183,6 +187,17 @@ class AuthController
             'role'     => $user['role'] ?? 'customer',
         ];
 
+        $userId = (int)$_SESSION['user']['id'];
+        
+        // Lưu giỏ hàng session vào database nếu có
+        $sessionCart = $_SESSION['cart'] ?? [];
+        if (!empty($sessionCart)) {
+            $this->cartModel->syncSessionCartToDatabase($userId, $sessionCart);
+        }
+        
+        // Khôi phục giỏ hàng từ database (đã sync session cart vào DB rồi nên chỉ load từ DB)
+        $this->cartModel->loadCartToSession($userId, false);
+
         $_SESSION['success'] = 'Đăng nhập thành công.';
         $this->redirect('/');
     }
@@ -193,6 +208,8 @@ class AuthController
     public function logout(): void
     {
         unset($_SESSION['user']);
+        // Xóa giỏ hàng trong session khi đăng xuất
+        unset($_SESSION['cart']);
         session_regenerate_id(true);
         $_SESSION['success'] = 'Bạn đã đăng xuất.';
         $this->redirect('/');

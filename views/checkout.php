@@ -112,7 +112,171 @@
         background: #333;
         transform: translateY(-2px);
     }
+    
+    .coupon-section {
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+    
+    .coupon-message {
+        font-size: 0.85rem;
+        margin-top: 8px;
+    }
+    
+    .coupon-message.success {
+        color: #28a745;
+    }
+    
+    .coupon-message.error {
+        color: #dc3545;
+    }
+    
+    #couponCode {
+        text-transform: uppercase;
+    }
 </style>
+
+<script>
+let appliedCoupon = null;
+let currentDiscount = 0;
+let originalTotal = 0;
+
+// Tính tổng tiền ban đầu khi trang load
+document.addEventListener('DOMContentLoaded', function() {
+    const subtotalElement = document.getElementById('subtotalAmount');
+    if (subtotalElement) {
+        const subtotalText = subtotalElement.textContent.replace(/[^\d]/g, '');
+        originalTotal = parseFloat(subtotalText) || 0;
+    }
+});
+
+function applyCoupon() {
+    const code = document.getElementById('couponCode').value.trim().toUpperCase();
+    const messageDiv = document.getElementById('couponMessage');
+    const applyBtn = document.getElementById('applyCouponBtn');
+    
+    if (!code) {
+        messageDiv.innerHTML = '<span class="coupon-message error">Vui lòng nhập mã giảm giá</span>';
+        return;
+    }
+    
+    applyBtn.disabled = true;
+    applyBtn.textContent = 'Đang kiểm tra...';
+    messageDiv.innerHTML = '';
+    
+    fetch('<?= BASE_URL ?>?action=coupon-validate', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            coupon_code: code,
+            order_amount: originalTotal
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            appliedCoupon = data.coupon;
+            currentDiscount = data.discount_amount;
+            
+            // Cập nhật UI
+            document.getElementById('appliedCouponId').value = data.coupon.id;
+            document.getElementById('appliedCouponCode').value = data.coupon.code;
+            document.getElementById('discountAmount').value = currentDiscount;
+            
+            // Hiển thị thông báo
+            messageDiv.innerHTML = `<span class="coupon-message success">✓ ${data.message}</span>`;
+            
+            // Cập nhật tổng tiền
+            updateTotals();
+            
+            // Disable input và button
+            document.getElementById('couponCode').disabled = true;
+            applyBtn.textContent = 'Đã áp dụng';
+            applyBtn.disabled = true;
+            applyBtn.classList.remove('btn-outline-dark');
+            applyBtn.classList.add('btn-success');
+            
+            // Thêm nút xóa mã
+            if (!document.getElementById('removeCouponBtn')) {
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'btn btn-sm btn-outline-danger mt-2';
+                removeBtn.id = 'removeCouponBtn';
+                removeBtn.textContent = 'Xóa mã';
+                removeBtn.onclick = removeCoupon;
+                messageDiv.appendChild(document.createElement('br'));
+                messageDiv.appendChild(removeBtn);
+            }
+        } else {
+            messageDiv.innerHTML = `<span class="coupon-message error">${data.message}</span>`;
+            applyBtn.disabled = false;
+            applyBtn.textContent = 'Áp dụng';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        messageDiv.innerHTML = '<span class="coupon-message error">Có lỗi xảy ra. Vui lòng thử lại.</span>';
+        applyBtn.disabled = false;
+        applyBtn.textContent = 'Áp dụng';
+    });
+}
+
+function removeCoupon() {
+    appliedCoupon = null;
+    currentDiscount = 0;
+    
+    document.getElementById('appliedCouponId').value = '';
+    document.getElementById('appliedCouponCode').value = '';
+    document.getElementById('discountAmount').value = '0';
+    document.getElementById('couponCode').value = '';
+    document.getElementById('couponCode').disabled = false;
+    document.getElementById('couponMessage').innerHTML = '';
+    
+    const applyBtn = document.getElementById('applyCouponBtn');
+    applyBtn.disabled = false;
+    applyBtn.textContent = 'Áp dụng';
+    applyBtn.classList.remove('btn-success');
+    applyBtn.classList.add('btn-outline-dark');
+    
+    const removeBtn = document.getElementById('removeCouponBtn');
+    if (removeBtn) {
+        removeBtn.remove();
+    }
+    
+    updateTotals();
+}
+
+function updateTotals() {
+    const finalTotal = originalTotal - currentDiscount;
+    
+    document.getElementById('subtotalAmount').textContent = formatCurrency(originalTotal);
+    
+    if (currentDiscount > 0) {
+        document.getElementById('discountRow').style.display = 'flex';
+        document.getElementById('discountAmountDisplay').textContent = '-' + formatCurrency(currentDiscount);
+    } else {
+        document.getElementById('discountRow').style.display = 'none';
+    }
+    
+    document.getElementById('finalTotalAmount').textContent = formatCurrency(finalTotal);
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('vi-VN').format(Math.round(amount)) + ' đ';
+}
+
+// Cho phép nhấn Enter để áp dụng mã
+document.getElementById('couponCode').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        applyCoupon();
+    }
+});
+</script>
 
 <div class="checkout-page">
     <div class="container checkout-container">
@@ -204,18 +368,68 @@
                             <?php endforeach; ?>
                         </div>
                         
+                        <!-- Thông tin mã giảm giá đã áp dụng -->
+                        <?php 
+                        $appliedCoupon = $_SESSION['applied_coupon'] ?? null;
+                        $discountAmount = 0;
+                        $finalTotal = $total;
+                        
+                        if ($appliedCoupon) {
+                            $discountAmount = $appliedCoupon['discount_amount'] ?? 0;
+                            $finalTotal = $total - $discountAmount;
+                        }
+                        ?>
+                        
+                        <?php if ($appliedCoupon): ?>
+                        <div class="coupon-section mb-4" style="background: #e8f5e9; border: 1px solid #4caf50;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <label class="form-label mb-1" style="color: #2e7d32; font-weight: 600;">
+                                        <i class="bi bi-check-circle-fill text-success"></i> Mã giảm giá đã áp dụng
+                                    </label>
+                                    <div>
+                                        <strong style="color: #000;"><?= htmlspecialchars($appliedCoupon['code']) ?></strong>
+                                        <?php if (!empty($appliedCoupon['name'])): ?>
+                                            <small class="d-block text-muted"><?= htmlspecialchars($appliedCoupon['name']) ?></small>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div style="color: #28a745; font-weight: 700; font-size: 1.1rem;">
+                                        -<?= number_format($discountAmount, 0, ',', '.') ?> đ
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" name="coupon_id" value="<?= $appliedCoupon['id'] ?? '' ?>">
+                            <input type="hidden" name="applied_coupon_code" value="<?= htmlspecialchars($appliedCoupon['code']) ?>">
+                            <input type="hidden" name="discount_amount" value="<?= $discountAmount ?>">
+                        </div>
+                        <?php else: ?>
+                            <input type="hidden" name="coupon_id" value="">
+                            <input type="hidden" name="applied_coupon_code" value="">
+                            <input type="hidden" name="discount_amount" value="0">
+                        <?php endif; ?>
+                        
                         <div class="checkout-summary">
                             <div class="checkout-total-row">
                                 <span>Tạm tính</span>
-                                <span><?= number_format($total, 0, ',', '.') ?> đ</span>
+                                <span id="subtotalAmount"><?= number_format($total, 0, ',', '.') ?> đ</span>
                             </div>
+                            <?php if ($appliedCoupon && $discountAmount > 0): ?>
+                            <div class="checkout-total-row">
+                                <span>Giảm giá</span>
+                                <span id="discountAmountDisplay" style="color: #28a745; font-weight: 600;">
+                                    -<?= number_format($discountAmount, 0, ',', '.') ?> đ
+                                </span>
+                            </div>
+                            <?php endif; ?>
                             <div class="checkout-total-row">
                                 <span>Phí vận chuyển</span>
                                 <span>Miễn phí</span>
                             </div>
                             <div class="checkout-total-row checkout-final-total">
                                 <span>Tổng cộng</span>
-                                <span><?= number_format($total, 0, ',', '.') ?> đ</span>
+                                <span id="finalTotalAmount"><?= number_format($finalTotal, 0, ',', '.') ?> đ</span>
                             </div>
                         </div>
                         

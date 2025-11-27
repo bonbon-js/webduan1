@@ -74,10 +74,10 @@ class OrderModel extends BaseModel
             // Lưu order cha
             $stmt = $this->pdo->prepare("
                 INSERT INTO orders (
-                    order_code, user_id, fullname, email, phone, address, city, district, ward, note, payment_method, status, total_amount
+                    order_code, user_id, fullname, email, phone, address, city, district, ward, note, payment_method, status, total_amount, coupon_id, discount_amount, coupon_code, coupon_name
                 )
                 VALUES (
-                    :order_code, :user_id, :fullname, :email, :phone, :address, :city, :district, :ward, :note, :payment_method, :status, :total_amount
+                    :order_code, :user_id, :fullname, :email, :phone, :address, :city, :district, :ward, :note, :payment_method, :status, :total_amount, :coupon_id, :discount_amount, :coupon_code, :coupon_name
                 )
             ");
 
@@ -95,6 +95,10 @@ class OrderModel extends BaseModel
                 ':payment_method' => $orderData['payment_method'] ?? 'cod',
                 ':status'         => $orderData['status'] ?? self::STATUS_CONFIRMED,
                 ':total_amount'   => $total,
+                ':coupon_id'      => $orderData['coupon_id'] ?? null,
+                ':discount_amount' => $orderData['discount_amount'] ?? 0,
+                ':coupon_code'    => $orderData['coupon_code'] ?? null,
+                ':coupon_name'    => $orderData['coupon_name'] ?? null,
             ];
 
             $stmt->execute($orderPayload);

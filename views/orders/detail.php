@@ -102,7 +102,20 @@
                 <div class="order-items-card mb-4">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="fw-bold mb-0">Sản phẩm</h5>
-                        <div class="text-muted">Tổng cộng: <strong><?= number_format($order['total_amount'], 0, ',', '.') ?> đ</strong></div>
+                        <div class="text-muted">
+                            <?php if (!empty($order['discount_amount']) && $order['discount_amount'] > 0): ?>
+                                <div class="text-end">
+                                    <div class="small text-muted">Tạm tính: <?= number_format($order['total_amount'] + $order['discount_amount'], 0, ',', '.') ?> đ</div>
+                                    <?php if (!empty($order['coupon_code'])): ?>
+                                        <div class="small text-success">Mã giảm giá: <?= htmlspecialchars($order['coupon_code']) ?> (<?= htmlspecialchars($order['coupon_name'] ?? '') ?>)</div>
+                                        <div class="small text-success">Giảm: -<?= number_format($order['discount_amount'], 0, ',', '.') ?> đ</div>
+                                    <?php endif; ?>
+                                    <div class="fw-bold">Tổng cộng: <?= number_format($order['total_amount'], 0, ',', '.') ?> đ</div>
+                                </div>
+                            <?php else: ?>
+                                <div class="text-end">Tổng cộng: <strong><?= number_format($order['total_amount'], 0, ',', '.') ?> đ</strong></div>
+                            <?php endif; ?>
+                        </div>
                     </div>
                     <div class="table-responsive">
                         <table class="table align-middle">

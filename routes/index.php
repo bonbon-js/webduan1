@@ -5,16 +5,35 @@ $action = $_GET['action'] ?? '/';
 match ($action) {
     '/'              => (new HomeController)->index(),
     
+    // Product routes
+    'products'       => (new ProductController)->index(),
+    'product-detail' => (new ProductController)->detail(),
+    'product-attributes' => (new ProductController)->attributes(),
+    'variant-images' => (new ProductController)->variantImages(),
+    'search-api'     => (new ProductController)->searchApi(),
+    'search-smart'   => (new ProductController)->searchSmart(),
+    
+    // Post routes
+    'posts'          => (new PostController)->index(),
+    'post-detail'    => (new PostController)->detail(),
+    
     // Cart routes
     'cart-list'      => (new CartController)->index(),
     'cart-add'       => (new CartController)->add(),
     'cart-update'    => (new CartController)->update(),
     'cart-delete'    => (new CartController)->delete(),
+    'cart-delete-multiple' => (new CartController)->deleteMultiple(),
     'cart-count'     => (new CartController)->count(),
+    'cart-set-selected' => (new CartController)->setSelected(),
     
     // Checkout routes
     'checkout'       => (new CheckoutController)->index(),
     'checkout-process' => (new CheckoutController)->process(),
+    
+    // Coupon routes
+    'coupon-validate' => (new CouponController)->validate(),
+    'coupon-available' => (new CouponController)->getAvailable(),
+    'coupon-remove' => (new CouponController)->remove(),
 
     // Routes đơn hàng cho user
     'order-history'  => (new OrderController)->history(),
@@ -28,6 +47,15 @@ match ($action) {
     'admin-users'        => (new AdminUserController)->index(),
     'admin-user-role'    => (new AdminUserController)->updateRole(),
     'admin-user-delete' => (new AdminUserController)->delete(),
+    
+    // Quản lý mã giảm giá
+    'admin-coupons'      => (new AdminCouponController)->index(),
+    'admin-coupon-create' => (new AdminCouponController)->create(),
+    'admin-coupon-update' => (new AdminCouponController)->update(),
+    'admin-coupon-delete' => (new AdminCouponController)->delete(),
+    'admin-coupons-trash' => (new AdminCouponController)->trash(),
+    'admin-coupon-restore' => (new AdminCouponController)->restore(),
+    'admin-coupon-force-delete' => (new AdminCouponController)->forceDelete(),
     
     // Auth routes
     'show-login'         => (new AuthController)->showLogin(),
