@@ -43,7 +43,7 @@
             <div>
                 <p class="text-uppercase text-muted mb-1 small">Mã đơn: <?= htmlspecialchars($order['order_code']) ?></p>
                 <h2 class="fw-bold">Chi tiết đơn hàng</h2>
-                <p class="text-muted mb-0">Đặt lúc <?= date('d/m/Y H:i', strtotime($order['created_at'])) ?></p>
+                <p class="text-muted mb-0">Đặt lúc <?= isset($order['created_at']) && $order['created_at'] ? date('d/m/Y H:i', strtotime($order['created_at'])) : '-' ?></p>
             </div>
             <a href="<?= BASE_URL ?>?action=order-history" class="btn btn-outline-dark">Quay lại danh sách</a>
         </div>

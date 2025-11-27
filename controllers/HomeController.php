@@ -1,6 +1,7 @@
 <?php
 
 require_once PATH_MODEL . 'PostModel.php';
+require_once PATH_MODEL . 'ProductModel.php';
 
 class HomeController
 {
@@ -10,6 +11,10 @@ class HomeController
         $view  = 'home';
         $logoUrl = BASE_URL . 'assets/images/logo.png';
         $isLoggedIn = isset($_SESSION['user']) ? 'true' : 'false';
+
+        // Lấy 8 sản phẩm mới nhất từ database
+        $productModel = new ProductModel();
+        $products = $productModel->getAllProducts(8);
 
         // Lấy 3 tin tức nổi bật từ database
         $postModel = new PostModel();

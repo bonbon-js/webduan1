@@ -13,15 +13,7 @@ class AdminUserController
     {
         $this->requireAdmin();
 
-        $keyword = $_GET['keyword'] ?? '';
-        $role    = $_GET['role'] ?? '';
-        $status  = $_GET['status'] ?? '';
-
-        $users = $this->userModel->getAll(
-            $keyword ?: null,
-            $role ?: null,
-            $status ?: null
-        );
+        $users = $this->userModel->getAll();
 
         $title = 'Quản lý người dùng';
         $view  = 'admin/users/index';

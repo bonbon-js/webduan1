@@ -387,7 +387,8 @@ document.addEventListener('DOMContentLoaded', function() {
     <h2 class="section-title">Sản phẩm mới</h2>
 
     <div class="row g-4">
-        <?php foreach ($products as $product) : ?>
+        <?php if (isset($products) && is_array($products) && !empty($products)) : ?>
+            <?php foreach ($products as $product) : ?>
             <div class="col-12 col-sm-6 col-lg-3">
                 <article class="product-card">
                     <?php if (isset($product['id']) && $product['id'] <= 3) : ?>
@@ -409,7 +410,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     <p class="fw-semibold"><?= number_format($product['price'], 0, ',', '.') ?> đ</p>
                 </article>
             </div>
-        <?php endforeach; ?>
+            <?php endforeach; ?>
+        <?php else : ?>
+            <div class="col-12">
+                <p class="text-center text-muted">Chưa có sản phẩm nào.</p>
+            </div>
+        <?php endif; ?>
     </div>
 
     <div class="text-center mt-4">

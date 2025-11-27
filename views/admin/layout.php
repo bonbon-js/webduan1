@@ -28,7 +28,18 @@
 
     <div class="d-flex">
         <aside class="admin-sidebar">
-            <div class="brand">BonBon</div>
+            <div class="brand">
+                <?php 
+                $logoPath = PATH_ROOT . 'assets/images/logo.png';
+                if (file_exists($logoPath)): 
+                    $logoData = base64_encode(file_get_contents($logoPath));
+                    $logoSrc = 'data:image/png;base64,' . $logoData;
+                ?>
+                    <img class="logo-image" src="<?= $logoSrc ?>" alt="BonBonwear" style="max-width: 120px; height: auto;">
+                <?php else: ?>
+                    <span class="logo-text">BONBONWEAR</span>
+                <?php endif; ?>
+            </div>
             <nav>
                 <?php
                 $currentAction = $_GET['action'] ?? '';
@@ -36,6 +47,10 @@
                     return $currentAction === $action ? 'active' : '';
                 };
                 ?>
+                <a href="<?= BASE_URL ?>?action=admin-dashboard" class="nav-item <?= $isActive('admin-dashboard') ?>">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Bảng điều khiển</span>
+                </a>
                 <a href="#" class="nav-item">
                     <i class="bi bi-gear"></i>
                     <span>Quản lý danh mục</span>
@@ -61,7 +76,7 @@
                     <i class="bi bi-ticket-perforated"></i>
                     <span>Quản lý mã giảm giá</span>
                 </a>
-                <a href="#" class="nav-item">
+                <a href="<?= BASE_URL ?>?action=admin-statistics" class="nav-item <?= $isActive('admin-statistics') ?>">
                     <i class="bi bi-bar-chart"></i>
                     <span>Thống kê</span>
                 </a>

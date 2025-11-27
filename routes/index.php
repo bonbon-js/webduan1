@@ -40,7 +40,9 @@ match ($action) {
     'order-detail'   => (new OrderController)->detail(),
     'order-cancel'   => (new OrderController)->cancel(),
 
-    // Routes quản trị đơn hàng
+    // Routes quản trị
+    'admin-dashboard'    => (new AdminDashboardController)->index(),
+    'admin-statistics'   => (new AdminStatisticsController)->index(),
     'admin-orders'       => (new AdminOrderController)->index(),
     'admin-order-update' => (new AdminOrderController)->updateStatus(),
     // Quản lý tài khoản
@@ -68,6 +70,8 @@ match ($action) {
     'logout'             => (new AuthController)->logout(),
     'forgot-password'    => (new AuthController)->handleForgotPassword(),
     'reset-password'     => (new AuthController)->resetPassword(),
+    'profile'            => (new AuthController)->showProfile(),
+    'update-profile'     => (new AuthController)->updateProfile(),
     
     default          => (new HomeController)->index(),
 };

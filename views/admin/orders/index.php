@@ -70,7 +70,11 @@
                                 <tr>
                                     <td>
                                         <div class="fw-semibold"><?= htmlspecialchars($order['order_code']) ?></div>
-                                        <small class="text-muted"><?= date('d/m/Y H:i', strtotime($order['created_at'])) ?></small>
+                                        <?php if (isset($order['created_at']) && $order['created_at']): ?>
+                                            <small class="text-muted"><?= date('d/m/Y H:i', strtotime($order['created_at'])) ?></small>
+                                        <?php else: ?>
+                                            <small class="text-muted">-</small>
+                                        <?php endif; ?>
                                     </td>
                                     <td><?= htmlspecialchars($order['fullname']) ?></td>
                                     <td>

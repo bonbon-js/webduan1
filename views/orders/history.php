@@ -57,7 +57,7 @@
                         <div class="col-md-3">
                             <div class="order-code text-uppercase small text-muted mb-1">Mã đơn</div>
                             <h5 class="mb-0"><?= htmlspecialchars($order['order_code']) ?></h5>
-                            <div class="order-meta">Ngày đặt: <?= date('d/m/Y H:i', strtotime($order['created_at'])) ?></div>
+                            <div class="order-meta">Ngày đặt: <?= isset($order['created_at']) && $order['created_at'] ? date('d/m/Y H:i', strtotime($order['created_at'])) : '-' ?></div>
                         </div>
                         <div class="col-md-3">
                             <div class="order-code text-uppercase small text-muted mb-1">Trạng thái</div>

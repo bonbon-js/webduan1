@@ -120,5 +120,66 @@ class UserModel extends BaseModel
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['id' => $userId]);
     }
+
+    // Lấy tổng số người dùng
+    public function getTotalCount(): int
+    {
+        $stmt = $this->pdo->query("SELECT COUNT(*) AS total FROM {$this->table}");
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int)($result['total'] ?? 0);
+    }
+
+    // Lấy số lượng admin
+    public function getAdminCount(): int
+    {
+        $stmt = $this->pdo->query("SELECT COUNT(*) AS total FROM {$this->table} WHERE role = 'admin'");
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int)($result['total'] ?? 0);
+    }
+
+    // Lấy số lượng khách hàng
+    public function getCustomerCount(): int
+    {
+        $stmt = $this->pdo->query("SELECT COUNT(*) AS total FROM {$this->table} WHERE role = 'customer'");
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int)($result['total'] ?? 0);
+    }
+
+    // Lấy thông tin user theo ID
+    public function findById(int $userId): ?array
+    {
+        $sql = "SELECT * FROM {$this->table} WHERE user_id = :id LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['id' => $userId]);
+
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $user ?: null;
+    }
+
+    // Cập nhật thông tin cá nhân
+    public function updateProfile(int $userId, array $data): void
+    {
+        $sql = "UPDATE {$this->table} 
+                SET first_name = :first_name, 
+                    last_name = :last_name, 
+                    full_name = :full_name,
+                    gender = :gender, 
+                    birthday = :birthday, 
+                    phone = :phone, 
+                    address = :address
+                WHERE user_id = :id";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'first_name' => $data['first_name'],
+            'last_name'  => $data['last_name'],
+            'full_name'  => trim($data['first_name'] . ' ' . $data['last_name']),
+            'gender'     => $data['gender'],
+            'birthday'   => $data['birthday'] ?: null,
+            'phone'      => $data['phone'],
+            'address'    => $data['address'],
+            'id'         => $userId,
+        ]);
+    }
 }
 
