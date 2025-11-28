@@ -190,8 +190,17 @@ class OrderModel extends BaseModel
             $columnsStr = implode(', ', $insertColumns);
             $valuesStr = implode(', ', $insertValues);
             
+            // Kiểm tra lại lần cuối: Đảm bảo PRIMARY KEY không có trong SQL
+            if ($primaryKeyColumn && (strpos($columnsStr, $primaryKeyColumn) !== false || strpos($valuesStr, ':' . $primaryKeyColumn) !== false)) {
+                $errorMsg = "Lỗi nghiêm trọng: PRIMARY KEY ($primaryKeyColumn) vẫn xuất hiện trong SQL statement!";
+                error_log($errorMsg);
+                error_log("SQL: INSERT INTO orders ($columnsStr) VALUES ($valuesStr)");
+                throw new Exception($errorMsg);
+            }
+            
             $sql = "INSERT INTO orders ($columnsStr) VALUES ($valuesStr)";
             error_log('OrderModel::create - SQL: ' . $sql);
+            error_log('OrderModel::create - Primary Key Column (should NOT be in SQL): ' . ($primaryKeyColumn ?? 'NULL'));
             
             $stmt = $this->pdo->prepare($sql);
 
