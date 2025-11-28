@@ -211,6 +211,12 @@ class AuthController
             $this->redirect('show-login');
         }
 
+        // Kiểm tra tài khoản có bị khóa không
+        if (isset($user['is_locked']) && (bool)$user['is_locked']) {
+            $_SESSION['error'] = 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên để được hỗ trợ.';
+            $this->redirect('show-login');
+        }
+
         if (!empty($user['session_token'])) {
             $_SESSION['error'] = 'Tài khoản chưa được xác thực. Vui lòng kiểm tra Gmail.';
             $this->redirect('show-login');

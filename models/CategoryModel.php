@@ -11,6 +11,54 @@ class CategoryModel extends BaseModel
     }
 
     /**
+     * Tạo danh mục mới
+     */
+    public function createCategory(string $name, ?string $description = null): int
+    {
+        $sql = "INSERT INTO {$this->table} (category_name, description)
+                VALUES (:name, :description)";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':name', $name, PDO::PARAM_STR);
+        $stmt->bindValue(
+            ':description',
+            $description,
+            $description === null ? PDO::PARAM_NULL : PDO::PARAM_STR
+        );
+        $stmt->execute();
+        return (int)$this->pdo->lastInsertId();
+    }
+
+    /**
+     * Cập nhật danh mục
+     */
+    public function updateCategory(int $categoryId, string $name, ?string $description = null): bool
+    {
+        $sql = "UPDATE {$this->table}
+                SET category_name = :name, description = :description
+                WHERE category_id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':name', $name, PDO::PARAM_STR);
+        $stmt->bindValue(
+            ':description',
+            $description,
+            $description === null ? PDO::PARAM_NULL : PDO::PARAM_STR
+        );
+        $stmt->bindValue(':id', $categoryId, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
+    /**
+     * Xóa danh mục (chỉ thành công khi không có sản phẩm ràng buộc hoặc DB cho phép)
+     */
+    public function deleteCategory(int $categoryId): bool
+    {
+        $sql = "DELETE FROM {$this->table} WHERE category_id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':id', $categoryId, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
+    /**
      * Lấy tất cả danh mục
      */
     public function getAllCategories(): array

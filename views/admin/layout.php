@@ -43,15 +43,16 @@
             <nav>
                 <?php
                 $currentAction = $_GET['action'] ?? '';
-                $isActive = function($action) use ($currentAction) {
-                    return $currentAction === $action ? 'active' : '';
+                $isActive = function($actions) use ($currentAction) {
+                    $actions = (array)$actions;
+                    return in_array($currentAction, $actions, true) ? 'active' : '';
                 };
                 ?>
                 <a href="<?= BASE_URL ?>?action=admin-dashboard" class="nav-item <?= $isActive('admin-dashboard') ?>">
                     <i class="bi bi-speedometer2"></i>
                     <span>Bảng điều khiển</span>
                 </a>
-                <a href="#" class="nav-item">
+                <a href="<?= BASE_URL ?>?action=admin-categories" class="nav-item <?= $isActive('admin-categories') ?>">
                     <i class="bi bi-gear"></i>
                     <span>Quản lý danh mục</span>
                 </a>
@@ -59,14 +60,16 @@
                     <i class="bi bi-people"></i>
                     <span>Quản lý người dùng</span>
                 </a>
-                <a href="#" class="nav-item">
+                <a href="<?= BASE_URL ?>?action=admin-products" class="nav-item <?= $isActive(['admin-products', 'admin-product-create', 'admin-product-edit']) ?>">
                     <i class="bi bi-briefcase"></i>
                     <span>Quản lý sản phẩm</span>
                 </a>
+
                 
                 <a href="<?= BASE_URL ?>?action=admin-reviews" class="nav-item <?= $isActive('admin-reviews') ?>">
                     <i class="bi bi-star"></i>
                     <span>Quản lý đánh giá</span>
+
                 </a>
                 <a href="<?= BASE_URL ?>?action=admin-orders" class="nav-item <?= $isActive('admin-orders') ?>">
                     <i class="bi bi-cart"></i>
@@ -94,6 +97,12 @@
         </aside>
 
         <main class="admin-content">
+            <?php $flash = get_flash(); ?>
+            <?php if ($flash): ?>
+                <div class="alert alert-<?= htmlspecialchars($flash['type']) ?>">
+                    <?= htmlspecialchars($flash['message']) ?>
+                </div>
+            <?php endif; ?>
             <?php
             if (isset($view)) {
                 require_once PATH_VIEW . $view . '.php';

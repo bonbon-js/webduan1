@@ -64,7 +64,7 @@ match ($action) {
     // Quản lý tài khoản
     'admin-users'        => (new AdminUserController)->index(),
     'admin-user-role'    => (new AdminUserController)->updateRole(),
-    'admin-user-delete' => (new AdminUserController)->delete(),
+    'admin-user-toggle-lock' => (new AdminUserController)->toggleLock(),
     
     // Quản lý mã giảm giá
     'admin-coupons'      => (new AdminCouponController)->index(),
@@ -74,12 +74,6 @@ match ($action) {
     'admin-coupons-trash' => (new AdminCouponController)->trash(),
     'admin-coupon-restore' => (new AdminCouponController)->restore(),
     'admin-coupon-force-delete' => (new AdminCouponController)->forceDelete(),
-    
-    // Quản lý đánh giá
-    'admin-reviews'  => (new AdminReviewController)->index(),
-    'admin-review-toggle-hidden' => (new AdminReviewController)->toggleHidden(),
-    'admin-review-reply' => (new AdminReviewController)->reply(),
-    'admin-review-delete' => (new AdminReviewController)->delete(),
     
     // Auth routes
     'show-login'         => (new AuthController)->showLogin(),
