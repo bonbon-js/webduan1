@@ -31,7 +31,8 @@ class CouponController
             exit;
         }
         
-        if ($orderAmount <= 0) {
+        // Cho phép orderAmount = 0 để validate mã không yêu cầu đơn tối thiểu
+        if ($orderAmount < 0) {
             echo json_encode([
                 'success' => false,
                 'message' => 'Tổng tiền đơn hàng không hợp lệ'
@@ -45,6 +46,18 @@ class CouponController
             echo json_encode([
                 'success' => false,
                 'message' => 'Mã giảm giá không hợp lệ hoặc đã hết hạn. Vui lòng kiểm tra lại điều kiện áp dụng.'
+            ]);
+            exit;
+        }
+        
+        // Kiểm tra xem mã đã đến thời gian bắt đầu chưa
+        // Sử dụng timezone Việt Nam
+        date_default_timezone_set('Asia/Ho_Chi_Minh');
+        $now = date('Y-m-d H:i:s');
+        if ($now < $coupon['start_date']) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Mã giảm giá chưa đến thời gian áp dụng. Thời gian bắt đầu: ' . date('d/m/Y H:i', strtotime($coupon['start_date']))
             ]);
             exit;
         }
@@ -85,7 +98,9 @@ class CouponController
         
         $orderAmount = (float)($_GET['order_amount'] ?? 0);
         
-        if ($orderAmount <= 0) {
+        // Cho phép orderAmount = 0 để hiển thị các mã không yêu cầu đơn tối thiểu
+        // Nếu orderAmount < 0 thì mới là lỗi
+        if ($orderAmount < 0) {
             echo json_encode([
                 'success' => false,
                 'message' => 'Tổng tiền đơn hàng không hợp lệ',

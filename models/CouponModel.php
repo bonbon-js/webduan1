@@ -2,10 +2,57 @@
 
 class CouponModel extends BaseModel
 {
+    private ?bool $hasDeletedAtColumn = null;
+    private ?array $existingColumns = null;
+    
     public function __construct()
     {
         parent::__construct();
         $this->table = 'coupons';
+    }
+    
+    /**
+     * Kiểm tra xem cột deleted_at có tồn tại không
+     * @return bool
+     */
+    private function hasDeletedAtColumn(): bool
+    {
+        if ($this->hasDeletedAtColumn === null) {
+            try {
+                $stmt = $this->pdo->query("SHOW COLUMNS FROM {$this->table} LIKE 'deleted_at'");
+                $this->hasDeletedAtColumn = $stmt->rowCount() > 0;
+            } catch (PDOException $e) {
+                $this->hasDeletedAtColumn = false;
+            }
+        }
+        return $this->hasDeletedAtColumn;
+    }
+    
+    /**
+     * Lấy danh sách các cột có trong bảng
+     * @return array
+     */
+    private function getExistingColumns(): array
+    {
+        if ($this->existingColumns === null) {
+            try {
+                $stmt = $this->pdo->query("SHOW COLUMNS FROM {$this->table}");
+                $this->existingColumns = array_column($stmt->fetchAll(PDO::FETCH_ASSOC), 'Field');
+            } catch (PDOException $e) {
+                $this->existingColumns = [];
+            }
+        }
+        return $this->existingColumns;
+    }
+    
+    /**
+     * Kiểm tra xem cột có tồn tại không
+     * @param string $columnName
+     * @return bool
+     */
+    private function hasColumn(string $columnName): bool
+    {
+        return in_array($columnName, $this->getExistingColumns());
     }
 
     /**
@@ -18,9 +65,13 @@ class CouponModel extends BaseModel
     {
         $sql = "SELECT * FROM {$this->table} 
                 WHERE code = :code 
-                  AND status = 'active'
-                  AND deleted_at IS NULL
-                LIMIT 1";
+                  AND status = 'active'";
+        
+        if ($this->hasDeletedAtColumn()) {
+            $sql .= " AND deleted_at IS NULL";
+        }
+        
+        $sql .= " LIMIT 1";
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['code' => strtoupper(trim($code))]);
@@ -30,20 +81,26 @@ class CouponModel extends BaseModel
             return null;
         }
         
+        // Sử dụng timezone Việt Nam
+        date_default_timezone_set('Asia/Ho_Chi_Minh');
         $now = date('Y-m-d H:i:s');
         
-        // Kiểm tra thời gian áp dụng
-        if ($now < $coupon['start_date'] || $now > $coupon['end_date']) {
-            return null;
+        // Kiểm tra thời gian áp dụng - chỉ kiểm tra hết hạn, không kiểm tra chưa bắt đầu
+        // Mã chưa đến thời gian bắt đầu vẫn có thể hiển thị nhưng sẽ không áp dụng được
+        if ($now > $coupon['end_date']) {
+            return null; // Đã hết hạn
         }
+        
+        // Nếu chưa đến thời gian bắt đầu, vẫn trả về coupon nhưng sẽ có thông báo khi áp dụng
+        // (Logic này sẽ được xử lý ở frontend hoặc khi validate)
         
         // Kiểm tra số lần sử dụng
         if ($coupon['usage_limit'] !== null && $coupon['used_count'] >= $coupon['usage_limit']) {
             return null;
         }
         
-        // Kiểm tra đơn hàng tối thiểu
-        if ($orderAmount < (float)$coupon['min_order_amount']) {
+        // Kiểm tra đơn hàng tối thiểu (chỉ kiểm tra nếu có yêu cầu)
+        if ($coupon['min_order_amount'] > 0 && $orderAmount < (float)$coupon['min_order_amount']) {
             return null;
         }
         
@@ -109,20 +166,28 @@ class CouponModel extends BaseModel
      */
     private function calculateStatus(array $coupon): string
     {
+        // Nếu status = inactive, trả về inactive
         if ($coupon['status'] === 'inactive') {
             return 'inactive';
         }
         
+        // Sử dụng timezone Việt Nam
+        date_default_timezone_set('Asia/Ho_Chi_Minh');
         $now = date('Y-m-d H:i:s');
         
-        // Kiểm tra hết hạn
+        // Kiểm tra hết hạn (ưu tiên kiểm tra hết hạn trước)
         if ($now > $coupon['end_date']) {
             return 'expired';
         }
         
-        // Kiểm tra hết mã
+        // Kiểm tra hết lượt sử dụng (hết mã)
         if ($coupon['usage_limit'] !== null && $coupon['used_count'] >= $coupon['usage_limit']) {
             return 'out_of_stock';
+        }
+        
+        // Kiểm tra chưa đến thời gian bắt đầu
+        if ($now < $coupon['start_date']) {
+            return 'pending'; // Chưa bắt đầu
         }
         
         return 'active';
@@ -137,11 +202,15 @@ class CouponModel extends BaseModel
      */
     public function getAll(?string $keyword = null, ?string $statusFilter = null, ?string $discountTypeFilter = null, bool $includeDeleted = false): array
     {
+        // Kiểm tra xem cột deleted_at có tồn tại không
+        $stmt = $this->pdo->query("SHOW COLUMNS FROM {$this->table} LIKE 'deleted_at'");
+        $hasDeletedAt = $stmt->rowCount() > 0;
+        
         $sql = "SELECT * FROM {$this->table} WHERE 1=1";
         $params = [];
         
         // Lọc bỏ các mã đã bị xóa mềm (trừ khi yêu cầu hiển thị)
-        if (!$includeDeleted) {
+        if ($hasDeletedAt && !$includeDeleted) {
             $sql .= " AND deleted_at IS NULL";
         }
         
@@ -155,14 +224,42 @@ class CouponModel extends BaseModel
             $params['discount_type'] = $discountTypeFilter;
         }
         
-        $sql .= " ORDER BY 
-                    CASE 
-                        WHEN status = 'inactive' THEN 3
-                        WHEN NOW() > end_date THEN 2
-                        WHEN usage_limit IS NOT NULL AND used_count >= usage_limit THEN 2
-                        ELSE 1
-                    END,
-                    created_at DESC";
+        // Xây dựng ORDER BY clause dựa trên các cột có sẵn
+        $orderByParts = [];
+        
+        // Kiểm tra và thêm CASE statement nếu các cột cần thiết tồn tại
+        if ($this->hasColumn('status') || $this->hasColumn('end_date') || 
+            ($this->hasColumn('usage_limit') && $this->hasColumn('used_count'))) {
+            
+            $caseWhen = "CASE";
+            
+            if ($this->hasColumn('status')) {
+                $caseWhen .= " WHEN status = 'inactive' THEN 3";
+            }
+            
+            if ($this->hasColumn('end_date')) {
+                $caseWhen .= " WHEN NOW() > end_date THEN 2";
+            }
+            
+            if ($this->hasColumn('usage_limit') && $this->hasColumn('used_count')) {
+                $caseWhen .= " WHEN usage_limit IS NOT NULL AND used_count >= usage_limit THEN 2";
+            }
+            
+            $caseWhen .= " ELSE 1 END";
+            $orderByParts[] = $caseWhen;
+        }
+        
+        // Thêm created_at nếu có
+        if ($this->hasColumn('created_at')) {
+            $orderByParts[] = "created_at DESC";
+        } else if ($this->hasColumn('coupon_id')) {
+            // Fallback: sắp xếp theo ID nếu không có created_at
+            $orderByParts[] = "coupon_id DESC";
+        }
+        
+        if (!empty($orderByParts)) {
+            $sql .= " ORDER BY " . implode(", ", $orderByParts);
+        }
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
@@ -194,15 +291,29 @@ class CouponModel extends BaseModel
      */
     public function getAvailableCoupons(float $orderAmount): array
     {
+        // Sử dụng timezone Việt Nam
+        date_default_timezone_set('Asia/Ho_Chi_Minh');
         $now = date('Y-m-d H:i:s');
         
         $sql = "SELECT * FROM {$this->table} 
-                WHERE status = 'active'
-                  AND deleted_at IS NULL
-                  AND start_date <= :now
-                  AND end_date >= :now
-                  AND min_order_amount <= :order_amount
-                  AND (usage_limit IS NULL OR used_count < usage_limit)
+                WHERE status = 'active'";
+        
+        if ($this->hasDeletedAtColumn()) {
+            $sql .= " AND deleted_at IS NULL";
+        }
+        
+        // Hiển thị mã chưa hết hạn (kể cả chưa đến thời gian bắt đầu)
+        // Chỉ loại bỏ mã đã hết hạn (end_date < now)
+        $sql .= " AND end_date >= :now";
+        
+        // Nếu orderAmount = 0, chỉ lấy mã không yêu cầu đơn tối thiểu
+        if ($orderAmount > 0) {
+            $sql .= " AND (min_order_amount IS NULL OR min_order_amount = 0 OR min_order_amount <= :order_amount)";
+        } else {
+            $sql .= " AND (min_order_amount IS NULL OR min_order_amount = 0)";
+        }
+        
+        $sql .= " AND (usage_limit IS NULL OR used_count < usage_limit)
                 ORDER BY discount_value DESC, created_at DESC";
         
         $stmt = $this->pdo->prepare($sql);
@@ -245,7 +356,7 @@ class CouponModel extends BaseModel
         $sql = "SELECT * FROM {$this->table} WHERE coupon_id = :coupon_id";
         
         // Lọc bỏ các mã đã bị xóa mềm (trừ khi yêu cầu hiển thị)
-        if (!$includeDeleted) {
+        if ($this->hasDeletedAtColumn() && !$includeDeleted) {
             $sql .= " AND deleted_at IS NULL";
         }
         
@@ -268,7 +379,7 @@ class CouponModel extends BaseModel
         $sql = "SELECT * FROM {$this->table} WHERE code = :code";
         
         // Lọc bỏ các mã đã bị xóa mềm (trừ khi yêu cầu hiển thị)
-        if (!$includeDeleted) {
+        if ($this->hasDeletedAtColumn() && !$includeDeleted) {
             $sql .= " AND deleted_at IS NULL";
         }
         
@@ -366,12 +477,17 @@ class CouponModel extends BaseModel
      */
     public function delete(int $couponId): void
     {
-        $sql = "UPDATE {$this->table} 
-                SET deleted_at = NOW() 
-                WHERE coupon_id = :coupon_id 
-                  AND deleted_at IS NULL";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(['coupon_id' => $couponId]);
+        if ($this->hasDeletedAtColumn()) {
+            $sql = "UPDATE {$this->table} 
+                    SET deleted_at = NOW() 
+                    WHERE coupon_id = :coupon_id 
+                      AND deleted_at IS NULL";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute(['coupon_id' => $couponId]);
+        } else {
+            // Nếu chưa có cột deleted_at, xóa vĩnh viễn
+            $this->forceDelete($couponId);
+        }
     }
     
     /**
@@ -380,6 +496,10 @@ class CouponModel extends BaseModel
      */
     public function restore(int $couponId): void
     {
+        if (!$this->hasDeletedAtColumn()) {
+            return; // Không thể khôi phục nếu chưa có cột deleted_at
+        }
+        
         $sql = "UPDATE {$this->table} 
                 SET deleted_at = NULL 
                 WHERE coupon_id = :coupon_id 
@@ -405,6 +525,10 @@ class CouponModel extends BaseModel
      */
     public function getDeleted(): array
     {
+        if (!$this->hasDeletedAtColumn()) {
+            return []; // Trả về mảng rỗng nếu chưa có cột deleted_at
+        }
+        
         $sql = "SELECT * FROM {$this->table} 
                 WHERE deleted_at IS NOT NULL
                 ORDER BY deleted_at DESC";

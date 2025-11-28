@@ -1,84 +1,3 @@
-<style>
-    .coupons-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 16px;
-        padding: 2rem;
-        color: #fff;
-        margin-bottom: 2rem;
-        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-    }
-    .coupons-header h2 {
-        margin: 0;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-    .coupons-header .icon-wrapper {
-        width: 56px;
-        height: 56px;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-    }
-    .admin-table {
-        background: #fff;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    }
-    .table {
-        margin: 0;
-    }
-    .table thead {
-        background: #f8f9fa;
-    }
-    .table thead th {
-        border: none;
-        padding: 1rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.85rem;
-        color: #495057;
-    }
-    .table tbody td {
-        padding: 1rem;
-        vertical-align: middle;
-        border-top: 1px solid #f0f0f0;
-    }
-    .badge {
-        padding: 0.4rem 0.8rem;
-        border-radius: 6px;
-        font-weight: 600;
-        font-size: 0.75rem;
-    }
-    .btn-sm {
-        padding: 0.4rem 0.8rem;
-        font-size: 0.85rem;
-    }
-    .empty-state {
-        text-align: center;
-        padding: 3rem;
-        color: #999;
-    }
-    .empty-state i {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-        display: block;
-    }
-    .modal-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: #fff;
-        border: none;
-    }
-    .modal-header .btn-close {
-        filter: brightness(0) invert(1);
-    }
-</style>
-
 <div class="coupons-header">
     <h2>
         <div class="icon-wrapper">
@@ -235,13 +154,16 @@
                             
                             if ($calculatedStatus === 'expired') {
                                 $statusBadge = 'danger';
-                                $statusText = 'Hết hạn';
+                                $statusText = 'Đã hết hạn';
                             } elseif ($calculatedStatus === 'out_of_stock') {
                                 $statusBadge = 'warning';
-                                $statusText = 'Hết mã';
+                                $statusText = 'Hết lượt sử dụng';
                             } elseif ($calculatedStatus === 'inactive') {
                                 $statusBadge = 'secondary';
                                 $statusText = 'Tạm dừng';
+                            } elseif ($calculatedStatus === 'pending') {
+                                $statusBadge = 'info';
+                                $statusText = 'Chưa bắt đầu';
                             }
                             ?>
                             <span class="badge bg-<?= $statusBadge ?>">

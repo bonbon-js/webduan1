@@ -1,37 +1,3 @@
-<style>
-    .orders-page {
-        padding: 60px 0;
-        min-height: 70vh;
-    }
-
-    .order-card {
-        border-radius: 12px;
-        border: 1px solid #f0f0f0;
-        padding: 24px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-    }
-
-    .order-card:hover {
-        border-color: #000;
-        transition: border-color 0.2s ease;
-    }
-
-    .order-code {
-        font-weight: 700;
-        letter-spacing: 0.5px;
-    }
-
-    .order-meta {
-        font-size: 0.9rem;
-        color: #666;
-    }
-
-    .order-actions .btn {
-        min-width: 160px;
-    }
-</style>
-
 <!-- Trang lịch sử đơn hàng của user -->
 <section class="orders-page">
     <div class="container">
@@ -56,7 +22,7 @@
                     <div class="row g-3 align-items-center">
                         <div class="col-md-3">
                             <div class="order-code text-uppercase small text-muted mb-1">Mã đơn</div>
-                            <h5 class="mb-0"><?= htmlspecialchars($order['order_code']) ?></h5>
+                            <h5 class="mb-0"><?= htmlspecialchars($order['order_code'] ?? '#' . ($order['id'] ?? $order['order_id'] ?? '')) ?></h5>
                             <div class="order-meta">Ngày đặt: <?= isset($order['created_at']) && $order['created_at'] ? date('d/m/Y H:i', strtotime($order['created_at'])) : '-' ?></div>
                         </div>
                         <div class="col-md-3">

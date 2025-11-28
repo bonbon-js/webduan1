@@ -71,38 +71,147 @@ class OrderModel extends BaseModel
                 }, 0);
             }
 
-            // Lưu order cha
-            $stmt = $this->pdo->prepare("
-                INSERT INTO orders (
-                    order_code, user_id, fullname, email, phone, address, city, district, ward, note, payment_method, status, total_amount, coupon_id, discount_amount, coupon_code, coupon_name
-                )
-                VALUES (
-                    :order_code, :user_id, :fullname, :email, :phone, :address, :city, :district, :ward, :note, :payment_method, :status, :total_amount, :coupon_id, :discount_amount, :coupon_code, :coupon_name
-                )
-            ");
-
-            $orderPayload = [
-                ':order_code'     => $orderData['order_code'] ?? $this->generateOrderCode(),
-                ':user_id'        => $orderData['user_id'] ?? null,
-                ':fullname'       => $orderData['fullname'],
-                ':email'          => $orderData['email'],
-                ':phone'          => $orderData['phone'],
-                ':address'        => $orderData['address'],
-                ':city'           => $orderData['city'] ?? null,
-                ':district'       => $orderData['district'] ?? null,
-                ':ward'           => $orderData['ward'] ?? null,
-                ':note'           => $orderData['note'] ?? null,
-                ':payment_method' => $orderData['payment_method'] ?? 'cod',
-                ':status'         => $orderData['status'] ?? self::STATUS_CONFIRMED,
-                ':total_amount'   => $total,
-                ':coupon_id'      => $orderData['coupon_id'] ?? null,
-                ':discount_amount' => $orderData['discount_amount'] ?? 0,
-                ':coupon_code'    => $orderData['coupon_code'] ?? null,
-                ':coupon_name'    => $orderData['coupon_name'] ?? null,
+            // Kiểm tra các cột có tồn tại không
+            $existingColumns = $this->getExistingColumns('orders');
+            
+            // Tìm tên cột đúng (có thể có biến thể)
+            $columnMap = [
+                'fullname' => $this->findColumnName($existingColumns, ['fullname', 'full_name', 'name', 'customer_name']),
+                'email' => $this->findColumnName($existingColumns, ['email', 'customer_email']),
+                'phone' => $this->findColumnName($existingColumns, ['phone', 'phone_number', 'tel']),
+                'address' => $this->findColumnName($existingColumns, ['address', 'delivery_address', 'shipping_address']),
+                'user_id' => $this->findColumnName($existingColumns, ['user_id', 'customer_id']),
+                'payment_method' => $this->findColumnName($existingColumns, ['payment_method', 'payment']),
+                'status' => $this->findColumnName($existingColumns, ['status', 'order_status']),
+                'total_amount' => $this->findColumnName($existingColumns, ['total_amount', 'total', 'amount']),
             ];
+            
+            // Xây dựng danh sách cột và giá trị động (chỉ thêm các cột tồn tại)
+            $insertColumns = [];
+            $insertValues = [];
+            $orderPayload = [];
+            
+            // KHÔNG thêm PRIMARY KEY vào INSERT (để AUTO_INCREMENT tự động tăng)
+            // Kiểm tra PRIMARY KEY để tránh thêm vào
+            $primaryKeyColumn = $this->getPrimaryKeyColumn('orders');
+            
+            // Thêm các cột bắt buộc nếu tồn tại (trừ PRIMARY KEY)
+            if ($columnMap['user_id'] && $columnMap['user_id'] !== $primaryKeyColumn) {
+                $insertColumns[] = $columnMap['user_id'];
+                $insertValues[] = ':user_id';
+                $orderPayload[':user_id'] = $orderData['user_id'] ?? null;
+            }
+            
+            if ($columnMap['fullname'] && $columnMap['fullname'] !== $primaryKeyColumn) {
+                $insertColumns[] = $columnMap['fullname'];
+                $insertValues[] = ':fullname';
+                $orderPayload[':fullname'] = $orderData['fullname'];
+            }
+            
+            if ($columnMap['email'] && $columnMap['email'] !== $primaryKeyColumn) {
+                $insertColumns[] = $columnMap['email'];
+                $insertValues[] = ':email';
+                $orderPayload[':email'] = $orderData['email'];
+            }
+            
+            if ($columnMap['phone'] && $columnMap['phone'] !== $primaryKeyColumn) {
+                $insertColumns[] = $columnMap['phone'];
+                $insertValues[] = ':phone';
+                $orderPayload[':phone'] = $orderData['phone'];
+            }
+            
+            if ($columnMap['address'] && $columnMap['address'] !== $primaryKeyColumn) {
+                $insertColumns[] = $columnMap['address'];
+                $insertValues[] = ':address';
+                $orderPayload[':address'] = $orderData['address'];
+            }
+            
+            if ($columnMap['payment_method'] && $columnMap['payment_method'] !== $primaryKeyColumn) {
+                $insertColumns[] = $columnMap['payment_method'];
+                $insertValues[] = ':payment_method';
+                $orderPayload[':payment_method'] = $orderData['payment_method'] ?? 'cod';
+            }
+            
+            if ($columnMap['status'] && $columnMap['status'] !== $primaryKeyColumn) {
+                $insertColumns[] = $columnMap['status'];
+                $insertValues[] = ':status';
+                $orderPayload[':status'] = $orderData['status'] ?? self::STATUS_CONFIRMED;
+            }
+            
+            if ($columnMap['total_amount'] && $columnMap['total_amount'] !== $primaryKeyColumn) {
+                $insertColumns[] = $columnMap['total_amount'];
+                $insertValues[] = ':total_amount';
+                $orderPayload[':total_amount'] = $total;
+            }
+            
+            // Thêm các cột tùy chọn nếu tồn tại
+            $optionalColumns = [
+                'order_code' => $orderData['order_code'] ?? $this->generateOrderCode(),
+                'city' => $orderData['city'] ?? null,
+                'district' => $orderData['district'] ?? null,
+                'ward' => $orderData['ward'] ?? null,
+                'note' => $orderData['note'] ?? null,
+                'coupon_id' => $orderData['coupon_id'] ?? null,
+                'discount_amount' => $orderData['discount_amount'] ?? 0,
+                'coupon_code' => $orderData['coupon_code'] ?? null,
+                'coupon_name' => $orderData['coupon_name'] ?? null,
+            ];
+            
+            foreach ($optionalColumns as $col => $value) {
+                // Không thêm PRIMARY KEY vào INSERT
+                if (in_array($col, $existingColumns) && $col !== $primaryKeyColumn) {
+                    $insertColumns[] = $col;
+                    $insertValues[] = ':' . $col;
+                    $orderPayload[':' . $col] = $value;
+                }
+            }
+            
+            // Validate: Phải có ít nhất các cột cơ bản
+            if (empty($insertColumns)) {
+                $errorMsg = 'Không tìm thấy cột nào phù hợp trong bảng orders. ';
+                $errorMsg .= 'Các cột hiện có: ' . implode(', ', $existingColumns);
+                error_log('OrderModel::create - Available columns: ' . implode(', ', $existingColumns));
+                throw new Exception($errorMsg);
+            }
+            
+            // Log để debug
+            error_log('OrderModel::create - Primary Key Column: ' . ($primaryKeyColumn ?? 'NULL'));
+            error_log('OrderModel::create - Inserting columns: ' . implode(', ', $insertColumns));
+            error_log('OrderModel::create - Inserting values: ' . json_encode($orderPayload));
+
+            // Đảm bảo PRIMARY KEY không có trong danh sách cột
+            if ($primaryKeyColumn && in_array($primaryKeyColumn, $insertColumns)) {
+                $errorMsg = "Lỗi: PRIMARY KEY ($primaryKeyColumn) đã được thêm vào INSERT statement. Điều này không được phép.";
+                error_log($errorMsg);
+                throw new Exception($errorMsg);
+            }
+
+            // Lưu order cha
+            $columnsStr = implode(', ', $insertColumns);
+            $valuesStr = implode(', ', $insertValues);
+            
+            $sql = "INSERT INTO orders ($columnsStr) VALUES ($valuesStr)";
+            error_log('OrderModel::create - SQL: ' . $sql);
+            
+            $stmt = $this->pdo->prepare($sql);
 
             $stmt->execute($orderPayload);
             $orderId = (int)$this->pdo->lastInsertId();
+            
+            if ($orderId === 0) {
+                error_log('OrderModel::create - WARNING: lastInsertId() returned 0. This might indicate an issue with AUTO_INCREMENT.');
+                // Thử lấy ID bằng cách khác
+                $stmt = $this->pdo->query("SELECT LAST_INSERT_ID() as id");
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($result && isset($result['id']) && $result['id'] > 0) {
+                    $orderId = (int)$result['id'];
+                    error_log('OrderModel::create - Got ID from LAST_INSERT_ID(): ' . $orderId);
+                } else {
+                    throw new Exception('Không thể lấy ID của đơn hàng vừa tạo. Có thể do lỗi AUTO_INCREMENT.');
+                }
+            }
+            
+            error_log('OrderModel::create - Created order with ID: ' . $orderId);
 
             // Chuẩn bị statement để loop thêm từng sản phẩm
             $itemStmt = $this->pdo->prepare("
@@ -135,26 +244,46 @@ class OrderModel extends BaseModel
         }
     }
 
-    // Lấy lịch sử đơn hàng dành cho user (tự động ưu tiên user_id, fallback email)
+    // Lấy lịch sử đơn hàng dành cho user
     public function getHistory(?int $userId, ?string $email): array
     {
+        // Kiểm tra các cột có tồn tại không
+        $existingColumns = $this->getExistingColumns('orders');
+        
+        // Tìm tên cột user_id (có thể là user_id hoặc customer_id)
+        $userIdColumn = $this->findColumnName($existingColumns, ['user_id', 'customer_id']);
+        
+        if (!$userIdColumn) {
+            // Nếu không có cột user_id, trả về mảng rỗng
+            error_log('OrderModel::getHistory - No user_id column found in orders table');
+            return [];
+        }
+        
         $query = "SELECT * FROM orders";
         $params = [];
 
-        if ($userId && $email) {
-            $query .= " WHERE (user_id = :user_id OR email = :email)";
+        // Chỉ sử dụng user_id để tìm kiếm (đảm bảo an toàn và đơn giản)
+        if ($userId) {
+            $query .= " WHERE $userIdColumn = :user_id";
             $params[':user_id'] = $userId;
-            $params[':email']   = $email;
-        } elseif ($userId) {
-            $query .= " WHERE user_id = :user_id";
-            $params[':user_id'] = $userId;
-        } elseif ($email) {
-            $query .= " WHERE email = :email";
-            $params[':email'] = $email;
+        } else {
+            // Nếu không có user_id, trả về mảng rỗng
+            return [];
         }
 
-        // Bỏ ORDER BY vì không có cột phù hợp để sắp xếp
-        // $query .= " ORDER BY ...";
+        // Sắp xếp theo order_id (mới nhất trước) - không dùng created_at vì có thể không tồn tại
+        // Tìm tên cột PRIMARY KEY để sắp xếp
+        $pkColumn = $this->getPrimaryKeyColumn('orders');
+        if ($pkColumn) {
+            $query .= " ORDER BY $pkColumn DESC";
+        } else {
+            // Nếu không tìm thấy PRIMARY KEY, thử dùng order_id hoặc id
+            if (in_array('order_id', $existingColumns)) {
+                $query .= " ORDER BY order_id DESC";
+            } elseif (in_array('id', $existingColumns)) {
+                $query .= " ORDER BY id DESC";
+            }
+        }
 
         $stmt = $this->pdo->prepare($query);
         $stmt->execute($params);
@@ -257,6 +386,60 @@ class OrderModel extends BaseModel
     private function generateOrderCode(): string
     {
         return 'BB' . strtoupper(dechex(time())) . strtoupper(substr(uniqid('', true), -4));
+    }
+    
+    // Lấy danh sách cột có trong bảng
+    private function getExistingColumns(string $tableName): array
+    {
+        static $cache = [];
+        
+        if (isset($cache[$tableName])) {
+            return $cache[$tableName];
+        }
+        
+        try {
+            $stmt = $this->pdo->query("SHOW COLUMNS FROM {$tableName}");
+            $columns = [];
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $columns[] = $row['Field'];
+            }
+            $cache[$tableName] = $columns;
+            return $columns;
+        } catch (PDOException $e) {
+            // Nếu không thể lấy danh sách cột, trả về mảng rỗng
+            return [];
+        }
+    }
+    
+    // Tìm tên cột đúng từ danh sách các biến thể có thể có
+    private function findColumnName(array $existingColumns, array $possibleNames): ?string
+    {
+        foreach ($possibleNames as $name) {
+            if (in_array($name, $existingColumns)) {
+                return $name;
+            }
+        }
+        return null;
+    }
+    
+    // Lấy tên cột PRIMARY KEY của bảng
+    private function getPrimaryKeyColumn(string $tableName): ?string
+    {
+        static $cache = [];
+        
+        if (isset($cache[$tableName])) {
+            return $cache[$tableName];
+        }
+        
+        try {
+            $stmt = $this->pdo->query("SHOW COLUMNS FROM {$tableName} WHERE `Key` = 'PRI'");
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $pkColumn = $row ? $row['Field'] : null;
+            $cache[$tableName] = $pkColumn;
+            return $pkColumn;
+        } catch (PDOException $e) {
+            return null;
+        }
     }
 
     // Lấy tổng số đơn hàng

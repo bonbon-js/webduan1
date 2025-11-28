@@ -29,6 +29,17 @@ match ($action) {
     // Checkout routes
     'checkout'       => (new CheckoutController)->index(),
     'checkout-process' => (new CheckoutController)->process(),
+    'set-default-address' => (new CheckoutController)->setDefaultAddress(),
+    'save-address' => (new CheckoutController)->saveAddress(),
+    
+    // VNPay routes
+    'vnpay-return'   => (new VnPayController)->return(),
+    
+    // Address routes
+    'address-provinces' => (new AddressController)->getProvinces(),
+    'address-districts' => (new AddressController)->getDistricts(),
+    'address-wards' => (new AddressController)->getWards(),
+    'address-search' => (new AddressController)->search(),
     
     // Coupon routes
     'coupon-validate' => (new CouponController)->validate(),
@@ -39,6 +50,11 @@ match ($action) {
     'order-history'  => (new OrderController)->history(),
     'order-detail'   => (new OrderController)->detail(),
     'order-cancel'   => (new OrderController)->cancel(),
+    
+    // Routes đánh giá cho user
+    'review-submit'  => (new ReviewController)->submit(),
+    'review-upload-image' => (new ReviewController)->uploadImage(),
+    'review-get'     => (new ReviewController)->getByProduct(),
 
     // Routes quản trị
     'admin-dashboard'    => (new AdminDashboardController)->index(),
@@ -58,6 +74,12 @@ match ($action) {
     'admin-coupons-trash' => (new AdminCouponController)->trash(),
     'admin-coupon-restore' => (new AdminCouponController)->restore(),
     'admin-coupon-force-delete' => (new AdminCouponController)->forceDelete(),
+    
+    // Quản lý đánh giá
+    'admin-reviews'  => (new AdminReviewController)->index(),
+    'admin-review-toggle-hidden' => (new AdminReviewController)->toggleHidden(),
+    'admin-review-reply' => (new AdminReviewController)->reply(),
+    'admin-review-delete' => (new AdminReviewController)->delete(),
     
     // Auth routes
     'show-login'         => (new AuthController)->showLogin(),

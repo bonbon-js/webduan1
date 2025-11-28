@@ -1,5 +1,8 @@
 <?php
 
+// Thiết lập timezone mặc định cho toàn bộ ứng dụng
+date_default_timezone_set('Asia/Ho_Chi_Minh');
+
 define('BASE_URL',          'http://localhost/webduan1/');
 
 define('PATH_ROOT',         __DIR__ . '/../');
@@ -34,3 +37,10 @@ define('MAIL_USERNAME', 'le3221981@gmail.com');
 define('MAIL_PASSWORD', 'pslo nbcf htvf ftij'); // App Password của Gmail
 define('MAIL_FROM_ADDRESS', 'le3221981@gmail.com');
 define('MAIL_FROM_NAME', 'bonbon_shop');
+
+// VNPay Configuration
+// Lấy thông tin từ https://sandbox.vnpayment.vn/apis/docs/
+define('VNPAY_TMN_CODE', ''); // Điền mã website của bạn
+define('VNPAY_HASH_SECRET', ''); // Điền mã bảo mật từ VNPay
+define('VNPAY_URL', 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'); // Sandbox URL
+// Production URL: 'https://www.vnpayment.vn/paymentv2/vpcpay.html'

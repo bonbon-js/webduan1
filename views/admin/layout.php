@@ -64,9 +64,9 @@
                     <span>Quản lý sản phẩm</span>
                 </a>
                 
-                <a href="#" class="nav-item">
-                    <i class="bi bi-chat-dots"></i>
-                    <span>Quản lý bình luận</span>
+                <a href="<?= BASE_URL ?>?action=admin-reviews" class="nav-item <?= $isActive('admin-reviews') ?>">
+                    <i class="bi bi-star"></i>
+                    <span>Quản lý đánh giá</span>
                 </a>
                 <a href="<?= BASE_URL ?>?action=admin-orders" class="nav-item <?= $isActive('admin-orders') ?>">
                     <i class="bi bi-cart"></i>

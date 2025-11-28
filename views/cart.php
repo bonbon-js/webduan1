@@ -1,256 +1,3 @@
-<style>
-    .cart-page {
-        padding: 60px 0;
-        min-height: 60vh;
-    }
-    
-    .cart-header {
-        margin-bottom: 40px;
-        text-align: center;
-    }
-    
-    .cart-title {
-        font-family: 'Playfair Display', serif;
-        font-size: 2.5rem;
-        margin-bottom: 10px;
-    }
-    
-    .cart-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    
-    .cart-table th {
-        text-transform: uppercase;
-        font-size: 0.8rem;
-        letter-spacing: 1px;
-        padding: 20px;
-        border-bottom: 2px solid #000;
-        font-weight: 600;
-        text-align: left;
-    }
-    
-    .cart-table td {
-        padding: 25px 20px;
-        border-bottom: 1px solid #eee;
-        vertical-align: middle;
-    }
-    
-    .cart-product-img {
-        width: 80px;
-        height: 100px;
-        object-fit: cover;
-        margin-right: 20px;
-    }
-    
-    .cart-product-name {
-        font-weight: 600;
-        margin-bottom: 5px;
-        display: block;
-        color: #000;
-        text-decoration: none;
-    }
-    
-    .qty-input-group {
-        display: flex;
-        align-items: center;
-        border: 1px solid #000;
-        width: fit-content;
-        border-radius: 4px;
-    }
-    
-    .qty-btn {
-        background: #fff;
-        border: none;
-        padding: 5px 12px;
-        cursor: pointer;
-        color: #000;
-        transition: all 0.3s;
-        font-weight: 600;
-    }
-    
-    .qty-btn:hover {
-        background: #000;
-        color: #fff;
-    }
-    
-    .qty-input {
-        width: 40px;
-        text-align: center;
-        border: none;
-        font-weight: 600;
-        appearance: none;
-        -moz-appeara: textfield;
-    }
-    
-    .qty-input::-webkit-outer-spin-button,
-    .qty-input::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
-    
-    .remove-btn {
-        color: #666;
-        background: none;
-        border: none;
-        cursor: pointer;
-        transition: all 0.3s;
-        padding: 8px;
-        border-radius: 4px;
-    }
-    
-    .remove-btn:hover {
-        color: #000;
-        background: #f5f5f5;
-    }
-    
-    .coupon-section {
-        padding: 15px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        border: 1px solid #e0e0e0;
-    }
-    
-    .coupon-message {
-        font-size: 0.85rem;
-        margin-top: 8px;
-    }
-    
-    .coupon-message.success {
-        color: #28a745;
-    }
-    
-    .coupon-message.error {
-        color: #dc3545;
-    }
-    
-    .coupon-item {
-        cursor: pointer;
-        transition: all 0.3s;
-        border: 1px solid #ddd;
-        margin-bottom: 8px;
-        border-radius: 4px;
-    }
-    
-    .coupon-item:hover {
-        border-color: #000;
-        background: #f8f9fa;
-    }
-    
-    .coupon-item.selected {
-        border-color: #28a745;
-        background: #d4edda;
-    }
-    
-    .cart-summary {
-        background: #fafafa;
-        padding: 30px;
-        border-radius: 4px;
-        margin-top: 20px;
-        border: 1px solid #e0e0e0;
-    }
-    
-    .summary-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 15px;
-        font-size: 0.95rem;
-    }
-    
-    .summary-total {
-        border-top: 2px solid #000;
-        padding-top: 15px;
-        margin-top: 15px;
-        font-weight: 700;
-        font-size: 1.2rem;
-        color: #000;
-    }
-    
-    .btn-checkout {
-        display: block;
-        width: 100%;
-        background: #000;
-        color: #fff;
-        text-align: center;
-        padding: 15px;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        font-weight: 600;
-        text-decoration: none;
-        margin-top: 20px;
-        transition: all 0.3s;
-    }
-    
-    .btn-checkout:hover {
-        background: #333;
-        color: #fff;
-    }
-    
-    .empty-cart {
-        text-align: center;
-        padding: 60px 0;
-    }
-    
-    .empty-cart i {
-        font-size: 4rem;
-        color: #999;
-        margin-bottom: 20px;
-    }
-    
-    .empty-cart h3 {
-        color: #000;
-        font-weight: 600;
-    }
-
-    .cart-item-checkbox {
-        width: 18px;
-        height: 18px;
-        cursor: pointer;
-    }
-
-    #selectAll, #selectAllBottom {
-        width: 18px;
-        height: 18px;
-        cursor: pointer;
-    }
-    
-    #checkoutBtn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        background: #999 !important;
-    }
-
-    #deleteSelectedBtn:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-        background: #f5f5f5 !important;
-        color: #999 !important;
-        border-color: #ddd !important;
-    }
-    
-    #deleteSelectedBtn:not(:disabled) {
-        background: #000;
-        color: #fff;
-        border: 1px solid #000;
-    }
-    
-    #deleteSelectedBtn:not(:disabled):hover {
-        background: #1a1a1a;
-        border-color: #1a1a1a;
-    }
-    
-    .btn-outline-danger {
-        border-color: #000;
-        color: #000;
-    }
-    
-    .btn-outline-danger:hover {
-        background: #000;
-        color: #fff;
-        border-color: #000;
-    }
-</style>
-
 <div class="container cart-page">
     <div class="cart-header">
         <h1 class="cart-title">Giỏ Hàng Của Bạn</h1>
@@ -461,14 +208,22 @@ function updateQty(cartKey, change) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
+            // Cập nhật giá trị input số lượng
+            input.value = newQty;
+            
             // Cập nhật data attributes và tổng tiền
+            // Đảm bảo lấy giá đúng từ data attribute (loại bỏ các ký tự không phải số nếu có)
             const itemPrice = parseFloat(row.dataset.itemPrice) || 0;
+            if (isNaN(itemPrice) || itemPrice <= 0) {
+                console.error('Invalid item price:', row.dataset.itemPrice);
+                return;
+            }
             const itemTotal = itemPrice * newQty;
             row.dataset.itemQuantity = newQty;
             row.dataset.itemTotal = itemTotal;
             
-            // Cập nhật hiển thị tổng tiền của item
-            const totalCell = row.querySelector('td:nth-child(6)');
+            // Cập nhật hiển thị tổng tiền của item (cột thứ 5: Checkbox, Sản phẩm, Giá, Số lượng, Tổng, Xóa)
+            const totalCell = row.querySelector('td:nth-child(5)');
             if (totalCell) {
                 totalCell.textContent = formatCurrency(itemTotal);
             }
@@ -477,9 +232,14 @@ function updateQty(cartKey, change) {
             const checkbox = row.querySelector('.cart-item-checkbox');
             if (checkbox && checkbox.checked) {
                 updateBuyTotal();
+            } else {
+                // Nếu không được chọn, vẫn cập nhật tổng tiền để đồng bộ
+                updateBuyTotal();
             }
         } else {
-            alert('Có lỗi xảy ra khi cập nhật số lượng');
+            alert('Có lỗi xảy ra khi cập nhật số lượng: ' + (data.message || ''));
+            // Khôi phục giá trị cũ nếu có lỗi
+            input.value = parseInt(input.value) - change;
         }
     })
     .catch(err => {
@@ -623,7 +383,18 @@ function updateBuyTotal() {
         const cartKey = checkbox.value;
         const row = document.querySelector(`tr[data-cart-key="${cartKey}"]`);
         if (row) {
-            const itemTotal = parseFloat(row.dataset.itemTotal) || 0;
+            // Lấy giá trị từ data attribute hoặc tính lại từ giá và số lượng
+            let itemTotal = parseFloat(row.dataset.itemTotal) || 0;
+            
+            // Nếu itemTotal không hợp lệ, tính lại từ giá và số lượng
+            if (isNaN(itemTotal) || itemTotal <= 0) {
+                const itemPrice = parseFloat(row.dataset.itemPrice) || 0;
+                const itemQuantity = parseInt(row.dataset.itemQuantity) || 0;
+                itemTotal = itemPrice * itemQuantity;
+                // Cập nhật lại data attribute
+                row.dataset.itemTotal = itemTotal;
+            }
+            
             subtotal += itemTotal;
         }
     });
@@ -705,20 +476,31 @@ function loadAvailableCoupons() {
         const cartKey = checkbox.value;
         const row = document.querySelector(`tr[data-cart-key="${cartKey}"]`);
         if (row) {
-            const itemTotal = parseFloat(row.dataset.itemTotal) || 0;
+            // Lấy giá trị từ data attribute hoặc tính lại từ giá và số lượng
+            let itemTotal = parseFloat(row.dataset.itemTotal) || 0;
+            
+            // Nếu itemTotal không hợp lệ, tính lại từ giá và số lượng
+            if (isNaN(itemTotal) || itemTotal <= 0) {
+                const itemPrice = parseFloat(row.dataset.itemPrice) || 0;
+                const itemQuantity = parseInt(row.dataset.itemQuantity) || 0;
+                itemTotal = itemPrice * itemQuantity;
+                // Cập nhật lại data attribute
+                row.dataset.itemTotal = itemTotal;
+            }
+            
             subtotal += itemTotal;
         }
     });
     
-    if (subtotal <= 0) {
-        document.getElementById('availableCouponsSection').style.display = 'none';
-        return;
-    }
+    // Tính tổng tiền (có thể = 0 nếu chưa chọn sản phẩm)
+    // Vẫn tải danh sách mã để hiển thị các mã không yêu cầu đơn tối thiểu
+    const orderAmount = subtotal > 0 ? subtotal : 0;
     
-    fetch(`<?= BASE_URL ?>?action=coupon-available&order_amount=${subtotal}`)
+    fetch(`<?= BASE_URL ?>?action=coupon-available&order_amount=${orderAmount}`)
         .then(response => response.json())
         .then(data => {
-            if (data.success && data.coupons.length > 0) {
+            console.log('loadAvailableCoupons response:', data);
+            if (data.success && data.coupons && data.coupons.length > 0) {
                 // Tính discount_amount cho mỗi mã và sắp xếp
                 const couponPromises = data.coupons.map(coupon => {
                     return fetch('<?= BASE_URL ?>?action=coupon-validate', {
@@ -728,11 +510,12 @@ function loadAvailableCoupons() {
                         },
                         body: JSON.stringify({
                             coupon_code: coupon.code,
-                            order_amount: subtotal
+                            order_amount: orderAmount
                         })
                     })
                     .then(res => res.json())
                     .then(result => {
+                        console.log('Coupon validate result for', coupon.code, ':', result);
                         if (result.success) {
                             return {
                                 coupon: coupon,
@@ -741,14 +524,18 @@ function loadAvailableCoupons() {
                         }
                         return null;
                     })
-                    .catch(() => null);
+                    .catch((error) => {
+                        console.error('Error validating coupon', coupon.code, ':', error);
+                        return null;
+                    });
                 });
                 
                 Promise.all(couponPromises).then(results => {
                     const validCoupons = results.filter(r => r !== null);
+                    console.log('loadAvailableCoupons validCoupons:', validCoupons);
                     
                     if (validCoupons.length > 0) {
-                        // Sắp xếp theo discount_amount giảm dần (mã giảm nhiều nhất ở đầu)
+                        // Sắp xếp theo discount_amount giảm dần (mã giảm nhiều nhất ở đầu, ít nhất ở cuối)
                         validCoupons.sort((a, b) => b.discount_amount - a.discount_amount);
                         
                         // Loại bỏ mã "Lựa chọn tốt nhất" khỏi danh sách nếu đã hiển thị ở trên
@@ -763,6 +550,8 @@ function loadAvailableCoupons() {
                         const listContainer = document.getElementById('availableCouponsList');
                         listContainer.innerHTML = '';
                         
+                        // Hiển thị các mã giảm giá theo thứ tự giảm dần (mã giảm nhiều nhất ở trên, ít nhất ở dưới)
+                        // Mã tốt nhất đã được hiển thị ở trên cùng với badge "Lựa chọn tốt nhất"
                         filteredCoupons.forEach((itemData, index) => {
                             const coupon = itemData.coupon;
                             const discountAmount = itemData.discount_amount;
@@ -818,6 +607,11 @@ function loadAvailableCoupons() {
         })
         .catch(error => {
             console.error('Error loading coupons:', error);
+            // Ẩn section nếu có lỗi
+            const section = document.getElementById('availableCouponsSection');
+            if (section) {
+                section.style.display = 'none';
+            }
         });
 }
 
@@ -839,14 +633,29 @@ function applyCoupon() {
         const cartKey = checkbox.value;
         const row = document.querySelector(`tr[data-cart-key="${cartKey}"]`);
         if (row) {
-            const itemTotal = parseFloat(row.dataset.itemTotal) || 0;
+            // Lấy giá trị từ data attribute hoặc tính lại từ giá và số lượng
+            let itemTotal = parseFloat(row.dataset.itemTotal) || 0;
+            
+            // Nếu itemTotal không hợp lệ, tính lại từ giá và số lượng
+            if (isNaN(itemTotal) || itemTotal <= 0) {
+                const itemPrice = parseFloat(row.dataset.itemPrice) || 0;
+                const itemQuantity = parseInt(row.dataset.itemQuantity) || 0;
+                itemTotal = itemPrice * itemQuantity;
+                // Cập nhật lại data attribute
+                row.dataset.itemTotal = itemTotal;
+            }
+            
             subtotal += itemTotal;
         }
     });
     
-    if (subtotal <= 0) {
-        messageDiv.innerHTML = '<span class="coupon-message error">Vui lòng chọn sản phẩm để áp dụng mã giảm giá</span>';
-        return;
+    // Cho phép áp dụng mã ngay cả khi chưa chọn sản phẩm (để validate mã không yêu cầu đơn tối thiểu)
+    // Nếu subtotal = 0, vẫn gửi request để validate, server sẽ kiểm tra điều kiện
+    const orderAmount = subtotal > 0 ? subtotal : 0;
+    
+    if (orderAmount === 0) {
+        // Nếu chưa chọn sản phẩm, vẫn cho phép validate nhưng sẽ có thông báo nếu mã yêu cầu đơn tối thiểu
+        console.log('Áp dụng mã với orderAmount = 0 (chưa chọn sản phẩm)');
     }
     
     applyBtn.disabled = true;
@@ -860,25 +669,38 @@ function applyCoupon() {
         },
         body: JSON.stringify({
             coupon_code: code,
-            order_amount: subtotal
+            order_amount: orderAmount
         })
     })
     .then(response => response.json())
     .then(data => {
+        console.log('applyCoupon response:', data);
         if (data.success) {
             appliedCouponData = data.coupon;
             appliedCouponData.discount_amount = data.discount_amount;
             pendingCouponCode = null; // Xóa mã chờ vì đã áp dụng thành công
             
-            showAppliedCoupon(data.coupon.code, data.coupon.name, data.discount_amount);
-            updateTotalsWithCoupon(data.discount_amount);
-            
-            document.getElementById('couponCodeInput').value = '';
-            document.getElementById('couponCodeInput').disabled = true;
-            applyBtn.disabled = true;
-            applyBtn.textContent = 'Đã áp dụng';
-            
-            messageDiv.innerHTML = '<span class="coupon-message success">✓ ' + data.message + '</span>';
+            // Nếu orderAmount = 0 (chưa chọn sản phẩm), chỉ lưu mã vào pending
+            if (orderAmount === 0) {
+                // Mã hợp lệ nhưng chưa có sản phẩm, lưu vào pending
+                pendingCouponCode = code;
+                document.getElementById('couponCodeInput').value = code;
+                messageDiv.innerHTML = '<span class="coupon-message success">✓ Mã hợp lệ! Vui lòng chọn sản phẩm để áp dụng mã giảm giá.</span>';
+                applyBtn.disabled = false;
+                applyBtn.textContent = 'Áp dụng';
+                // Không hiển thị applied coupon vì chưa có sản phẩm
+            } else {
+                // Có sản phẩm, áp dụng mã ngay
+                showAppliedCoupon(data.coupon.code, data.coupon.name, data.discount_amount);
+                updateTotalsWithCoupon(data.discount_amount);
+                
+                document.getElementById('couponCodeInput').value = data.coupon.code;
+                document.getElementById('couponCodeInput').disabled = true;
+                applyBtn.disabled = true;
+                applyBtn.textContent = 'Đã áp dụng';
+                
+                messageDiv.innerHTML = '<span class="coupon-message success">✓ ' + data.message + '</span>';
+            }
         } else {
             // Lưu mã vào pending để tự động áp dụng khi đủ điều kiện
             pendingCouponCode = code;
@@ -1019,7 +841,18 @@ function getSelectedSubtotal() {
         const cartKey = checkbox.value;
         const row = document.querySelector(`tr[data-cart-key="${cartKey}"]`);
         if (row) {
-            const itemTotal = parseFloat(row.dataset.itemTotal) || 0;
+            // Lấy giá trị từ data attribute hoặc tính lại từ giá và số lượng
+            let itemTotal = parseFloat(row.dataset.itemTotal) || 0;
+            
+            // Nếu itemTotal không hợp lệ, tính lại từ giá và số lượng
+            if (isNaN(itemTotal) || itemTotal <= 0) {
+                const itemPrice = parseFloat(row.dataset.itemPrice) || 0;
+                const itemQuantity = parseInt(row.dataset.itemQuantity) || 0;
+                itemTotal = itemPrice * itemQuantity;
+                // Cập nhật lại data attribute
+                row.dataset.itemTotal = itemTotal;
+            }
+            
             subtotal += itemTotal;
         }
     });
@@ -1153,16 +986,21 @@ function findBestCoupon() {
         const cartKey = checkbox.value;
         const row = document.querySelector(`tr[data-cart-key="${cartKey}"]`);
         if (row) {
-            const itemTotal = parseFloat(row.dataset.itemTotal) || 0;
+            // Lấy giá trị từ data attribute hoặc tính lại từ giá và số lượng
+            let itemTotal = parseFloat(row.dataset.itemTotal) || 0;
+            
+            // Nếu itemTotal không hợp lệ, tính lại từ giá và số lượng
+            if (isNaN(itemTotal) || itemTotal <= 0) {
+                const itemPrice = parseFloat(row.dataset.itemPrice) || 0;
+                const itemQuantity = parseInt(row.dataset.itemQuantity) || 0;
+                itemTotal = itemPrice * itemQuantity;
+                // Cập nhật lại data attribute
+                row.dataset.itemTotal = itemTotal;
+            }
+            
             subtotal += itemTotal;
         }
     });
-    
-    if (subtotal <= 0) {
-        const suggestionDiv = document.getElementById('bestCouponSuggestionInBox');
-        if (suggestionDiv) suggestionDiv.style.display = 'none';
-        return;
-    }
     
     // Nếu đã có mã áp dụng, không hiển thị gợi ý
     if (appliedCouponData) {
@@ -1171,10 +1009,14 @@ function findBestCoupon() {
         return;
     }
     
-    fetch(`<?= BASE_URL ?>?action=coupon-available&order_amount=${subtotal}`)
+    // Sử dụng subtotal, nếu = 0 thì vẫn tìm mã (có thể có mã không yêu cầu đơn tối thiểu)
+    const orderAmount = subtotal > 0 ? subtotal : 0;
+    
+    fetch(`<?= BASE_URL ?>?action=coupon-available&order_amount=${orderAmount}`)
         .then(response => response.json())
         .then(data => {
-            if (data.success && data.coupons.length > 0) {
+            console.log('findBestCoupon response:', data);
+            if (data.success && data.coupons && data.coupons.length > 0) {
                 // Tính discount cho mỗi mã và tìm mã tốt nhất
                 const couponPromises = data.coupons.map(coupon => {
                     return fetch('<?= BASE_URL ?>?action=coupon-validate', {
@@ -1184,7 +1026,7 @@ function findBestCoupon() {
                         },
                         body: JSON.stringify({
                             coupon_code: coupon.code,
-                            order_amount: subtotal
+                            order_amount: orderAmount
                         })
                     })
                     .then(res => res.json())
@@ -1203,11 +1045,13 @@ function findBestCoupon() {
                 
                 Promise.all(couponPromises).then(results => {
                     const validCoupons = results.filter(r => r !== null);
+                    console.log('findBestCoupon validCoupons:', validCoupons);
                     if (validCoupons.length > 0) {
-                        // Sắp xếp theo discount_amount giảm dần (mã giảm nhiều nhất lên đầu)
+                        // Sắp xếp theo discount_amount giảm dần (mã giảm nhiều nhất ở trên, ít nhất ở dưới)
                         validCoupons.sort((a, b) => b.discount_amount - a.discount_amount);
                         
                         // Lấy mã đầu tiên (giảm nhiều nhất) - Lựa chọn tốt nhất
+                        // Mã này sẽ được hiển thị ở trên cùng với badge "Lựa chọn tốt nhất"
                         const best = validCoupons[0];
                         
                         bestCouponData = best;
@@ -1230,6 +1074,7 @@ function findBestCoupon() {
 }
 
 function displayBestCoupon(best) {
+    console.log('displayBestCoupon called with:', best);
     // Lưu mã code để loại bỏ khỏi danh sách
     bestCouponCode = best.coupon.code;
     
@@ -1239,11 +1084,21 @@ function displayBestCoupon(best) {
     const discountDivInBox = document.getElementById('bestCouponDiscountInBox');
     const nameDivInBox = document.getElementById('bestCouponNameInBox');
     
+    console.log('Elements found:', {
+        suggestionDivInBox: !!suggestionDivInBox,
+        codeDivInBox: !!codeDivInBox,
+        discountDivInBox: !!discountDivInBox,
+        nameDivInBox: !!nameDivInBox
+    });
+    
     if (suggestionDivInBox && codeDivInBox && discountDivInBox && nameDivInBox) {
         codeDivInBox.textContent = best.coupon.code;
         discountDivInBox.textContent = `Tiết kiệm ${formatCurrency(best.discount_amount)}`;
         nameDivInBox.textContent = best.coupon.name || '';
         suggestionDivInBox.style.display = 'block';
+        console.log('Best coupon displayed');
+    } else {
+        console.error('Missing elements for displaying best coupon');
     }
     
     // Tải lại danh sách mã giảm giá để loại bỏ mã đã hiển thị ở trên
@@ -1260,6 +1115,7 @@ function applyBestCoupon() {
 
 // Tải danh sách mã giảm giá khi trang load
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOMContentLoaded - Loading coupons...');
     loadAvailableCoupons();
     findBestCoupon();
     

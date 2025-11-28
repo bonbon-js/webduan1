@@ -391,7 +391,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <?php foreach ($products as $product) : ?>
             <div class="col-12 col-sm-6 col-lg-3">
                 <article class="product-card">
-                    <?php if (isset($product['id']) && $product['id'] <= 3) : ?>
+                    <?php if (isset($product['id']) && isset($newProductIds) && in_array((int)$product['id'], $newProductIds, true)) : ?>
                         <span class="product-badge">New</span>
                     <?php endif; ?>
                     <div class="product-card-image-wrapper">
