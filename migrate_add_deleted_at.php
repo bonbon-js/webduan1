@@ -1,6 +1,4 @@
 <?php
-// Script migration để thêm cột deleted_at vào bảng coupons
-// Truy cập: http://localhost/webduan1/migrate_add_deleted_at.php
 
 require_once 'configs/env.php';
 
