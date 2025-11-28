@@ -73,14 +73,13 @@
                             <span class="ms-1 small"><?= $_SESSION['user']['fullname'] ?? 'User' ?></span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="<?= BASE_URL ?>?action=profile"><i class="bi bi-person me-2"></i>Thông tin cá nhân</a></li>
-                            <li><a class="dropdown-item" href="<?= BASE_URL ?>?action=order-history"><i class="bi bi-bag-check me-2"></i>Đơn hàng của tôi</a></li>
+                            <li><a class="dropdown-item" href="<?= BASE_URL ?>?action=profile">Thông tin cá nhân</a></li>
                             <?php if (($_SESSION['user']['role'] ?? null) === 'admin'): ?>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="<?= BASE_URL ?>?action=admin-dashboard"><i class="bi bi-speedometer2 me-2"></i>Quản lý</a></li>
+                                <li><a class="dropdown-item" href="<?= BASE_URL ?>?action=admin-dashboard">Quản lý</a></li>
                             <?php endif; ?>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="<?= BASE_URL ?>?action=logout"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</a></li>
+                            <li><a class="dropdown-item" href="<?= BASE_URL ?>?action=logout">Đăng xuất</a></li>
                         </ul>
                     </div>
                 <?php else: ?>
