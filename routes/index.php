@@ -59,6 +59,25 @@ match ($action) {
     'admin-coupon-restore' => (new AdminCouponController)->restore(),
     'admin-coupon-force-delete' => (new AdminCouponController)->forceDelete(),
     
+    // Quản lý danh mục
+    'admin-categories'      => (new AdminCategoryController)->index(),
+    'admin-category-create' => (new AdminCategoryController)->create(),
+    'admin-category-edit'   => (new AdminCategoryController)->edit(),
+    'admin-category-store'  => (new AdminCategoryController)->store(),
+    'admin-category-update' => (new AdminCategoryController)->update(),
+    'admin-category-delete' => (new AdminCategoryController)->delete(),
+    
+    // Quản lý sản phẩm
+    'admin-products'      => (new AdminProductController)->index(),
+    'admin-product-create' => (new AdminProductController)->create(),
+    'admin-product-edit'   => (new AdminProductController)->edit(),
+    'admin-product-store'  => (new AdminProductController)->store(),
+    'admin-product-update' => (new AdminProductController)->update(),
+    'admin-product-delete' => (new AdminProductController)->delete(),
+    'admin-product-variant-store' => (new AdminProductController)->storeVariant(),
+    'admin-product-variant-update' => (new AdminProductController)->updateVariant(),
+    'admin-product-variant-delete' => (new AdminProductController)->deleteVariant(),
+    
     // Auth routes
     'show-login'         => (new AuthController)->showLogin(),
     'show-register'      => (new AuthController)->showRegister(),

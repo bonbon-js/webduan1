@@ -130,8 +130,14 @@ class ProductModel extends BaseModel
 
             if (!empty($variantIds)) {
                 $placeholder = implode(',', array_fill(0, count($variantIds), '?'));
-                $stmt = $this->pdo->prepare("DELETE FROM variant_images WHERE variant_id IN ($placeholder)");
-                $stmt->execute($variantIds);
+                
+                // Xóa variant_images nếu bảng tồn tại (bỏ qua lỗi nếu không tồn tại)
+                try {
+                    $stmt = $this->pdo->prepare("DELETE FROM variant_images WHERE variant_id IN ($placeholder)");
+                    $stmt->execute($variantIds);
+                } catch (PDOException $e) {
+                    // Bảng variant_images không tồn tại, bỏ qua
+                }
 
                 $stmt = $this->pdo->prepare("DELETE FROM product_attribute_values WHERE variant_id IN ($placeholder)");
                 $stmt->execute($variantIds);
@@ -295,9 +301,14 @@ class ProductModel extends BaseModel
         $this->pdo->beginTransaction();
 
         try {
-            $stmt = $this->pdo->prepare("DELETE FROM variant_images WHERE variant_id = :variant_id");
-            $stmt->bindValue(':variant_id', $variantId, PDO::PARAM_INT);
-            $stmt->execute();
+            // Xóa variant_images nếu bảng tồn tại (bỏ qua lỗi nếu không tồn tại)
+            try {
+                $stmt = $this->pdo->prepare("DELETE FROM variant_images WHERE variant_id = :variant_id");
+                $stmt->bindValue(':variant_id', $variantId, PDO::PARAM_INT);
+                $stmt->execute();
+            } catch (PDOException $e) {
+                // Bảng variant_images không tồn tại, bỏ qua
+            }
 
             $stmt = $this->pdo->prepare("DELETE FROM product_attribute_values WHERE variant_id = :variant_id");
             $stmt->bindValue(':variant_id', $variantId, PDO::PARAM_INT);

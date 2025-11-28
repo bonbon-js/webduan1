@@ -21,6 +21,40 @@ class AdminCategoryController
         require_once PATH_VIEW . 'admin/layout.php';
     }
 
+    public function create(): void
+    {
+        $this->requireAdmin();
+
+        $title = 'Thêm danh mục mới';
+        $view  = 'admin/categories/form';
+
+        require_once PATH_VIEW . 'admin/layout.php';
+    }
+
+    public function edit(): void
+    {
+        $this->requireAdmin();
+
+        $categoryId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        if ($categoryId <= 0) {
+            set_flash('danger', 'Danh mục không hợp lệ.');
+            header('Location: ' . BASE_URL . '?action=admin-categories');
+            exit;
+        }
+
+        $category = $this->categoryModel->getCategoryById($categoryId);
+        if (!$category) {
+            set_flash('danger', 'Không tìm thấy danh mục.');
+            header('Location: ' . BASE_URL . '?action=admin-categories');
+            exit;
+        }
+
+        $title = 'Chỉnh sửa danh mục';
+        $view  = 'admin/categories/form';
+
+        require_once PATH_VIEW . 'admin/layout.php';
+    }
+
     public function store(): void
     {
         $this->requireAdmin();
