@@ -7,6 +7,9 @@ require_once PATH_ROOT . 'phpmailer/src/Exception.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
+/**
+ * Hàm debug: in dữ liệu và dừng chương trình
+ */
 if (!function_exists('debug')) {
     function debug($data)
     {
@@ -16,6 +19,9 @@ if (!function_exists('debug')) {
     }
 }
 
+/**
+ * Hàm upload file
+ */
 if (!function_exists('upload_file')) {
     function upload_file($folder, $file)
     {
@@ -29,7 +35,9 @@ if (!function_exists('upload_file')) {
     }
 }
 
-// Hàm set_flash: lưu thông báo tạm thời vào session để show 1 lần
+/**
+ * Flash message: lưu 1 lần
+ */
 if (!function_exists('set_flash')) {
     function set_flash(string $type, string $message): void
     {
@@ -40,7 +48,6 @@ if (!function_exists('set_flash')) {
     }
 }
 
-// Hàm get_flash: lấy thông báo và xóa đi để không bị lặp lại
 if (!function_exists('get_flash')) {
     function get_flash(): ?array
     {
@@ -54,6 +61,9 @@ if (!function_exists('get_flash')) {
     }
 }
 
+/**
+ * Hàm gửi email bằng PHPMailer
+ */
 if (!function_exists('send_mail')) {
     function send_mail(string $to, string $subject, string $html, string $toName = ''): bool
     {
@@ -85,3 +95,28 @@ if (!function_exists('send_mail')) {
         }
     }
 }
+
+/**
+ * Hàm kết nối PDO — BẠN BỊ THIẾU HÀM NÀY nên VS Code báo lỗi getPDO()
+ */
+if (!function_exists('getPDO')) {
+    function getPDO()
+    {
+        try {
+            $dsn = 'mysql:host=' . DB_HOST . ';port=' . DB_PORT . ';dbname=' . DB_NAME . ';charset=utf8';
+
+            $pdo = new PDO(
+                $dsn,
+                DB_USERNAME,   // sử dụng đúng tên hằng từ env.php
+                DB_PASSWORD,   // sử dụng đúng tên hằng từ env.php
+                DB_OPTIONS     // mảng options bạn đã định nghĩa sẵn
+            );
+
+            return $pdo;
+
+        } catch (PDOException $e) {
+            die("Kết nối database thất bại: " . $e->getMessage());
+        }
+    }
+}
+
