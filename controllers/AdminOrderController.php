@@ -24,7 +24,7 @@ class AdminOrderController
         $title = 'Quản lý đơn hàng';
         $logoUrl = BASE_URL . 'assets/images/logo.png';
 
-        require_once PATH_VIEW . 'main.php';
+        require_once PATH_VIEW . 'admin/layout.php';
     }
 
     // Xử lý form cập nhật trạng thái đơn

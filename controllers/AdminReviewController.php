@@ -28,7 +28,7 @@ class AdminReviewController
         $title = 'Quản lý đánh giá';
         $logoUrl = BASE_URL . 'assets/images/logo.png';
 
-        require_once PATH_VIEW . 'main.php';
+        require_once PATH_VIEW . 'admin/layout.php';
     }
 
     /**
