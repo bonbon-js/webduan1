@@ -1,47 +1,9 @@
-<style>
-    .order-detail-page {
-        padding: 60px 0;
-    }
-
-    .order-summary-card,
-    .order-items-card {
-        border-radius: 12px;
-        border: 1px solid #f0f0f0;
-        padding: 24px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-    }
-
-    .status-steps {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-
-    .status-steps li {
-        display: flex;
-        align-items: center;
-        margin-bottom: 12px;
-    }
-
-    .status-dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background: #d1d5db;
-        margin-right: 10px;
-    }
-
-    .status-dot.active {
-        background: #000;
-    }
-</style>
-
 <!-- Trang chi tiết đơn hàng hiển thị cho user -->
 <section class="order-detail-page">
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <p class="text-uppercase text-muted mb-1 small">Mã đơn: <?= htmlspecialchars($order['order_code']) ?></p>
+                <p class="text-uppercase text-muted mb-1 small">Mã đơn: <?= htmlspecialchars($order['order_code'] ?? '#' . ($order['id'] ?? $order['order_id'] ?? '')) ?></p>
                 <h2 class="fw-bold">Chi tiết đơn hàng</h2>
                 <p class="text-muted mb-0">Đặt lúc <?= isset($order['created_at']) && $order['created_at'] ? date('d/m/Y H:i', strtotime($order['created_at'])) : '-' ?></p>
             </div>
@@ -128,7 +90,19 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($order['items'] as $item): ?>
+                                <?php foreach ($order['items'] as $item): 
+                                    // Lấy order_item_id từ nhiều nguồn
+                                    $orderItemId = 0;
+                                    if (isset($item['id']) && $item['id']) {
+                                        $orderItemId = (int)$item['id'];
+                                    } elseif (isset($item['order_item_id']) && $item['order_item_id']) {
+                                        $orderItemId = (int)$item['order_item_id'];
+                                    }
+                                    
+                                    $productId = (int)($item['product_id'] ?? 0);
+                                    $hasReviewed = $item['has_reviewed'] ?? false;
+                                    $existingReview = $item['review'] ?? null;
+                                ?>
                                     <tr>
                                         <td>
                                             <div class="fw-semibold"><?= htmlspecialchars($item['product_name']) ?></div>
@@ -140,6 +114,83 @@
                                         <td><?= $item['quantity'] ?></td>
                                         <td class="text-end"><?= number_format($item['quantity'] * $item['unit_price'], 0, ',', '.') ?> đ</td>
                                     </tr>
+                                    <?php if ($canReview && $orderItemId): ?>
+                                        <tr class="review-row">
+                                            <td colspan="4" class="border-top-0 pt-0">
+                                                <?php if ($hasReviewed && $existingReview): 
+                                                    $reviewImages = [];
+                                                    if (!empty($existingReview['images'])) {
+                                                        $reviewImages = is_array($existingReview['images']) ? $existingReview['images'] : json_decode($existingReview['images'], true);
+                                                        if (!is_array($reviewImages)) $reviewImages = [];
+                                                    }
+                                                ?>
+                                                    <div class="review-submitted p-3 bg-light rounded">
+                                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                                            <div class="flex-grow-1">
+                                                                <div class="d-flex align-items-center mb-1">
+                                                                    <strong>Đánh giá của bạn:</strong>
+                                                                    <div class="ms-2">
+                                                                        <?php for ($i = 1; $i <= 5; $i++): ?>
+                                                                            <i class="bi bi-star<?= $i <= $existingReview['rating'] ? '-fill text-warning' : '' ?>"></i>
+                                                                        <?php endfor; ?>
+                                                                    </div>
+                                                                </div>
+                                                                <?php if (!empty($existingReview['comment'])): ?>
+                                                                    <p class="mb-2 text-muted"><?= nl2br(htmlspecialchars($existingReview['comment'])) ?></p>
+                                                                <?php endif; ?>
+                                                                <?php if (!empty($reviewImages)): ?>
+                                                                    <div class="review-images mt-2 mb-2">
+                                                                        <div class="d-flex flex-wrap gap-2">
+                                                                            <?php foreach ($reviewImages as $img): ?>
+                                                                                <a href="<?= htmlspecialchars($img) ?>" target="_blank" class="review-image-thumbnail">
+                                                                                    <img src="<?= htmlspecialchars($img) ?>" alt="Review image" class="img-thumbnail" style="width: 80px; height: 80px; object-fit: cover;">
+                                                                                </a>
+                                                                            <?php endforeach; ?>
+                                                                        </div>
+                                                                    </div>
+                                                                <?php endif; ?>
+                                                                <?php if (!empty($existingReview['reply'])): ?>
+                                                                    <div class="mt-2 p-2 bg-white rounded border-start border-3 border-primary">
+                                                                        <small class="text-muted d-block mb-1"><strong>Phản hồi từ cửa hàng:</strong></small>
+                                                                        <p class="mb-0 small"><?= nl2br(htmlspecialchars($existingReview['reply'])) ?></p>
+                                                                    </div>
+                                                                <?php endif; ?>
+                                                            </div>
+                                                            <small class="text-muted"><?= date('d/m/Y', strtotime($existingReview['created_at'])) ?></small>
+                                                        </div>
+                                                    </div>
+                                                <?php else: ?>
+                                                    <div class="review-form-container p-3 bg-light rounded">
+                                                        <h6 class="mb-3">Đánh giá sản phẩm</h6>
+                                                        <form class="review-form" data-order-item-id="<?= $orderItemId ?>" data-order-id="<?= $order['id'] ?? $order['order_id'] ?>" data-product-id="<?= $productId ?>" enctype="multipart/form-data">
+                                                            <div class="mb-3">
+                                                                <label class="form-label small">Đánh giá sao <span class="text-danger">*</span></label>
+                                                                <div class="rating-input">
+                                                                    <?php for ($i = 5; $i >= 1; $i--): ?>
+                                                                        <input type="radio" name="rating" id="rating_<?= $orderItemId ?>_<?= $i ?>" value="<?= $i ?>" required>
+                                                                        <label for="rating_<?= $orderItemId ?>_<?= $i ?>" class="star-label">
+                                                                            <i class="bi bi-star-fill"></i>
+                                                                        </label>
+                                                                    <?php endfor; ?>
+                                                                </div>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label small">Bình luận (tùy chọn)</label>
+                                                                <textarea name="comment" class="form-control" rows="3" placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."></textarea>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label small">Upload ảnh (tùy chọn, tối đa 5 ảnh)</label>
+                                                                <input type="file" class="form-control review-image-input" accept="image/*" multiple data-order-item-id="<?= $orderItemId ?>">
+                                                                <small class="text-muted">Chấp nhận: JPG, PNG, GIF, WEBP (tối đa 5MB/ảnh)</small>
+                                                                <div class="review-images-preview mt-2 d-flex flex-wrap gap-2" id="reviewImagesPreview_<?= $orderItemId ?>"></div>
+                                                            </div>
+                                                            <button type="submit" class="btn btn-dark btn-sm">Gửi đánh giá</button>
+                                                        </form>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </td>
+                                        </tr>
+                                    <?php endif; ?>
                                 <?php endforeach; ?>
                             </tbody>
                         </table>
@@ -156,4 +207,165 @@
         </div>
     </div>
 </section>
+
+<?php if ($canReview): ?>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Xử lý upload ảnh
+    const imageInputs = document.querySelectorAll('.review-image-input');
+    imageInputs.forEach(input => {
+        input.addEventListener('change', async function(e) {
+            const orderItemId = this.dataset.orderItemId;
+            const previewContainer = document.getElementById('reviewImagesPreview_' + orderItemId);
+            const files = Array.from(this.files);
+            
+            if (files.length > 5) {
+                alert('Chỉ có thể upload tối đa 5 ảnh');
+                this.value = '';
+                return;
+            }
+            
+            previewContainer.innerHTML = '';
+            const uploadedImages = [];
+            
+            for (let file of files) {
+                // Kiểm tra kích thước
+                if (file.size > 5 * 1024 * 1024) {
+                    alert(`Ảnh ${file.name} vượt quá 5MB. Vui lòng chọn ảnh khác.`);
+                    continue;
+                }
+                
+                // Hiển thị preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'img-thumbnail';
+                    img.style.cssText = 'width: 80px; height: 80px; object-fit: cover; margin-right: 5px;';
+                    previewContainer.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+                
+                // Upload ảnh
+                const formData = new FormData();
+                formData.append('image', file);
+                
+                try {
+                    const uploadResponse = await fetch('<?= BASE_URL ?>?action=review-upload-image', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const uploadData = await uploadResponse.json();
+                    if (uploadData.success) {
+                        uploadedImages.push(uploadData.url);
+                        // Lưu vào data attribute
+                        const form = input.closest('.review-form');
+                        form.dataset.uploadedImages = JSON.stringify(uploadedImages);
+                    } else {
+                        alert('Lỗi upload ảnh: ' + (uploadData.message || 'Vui lòng thử lại'));
+                    }
+                } catch (error) {
+                    console.error('Upload error:', error);
+                    alert('Lỗi upload ảnh. Vui lòng thử lại.');
+                }
+            }
+        });
+    });
+    
+    // Xử lý submit form đánh giá
+    const reviewForms = document.querySelectorAll('.review-form');
+    
+    reviewForms.forEach(form => {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const orderItemId = parseInt(this.dataset.orderItemId);
+            const orderId = parseInt(this.dataset.orderId);
+            const productId = parseInt(this.dataset.productId);
+            const rating = parseInt(this.querySelector('input[name="rating"]:checked')?.value || 0);
+            const comment = this.querySelector('textarea[name="comment"]').value.trim();
+            const images = this.dataset.uploadedImages ? JSON.parse(this.dataset.uploadedImages) : [];
+            
+            if (!rating) {
+                alert('Vui lòng chọn số sao đánh giá');
+                return;
+            }
+            
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Đang gửi...';
+            
+            try {
+                const response = await fetch('<?= BASE_URL ?>?action=review-submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        order_item_id: orderItemId,
+                        order_id: orderId,
+                        product_id: productId,
+                        rating: rating,
+                        comment: comment,
+                        images: images
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Reload trang để hiển thị đánh giá đã gửi
+                    location.reload();
+                } else {
+                    alert(data.message || 'Có lỗi xảy ra khi gửi đánh giá');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra. Vui lòng thử lại.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        });
+    });
+});
+</script>
+
+<style>
+.rating-input {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    gap: 5px;
+}
+
+.rating-input input[type="radio"] {
+    display: none;
+}
+
+.rating-input .star-label {
+    cursor: pointer;
+    font-size: 24px;
+    color: #ddd;
+    transition: color 0.2s;
+}
+
+.rating-input input[type="radio"]:checked ~ .star-label,
+.rating-input .star-label:hover,
+.rating-input .star-label:hover ~ .star-label {
+    color: #ffc107;
+}
+
+.review-form-container {
+    border-left: 3px solid #000;
+}
+
+.review-submitted {
+    border-left: 3px solid #28a745;
+}
+</style>
+<?php endif; ?>
 

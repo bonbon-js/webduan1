@@ -64,9 +64,12 @@
                     <i class="bi bi-briefcase"></i>
                     <span>Quản lý sản phẩm</span>
                 </a>
-                <a href="<?= BASE_URL ?>?action=admin-attributes" class="nav-item <?= $isActive('admin-attributes') ?>">
-                    <i class="bi bi-sliders"></i>
-                    <span>Quản lý thuộc tính</span>
+
+                
+                <a href="<?= BASE_URL ?>?action=admin-reviews" class="nav-item <?= $isActive('admin-reviews') ?>">
+                    <i class="bi bi-star"></i>
+                    <span>Quản lý đánh giá</span>
+
                 </a>
                 <a href="<?= BASE_URL ?>?action=admin-orders" class="nav-item <?= $isActive('admin-orders') ?>">
                     <i class="bi bi-cart"></i>

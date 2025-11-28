@@ -191,6 +191,7 @@ INSERT INTO `coupons` (`coupon_id`, `code`, `name`, `description`, `discount_typ
 
 CREATE TABLE `orders` (
   `order_id` int(11) NOT NULL,
+  `user_id` int(11) DEFAULT NULL,
   `order_date` datetime DEFAULT NULL,
   `total_amount` decimal(10,2) DEFAULT NULL,
   `status` varchar(50) DEFAULT NULL,
@@ -739,6 +740,7 @@ ALTER TABLE `coupons`
 --
 ALTER TABLE `orders`
   ADD PRIMARY KEY (`order_id`),
+  ADD KEY `user_id` (`user_id`),
   ADD KEY `coupon_id` (`coupon_id`);
 
 --

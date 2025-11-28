@@ -46,6 +46,46 @@ class OrderController
         }
 
         $canCancel = $this->orderModel->canCancel($order);
+        
+        // Load thông tin đánh giá nếu đơn hàng đã được giao
+        $reviews = [];
+        $canReview = ($order['status'] === OrderModel::STATUS_DELIVERED);
+        if ($canReview) {
+            require_once PATH_MODEL . 'ReviewModel.php';
+            $reviewModel = new ReviewModel();
+            $userId = (int)($user['id'] ?? 0);
+            
+            // Kiểm tra đã đánh giá chưa cho từng item
+            foreach ($order['items'] as &$item) {
+                // Thử lấy id từ nhiều nguồn khác nhau
+                $orderItemId = 0;
+                if (isset($item['id']) && $item['id']) {
+                    $orderItemId = (int)$item['id'];
+                } elseif (isset($item['order_item_id']) && $item['order_item_id']) {
+                    $orderItemId = (int)$item['order_item_id'];
+                }
+                
+                if ($orderItemId > 0) {
+                    $item['has_reviewed'] = $reviewModel->hasReviewed($orderItemId, $userId);
+                    $existingReview = $reviewModel->getByOrderItem($orderItemId);
+                    if ($existingReview) {
+                        // Parse images nếu có
+                        if (!empty($existingReview['images'])) {
+                            $images = json_decode($existingReview['images'], true);
+                            $existingReview['images'] = is_array($images) ? $images : [];
+                        } else {
+                            $existingReview['images'] = [];
+                        }
+                    }
+                    $item['review'] = $existingReview;
+                } else {
+                    $item['has_reviewed'] = false;
+                    $item['review'] = null;
+                }
+            }
+            unset($item);
+        }
+        
         $view = 'orders/detail';
         $title = 'Chi tiết đơn hàng';
         $statusMap = OrderModel::statuses();

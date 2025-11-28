@@ -1,275 +1,3 @@
-<style>
-    .product-detail-section {
-        padding: 80px 0;
-    }
-
-    .product-gallery {
-        position: relative;
-    }
-
-    .product-main-image {
-        width: 100%;
-        height: 600px;
-        object-fit: cover;
-        border-radius: 12px;
-        margin-bottom: 20px;
-    }
-
-    .product-thumbnails {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-
-    .product-thumbnail {
-        width: 80px;
-        height: 80px;
-        object-fit: cover;
-        border-radius: 8px;
-        cursor: pointer;
-        border: 2px solid transparent;
-        transition: all 0.3s;
-    }
-
-    .product-thumbnail:hover {
-        border-color: #000;
-        transform: scale(1.05);
-    }
-
-    .product-thumbnail.active {
-        border-color: #000;
-    }
-
-    .product-info h1 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 20px;
-        letter-spacing: 1px;
-    }
-
-    .product-price {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #000;
-        margin-bottom: 30px;
-    }
-
-    .product-description {
-        color: #666;
-        line-height: 1.8;
-        margin-bottom: 30px;
-    }
-
-    .attribute-selector {
-        margin-bottom: 25px;
-    }
-
-    .attribute-selector label {
-        display: block;
-        font-weight: 600;
-        margin-bottom: 10px;
-        text-transform: uppercase;
-        font-size: 0.85rem;
-        letter-spacing: 1px;
-    }
-
-    .size-options {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-
-    .size-option {
-        padding: 10px 20px;
-        border: 2px solid #e0e0e0;
-        background: #fff;
-        cursor: pointer;
-        transition: all 0.3s;
-        text-transform: uppercase;
-        font-weight: 600;
-    }
-
-    .size-option:hover {
-        border-color: #000;
-    }
-
-    .size-option.active {
-        background: #000;
-        color: #fff;
-        border-color: #000;
-    }
-
-    .color-options {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-
-    .color-option {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        cursor: pointer;
-        border: 3px solid transparent;
-        transition: all 0.3s;
-        position: relative;
-    }
-
-    .color-option:hover {
-        transform: scale(1.1);
-    }
-
-    .color-option.active {
-        border-color: #000;
-        outline: 2px solid #000;
-        outline-offset: 2px;
-    }
-
-    .color-option.white {
-        border: 2px solid #ccc;
-    }
-
-    .quantity-selector {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        margin-bottom: 30px;
-    }
-
-    .quantity-input-group {
-        display: flex;
-        width: 120px;
-    }
-
-    .quantity-input-group button {
-        width: 40px;
-        border: 1px solid #e0e0e0;
-        background: #fff;
-        cursor: pointer;
-    }
-
-    .quantity-input-group input {
-        flex: 1;
-        text-align: center;
-        border: 1px solid #e0e0e0;
-        border-left: none;
-        border-right: none;
-    }
-
-    .btn-add-to-cart {
-        padding: 15px 40px;
-        background: #000;
-        color: #fff;
-        border: none;
-        text-transform: uppercase;
-        font-weight: 600;
-        letter-spacing: 1px;
-        transition: all 0.3s;
-        margin-right: 15px;
-    }
-
-    .btn-add-to-cart:hover {
-        background: #333;
-        transform: translateY(-2px);
-    }
-
-    .btn-buy-now {
-        padding: 15px 40px;
-        background: transparent;
-        color: #000;
-        border: 2px solid #000;
-        text-transform: uppercase;
-        font-weight: 600;
-        letter-spacing: 1px;
-        transition: all 0.3s;
-    }
-
-    .btn-buy-now:hover {
-        background: #000;
-        color: #fff;
-    }
-
-    .similar-products-section {
-        margin-top: 80px;
-        padding-top: 80px;
-        border-top: 1px solid #e0e0e0;
-    }
-
-    .product-card {
-        background: #fff;
-        border: 1px solid #e0e0e0;
-        border-radius: 12px;
-        padding: 0;
-        text-align: center;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .product-card:hover {
-        border-color: #000;
-        transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-    }
-
-    .product-card-image-wrapper {
-        position: relative;
-        overflow: hidden;
-        margin-bottom: 20px;
-        border-radius: 12px 12px 0 0;
-    }
-
-    .product-card img {
-        width: 100%;
-        height: 280px;
-        object-fit: cover;
-        transition: all 0.4s;
-    }
-
-    .product-card:hover img {
-        opacity: 0.2;
-        transform: scale(1.02);
-    }
-
-    .product-card-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 20px;
-        opacity: 0;
-        transition: all 0.3s;
-    }
-
-    .product-card:hover .product-card-overlay {
-        opacity: 1;
-    }
-
-    .product-card-icon {
-        width: 56px;
-        height: 56px;
-        background: #000;
-        color: #fff;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.3s;
-        font-size: 22px;
-    }
-
-    .product-card-icon:hover {
-        background: #fff;
-        color: #000;
-        transform: scale(1.1);
-    }
-</style>
-
 <section class="container product-detail-section">
     <div class="row">
         <div class="col-md-6 product-gallery">
@@ -332,9 +60,101 @@
         </div>
     </div>
 
+    <!-- Reviews Section -->
+    <div class="reviews-section mt-5 pt-5 border-top">
+        <h2 class="section-title mb-4">Đánh giá sản phẩm</h2>
+        
+        <?php if (!empty($reviewStats) && $reviewStats['total_reviews'] > 0): ?>
+            <div class="review-summary mb-4 p-4 bg-light rounded">
+                <div class="row align-items-center">
+                    <div class="col-md-4 text-center">
+                        <div class="average-rating">
+                            <div class="display-4 fw-bold"><?= number_format($reviewStats['average_rating'], 1) ?></div>
+                            <div class="rating-stars mb-2">
+                                <?php for ($i = 1; $i <= 5; $i++): ?>
+                                    <i class="bi bi-star<?= $i <= round($reviewStats['average_rating']) ? '-fill text-warning' : '' ?>"></i>
+                                <?php endfor; ?>
+                            </div>
+                            <div class="text-muted small">Dựa trên <?= $reviewStats['total_reviews'] ?> đánh giá</div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="rating-breakdown">
+                            <?php for ($star = 5; $star >= 1; $star--): 
+                                $count = $reviewStats['rating_' . $star] ?? 0;
+                                $percentage = $reviewStats['total_reviews'] > 0 ? ($count / $reviewStats['total_reviews']) * 100 : 0;
+                            ?>
+                                <div class="rating-bar-item mb-2">
+                                    <div class="d-flex align-items-center">
+                                        <span class="me-2 small"><?= $star ?> sao</span>
+                                        <div class="progress flex-grow-1" style="height: 8px;">
+                                            <div class="progress-bar bg-warning" role="progressbar" style="width: <?= $percentage ?>%"></div>
+                                        </div>
+                                        <span class="ms-2 small text-muted"><?= $count ?></span>
+                                    </div>
+                                </div>
+                            <?php endfor; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <?php else: ?>
+            <div class="alert alert-light text-center">
+                <p class="mb-0">Chưa có đánh giá nào cho sản phẩm này.</p>
+            </div>
+        <?php endif; ?>
+
+        <!-- Reviews List -->
+        <?php if (!empty($reviews)): ?>
+            <div class="reviews-list">
+                <?php foreach ($reviews as $review): 
+                    $reviewImages = $review['images'] ?? [];
+                    if (is_string($reviewImages)) {
+                        $reviewImages = json_decode($reviewImages, true);
+                        if (!is_array($reviewImages)) $reviewImages = [];
+                    }
+                ?>
+                    <div class="review-item mb-4 p-3 border rounded">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <strong><?= htmlspecialchars($review['user_name'] ?? 'Khách hàng') ?></strong>
+                                <div class="rating-stars mt-1">
+                                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                                        <i class="bi bi-star<?= $i <= $review['rating'] ? '-fill text-warning' : '' ?>"></i>
+                                    <?php endfor; ?>
+                                </div>
+                            </div>
+                            <small class="text-muted"><?= date('d/m/Y', strtotime($review['created_at'])) ?></small>
+                        </div>
+                        <?php if (!empty($review['comment'])): ?>
+                            <p class="mb-2"><?= nl2br(htmlspecialchars($review['comment'])) ?></p>
+                        <?php endif; ?>
+                        <?php if (!empty($reviewImages)): ?>
+                            <div class="review-images mt-2 mb-2">
+                                <div class="d-flex flex-wrap gap-2">
+                                    <?php foreach ($reviewImages as $img): ?>
+                                        <a href="<?= htmlspecialchars($img) ?>" target="_blank" class="review-image-link">
+                                            <img src="<?= htmlspecialchars($img) ?>" alt="Review image" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover; cursor: pointer;">
+                                        </a>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                        <?php if (!empty($review['reply'])): ?>
+                            <div class="review-reply mt-3 p-3 bg-light rounded border-start border-3 border-primary">
+                                <small class="text-muted d-block mb-1"><strong>Phản hồi từ cửa hàng:</strong></small>
+                                <p class="mb-0 small"><?= nl2br(htmlspecialchars($review['reply'])) ?></p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    </div>
+
     <!-- Similar Products -->
     <?php if (!empty($similarProducts)): ?>
-        <div class="similar-products-section">
+        <div class="similar-products-section mt-5 pt-5 border-top">
             <h2 class="section-title">Sản phẩm tương tự</h2>
             <div class="row g-4">
                 <?php foreach ($similarProducts as $similar): ?>

@@ -1,188 +1,3 @@
-<style>
-    .products-section {
-        background: #fff;
-        padding: 80px 0;
-        margin: 0 auto;
-    }
-
-    .product-card {
-        background: #fff;
-        border: 1px solid #e0e0e0;
-        border-radius: 12px;
-        padding: 0;
-        text-align: center;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
-        box-shadow: none;
-        margin: 0 auto;
-    }
-
-    .product-card:hover {
-        border-color: #000;
-    }
-
-    .product-badge {
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        background: #000;
-        color: #fff;
-        padding: 6px 14px;
-        border-radius: 20px;
-        font-size: 10px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        z-index: 2;
-    }
-
-    .product-card-image-wrapper {
-        position: relative;
-        overflow: hidden;
-        margin-bottom: 20px;
-        border-radius: 12px 12px 0 0;
-        background: #f5f5f5;
-    }
-
-    .product-card img {
-        width: 100%;
-        height: 280px;
-        object-fit: cover;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        border-radius: 0;
-    }
-
-    .product-card:hover img {
-        opacity: 0.2;
-        transform: scale(1.02);
-    }
-
-    .product-card-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 20px;
-        opacity: 0;
-        transform: translateY(0);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .product-card:hover .product-card-overlay {
-        opacity: 1;
-    }
-
-    .product-card-icon {
-        width: 56px;
-        height: 56px;
-        background: #000;
-        color: #fff;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        font-size: 22px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        position: relative;
-        overflow: hidden;
-        border: 2px solid #000;
-    }
-
-    .product-card-icon:hover {
-        background: #fff;
-        color: #000;
-        transform: scale(1.1);
-        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
-    }
-
-    .product-card h3 {
-        font-weight: 600;
-        color: #000;
-        margin-bottom: 8px;
-        transition: color 0.3s;
-        padding: 0 20px;
-        letter-spacing: 0.5px;
-    }
-
-    .product-card .text-muted {
-        color: #666 !important;
-        padding: 0 20px;
-    }
-
-    .product-card .fw-semibold {
-        color: #000;
-        font-size: 1.2rem;
-        font-weight: 700;
-        padding: 0 20px 20px;
-        margin: 0;
-    }
-
-    .product-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-    }
-
-    .filter-section {
-        background: #f8f9fa;
-        padding: 30px;
-        border-radius: 12px;
-        margin-bottom: 40px;
-    }
-
-    .filter-section h5 {
-        font-weight: 700;
-        margin-bottom: 20px;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        font-size: 0.9rem;
-    }
-
-    .price-filter label {
-        display: block;
-        padding: 10px;
-        margin-bottom: 8px;
-        cursor: pointer;
-        border-radius: 6px;
-        transition: background 0.2s;
-    }
-
-    .price-filter label:hover {
-        background: #e9ecef;
-    }
-
-    .price-filter input[type="radio"]:checked + label {
-        background: #000;
-        color: #fff;
-    }
-
-    /* Responsive Quick Add Modal */
-    @media (max-width: 768px) {
-        .modal-dialog.modal-lg {
-            max-width: 95%;
-            margin: 10px auto;
-        }
-        
-        .modal-content .row {
-            flex-direction: column;
-        }
-        
-        .modal-content .col-md-6 {
-            max-width: 100%;
-        }
-        
-        #qaProductImage {
-            max-height: 250px !important;
-        }
-    }
-</style>
-
 <section class="container products-section">
     <h2 class="section-title">Tất cả sản phẩm</h2>
 
@@ -191,7 +6,7 @@
         <div class="row">
             <div class="col-md-4 mb-3">
                 <h5>Tìm kiếm</h5>
-                <form method="GET" action="<?= BASE_URL ?>?action=products">
+                <form method="GET" action="<?= BASE_URL ?>">
                     <input type="hidden" name="action" value="products">
                     <div class="input-group">
                         <input type="text" name="q" class="form-control" placeholder="Tìm kiếm sản phẩm..." value="<?= htmlspecialchars($_GET['q'] ?? '') ?>">
@@ -209,7 +24,7 @@
             </div>
             <div class="col-md-4 mb-3">
                 <h5>Danh mục</h5>
-                <form method="GET" action="<?= BASE_URL ?>?action=products" id="categoryForm">
+                <form method="GET" action="<?= BASE_URL ?>" id="categoryForm">
                     <input type="hidden" name="action" value="products">
                     <select name="category_id" class="form-select" onchange="document.getElementById('categoryForm').submit();">
                         <option value="">Tất cả danh mục</option>
@@ -229,7 +44,7 @@
             </div>
             <div class="col-md-4 mb-3">
                 <h5>Mức giá</h5>
-                <form method="GET" action="<?= BASE_URL ?>?action=products" id="priceForm">
+                <form method="GET" action="<?= BASE_URL ?>" id="priceForm">
                     <input type="hidden" name="action" value="products">
                     <select name="price" class="form-select" onchange="document.getElementById('priceForm').submit();">
                         <option value="">Tất cả mức giá</option>
@@ -259,7 +74,7 @@
             <?php foreach ($products as $product) : ?>
                 <div class="col-12 col-sm-6 col-lg-4">
                     <article class="product-card">
-                        <?php if (isset($product['id']) && $product['id'] <= 3) : ?>
+                        <?php if (isset($product['id']) && isset($newProductIds) && in_array((int)$product['id'], $newProductIds, true)) : ?>
                             <span class="product-badge">New</span>
                         <?php endif; ?>
                         <div class="product-card-image-wrapper">
@@ -375,27 +190,6 @@
         </div>
     </div>
 </div>
-
-<style>
-    /* Custom styles for color selector active state */
-    .btn-check:checked + label {
-        outline: 2px solid #000;
-        outline-offset: 2px;
-    }
-    
-    .color-option {
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        cursor: pointer;
-        border: 2px solid #fff;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    .color-option.white {
-        border: 1px solid #ccc;
-    }
-</style>
 
 <script>
     // Color mapping for display

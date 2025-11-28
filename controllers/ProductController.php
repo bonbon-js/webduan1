@@ -40,9 +40,22 @@ class ProductController
 		$productModel  = new ProductModel();
 		$categoryModel = new CategoryModel();
 
+		// Nếu có từ khóa và chưa chọn danh mục, thử tìm danh mục khớp
+		if ($keyword && !$category) {
+			$matchedCategories = $categoryModel->searchCategories($keyword);
+			if (!empty($matchedCategories)) {
+				// Nếu tìm thấy danh mục khớp, tự động lọc theo danh mục đó
+				$category = (int)$matchedCategories[0]['category_id'];
+			}
+		}
+
 		$totalProducts = $productModel->countAllProducts($category, $keyword ?: null, $priceMin, $priceMax);
 		$products      = $productModel->getProductsPage($page, $perPage, $category, $keyword ?: null, $priceMin, $priceMax);
 		$categories    = $categoryModel->getAllCategories();
+
+		// Lấy danh sách ID của 8 sản phẩm mới nhất để hiển thị tag "NEW"
+		$newProductIds = $productModel->getNewProductIds(8);
+		$newProductIds = array_map('intval', $newProductIds); // Chuyển sang int để so sánh
 
 		$hasMore = ($page * $perPage) < $totalProducts;
 
@@ -74,6 +87,12 @@ class ProductController
 		$images = $productModel->getProductImages($id);
 		$attributes = $productModel->getProductAttributes($id);
 		$similarProducts = $productModel->getSimilarProducts((int)$product['category_id'], (int)$product['id'], 8);
+
+		// Load đánh giá sản phẩm
+		require_once PATH_MODEL . 'ReviewModel.php';
+		$reviewModel = new ReviewModel();
+		$reviews = $reviewModel->getByProduct($id);
+		$reviewStats = $reviewModel->getProductStats($id);
 
 		$title = $product['name'] ?? 'Chi tiết sản phẩm';
 		$view  = 'products/detail';

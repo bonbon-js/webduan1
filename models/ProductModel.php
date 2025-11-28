@@ -639,6 +639,26 @@ class ProductModel extends BaseModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Lấy danh sách ID của các sản phẩm mới nhất
+     * @param int $limit Số lượng sản phẩm mới nhất (mặc định 8)
+     * @return array Danh sách product_id
+     */
+    public function getNewProductIds(int $limit = 8): array
+    {
+        $sql = "SELECT p.product_id 
+                FROM {$this->table} p
+                ORDER BY p.created_at DESC, p.product_id DESC
+                LIMIT :limit";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return array_map(fn($r) => (int)$r['product_id'], $results);
+    }
+
 		/**
 		 * Đếm tổng số sản phẩm (có thể theo danh mục)
 		 */
@@ -646,7 +666,11 @@ class ProductModel extends BaseModel
 		{
 			$conditions = [];
 			if ($categoryId) $conditions[] = 'p.category_id = :category_id';
-			if ($keyword)    $conditions[] = '(p.product_name LIKE :keyword OR p.description LIKE :keyword)';
+			if ($keyword) {
+				// Luôn chỉ tìm trong product_name để đảm bảo kết quả chính xác
+				// Không tìm trong description vì có thể tìm thấy sản phẩm không liên quan
+				$conditions[] = 'p.product_name LIKE :keyword';
+			}
 			if ($priceMin !== null) $conditions[] = 'p.price >= :price_min';
 			if ($priceMax !== null) $conditions[] = 'p.price <= :price_max';
 
@@ -671,10 +695,29 @@ class ProductModel extends BaseModel
 			$offset = max(0, ($page - 1) * $perPage);
 			$conditions = [];
 			if ($categoryId) $conditions[] = 'p.category_id = :category_id';
-			if ($keyword)    $conditions[] = '(p.product_name LIKE :keyword OR p.description LIKE :keyword)';
+			if ($keyword) {
+				// Luôn chỉ tìm trong product_name để đảm bảo kết quả chính xác
+				// Không tìm trong description vì có thể tìm thấy sản phẩm không liên quan
+				$conditions[] = 'p.product_name LIKE :keyword';
+			}
 			if ($priceMin !== null) $conditions[] = 'p.price >= :price_min';
 			if ($priceMax !== null) $conditions[] = 'p.price <= :price_max';
 			$whereSql = $conditions ? (' WHERE ' . implode(' AND ', $conditions)) : '';
+
+			// Sắp xếp theo độ liên quan nếu có keyword
+			$orderBy = 'p.created_at DESC';
+			if ($keyword) {
+				// Ưu tiên: khớp chính xác > bắt đầu bằng > chứa trong tên > ngày tạo
+				$orderBy = "
+					CASE 
+						WHEN p.product_name LIKE :keyword_exact THEN 1
+						WHEN p.product_name LIKE :keyword_start THEN 2
+						WHEN p.product_name LIKE :keyword THEN 3
+						ELSE 4
+					END ASC,
+					p.created_at DESC
+				";
+			}
 
 			$sql = "SELECT 
 						p.product_id as id,
@@ -682,22 +725,27 @@ class ProductModel extends BaseModel
 						p.description,
 						p.price,
 						p.stock,
-						c.category_name as category";
-			
-			$sql = $this->addImageField($sql);
-			
-			$sql .= " FROM {$this->table} p
-					LEFT JOIN categories c ON p.category_id = c.category_id";
-			
-			$sql = $this->addImageJoin($sql);
-			
-			$sql .= " {$whereSql}
-					ORDER BY p.product_id DESC
+
+						c.category_name as category,
+						pi.image_url as image
+					FROM {$this->table} p
+					LEFT JOIN categories c ON p.category_id = c.category_id
+					LEFT JOIN product_images pi ON p.product_id = pi.product_id AND pi.is_primary = 1
+					{$whereSql}
+					ORDER BY {$orderBy}
 					LIMIT :limit OFFSET :offset";
 			
 			$stmt = $this->pdo->prepare($sql);
 			if ($categoryId) $stmt->bindValue(':category_id', (int)$categoryId, PDO::PARAM_INT);
-			if ($keyword)    $stmt->bindValue(':keyword', "%{$keyword}%", PDO::PARAM_STR);
+			if ($keyword) {
+				$keywordEscaped = "%{$keyword}%";
+				$keywordExact = "{$keyword}";
+				$keywordStart = "{$keyword}%";
+				$stmt->bindValue(':keyword', $keywordEscaped, PDO::PARAM_STR);
+				// Luôn bind keyword_exact và keyword_start nếu có keyword (dùng trong ORDER BY)
+				$stmt->bindValue(':keyword_exact', $keywordExact, PDO::PARAM_STR);
+				$stmt->bindValue(':keyword_start', $keywordStart, PDO::PARAM_STR);
+			}
 			if ($priceMin !== null) $stmt->bindValue(':price_min', $priceMin, PDO::PARAM_STR);
 			if ($priceMax !== null) $stmt->bindValue(':price_max', $priceMax, PDO::PARAM_STR);
 			$stmt->bindValue(':limit', (int)$perPage, PDO::PARAM_INT);
@@ -933,30 +981,40 @@ class ProductModel extends BaseModel
      */
     public function searchProducts($keyword, $limit = null)
     {
+        // Chỉ tìm trong product_name để đảm bảo kết quả chính xác
         $sql = "SELECT 
                     p.product_id as id,
                     p.product_name as name,
                     p.description,
                     p.price,
                     p.stock,
-                    c.category_name as category";
-        
-        $sql = $this->addImageField($sql);
-        
-        $sql .= " FROM {$this->table} p
-                LEFT JOIN categories c ON p.category_id = c.category_id";
-        
-        $sql = $this->addImageJoin($sql);
-        
-        $sql .= " WHERE p.product_name LIKE :keyword OR p.description LIKE :keyword
-                ORDER BY p.product_id DESC";
+
+                    c.category_name as category,
+                    pi.image_url as image
+                FROM {$this->table} p
+                LEFT JOIN categories c ON p.category_id = c.category_id
+                LEFT JOIN product_images pi ON p.product_id = pi.product_id AND pi.is_primary = 1
+                WHERE p.product_name LIKE :keyword
+                ORDER BY 
+                    CASE 
+                        WHEN p.product_name LIKE :keyword_exact THEN 1
+                        WHEN p.product_name LIKE :keyword_start THEN 2
+                        WHEN p.product_name LIKE :keyword THEN 3
+                        ELSE 4
+                    END ASC,
+                    p.created_at DESC";
         
         if ($limit) {
             $sql .= " LIMIT :limit";
         }
         
         $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':keyword', "%{$keyword}%", PDO::PARAM_STR);
+        $keywordEscaped = "%{$keyword}%";
+        $keywordExact = "{$keyword}";
+        $keywordStart = "{$keyword}%";
+        $stmt->bindValue(':keyword', $keywordEscaped, PDO::PARAM_STR);
+        $stmt->bindValue(':keyword_exact', $keywordExact, PDO::PARAM_STR);
+        $stmt->bindValue(':keyword_start', $keywordStart, PDO::PARAM_STR);
         
         if ($limit) {
             $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);

@@ -1,16 +1,3 @@
-<style>
-    .admin-orders-page {
-        padding: 50px 0;
-    }
-
-    .admin-card {
-        border-radius: 16px;
-        border: 1px solid #efefef;
-        padding: 30px;
-        box-shadow: 0 8px 40px rgba(0,0,0,0.05);
-    }
-</style>
-
 <!-- Trang quản trị: xem và cập nhật trạng thái đơn -->
 <section class="admin-orders-page">
     <div class="container">

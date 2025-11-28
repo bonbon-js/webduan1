@@ -25,7 +25,7 @@
 <body class="bg-white">
 
     <header class="border-bottom">
-        <div class="container header-container d-flex flex-wrap justify-content-between align-items-center">
+        <div class="container header-container d-flex justify-content-between align-items-center">
             <a class="navbar-brand d-flex align-items-center text-decoration-none" href="<?= BASE_URL ?>">
                 <?php 
                 $logoPath = PATH_ROOT . 'assets/images/logo.png';
@@ -43,6 +43,9 @@
                 <a class="text-decoration-none text-dark" href="<?= BASE_URL ?>?action=products">Sản phẩm</a>
                 <a class="text-decoration-none text-dark" href="#">Bộ sưu tập</a>
                 <a class="text-decoration-none text-dark" href="<?= BASE_URL ?>?action=posts">Tin tức</a>
+                <?php if (isset($_SESSION['user'])): ?>
+                    <a class="text-decoration-none text-dark" href="<?= BASE_URL ?>?action=order-history">Đơn hàng của tôi</a>
+                <?php endif; ?>
                 <a class="text-decoration-none text-dark" href="#">Liên hệ</a>
             </nav>
 
@@ -196,22 +199,36 @@
         const headerSearchBtn = document.getElementById('headerSearchBtn');
         const searchIconToggle = document.getElementById('searchIconToggle');
 
-        // Mở thanh search (trượt ra)
+        // Mở thanh search (trượt ra) với hiệu ứng mượt mà
         function openHeaderSearch() {
+            // Xóa class slide-in nếu có
+            headerSearchWrapper.classList.remove('slide-in');
+            
+            // Đảm bảo wrapper có visibility để có thể animate
+            headerSearchWrapper.style.visibility = 'visible';
+            
+            // Force reflow để đảm bảo animation chạy
+            void headerSearchWrapper.offsetWidth;
+            
+            // Thêm class show để trigger animation
             headerSearchWrapper.classList.add('show');
             searchIconToggle.classList.add('hide');
+            
+            // Focus vào input sau khi animation hoàn thành
             setTimeout(() => {
                 headerSearchInput.focus();
-            }, 400);
+            }, 300);
         }
 
         // Đóng thanh search với hiệu ứng slide vào
         function closeHeaderSearch() {
+            headerSearchWrapper.classList.remove('show');
             headerSearchWrapper.classList.add('slide-in');
             searchIconToggle.classList.remove('hide');
             
             setTimeout(() => {
-                headerSearchWrapper.classList.remove('show', 'slide-in');
+                headerSearchWrapper.classList.remove('slide-in');
+                headerSearchWrapper.style.visibility = '';
                 headerSearchInput.value = '';
             }, 500);
         }
@@ -219,6 +236,7 @@
         // Toggle search khi click icon
         searchIconToggle.addEventListener('click', function(e) {
             e.preventDefault();
+            e.stopPropagation();
             if (headerSearchWrapper.classList.contains('show')) {
                 closeHeaderSearch();
             } else {
@@ -233,7 +251,7 @@
                 return;
             }
             
-            // Hiệu ứng slide vào
+            // Hiệu ứng slide vào trước khi chuyển trang
             headerSearchWrapper.classList.add('slide-in');
             searchIconToggle.classList.remove('hide');
             
@@ -243,6 +261,7 @@
                 .then(data => {
                     setTimeout(() => {
                         headerSearchWrapper.classList.remove('show', 'slide-in');
+                        headerSearchWrapper.style.visibility = '';
                         headerSearchInput.value = '';
                         
                         if (data.success) {
@@ -260,20 +279,25 @@
                             // Không tìm thấy → chuyển đến danh sách với từ khóa
                             window.location.href = `<?= BASE_URL ?>?action=products&q=${encodeURIComponent(keyword)}`;
                         }
-                    }, 500);
+                    }, 400);
                 })
                 .catch(error => {
                     console.error('Search error:', error);
                     setTimeout(() => {
                         headerSearchWrapper.classList.remove('show', 'slide-in');
+                        headerSearchWrapper.style.visibility = '';
                         headerSearchInput.value = '';
                         window.location.href = `<?= BASE_URL ?>?action=products&q=${encodeURIComponent(keyword)}`;
-                    }, 500);
+                    }, 400);
                 });
         }
 
         // Event listeners
-        headerSearchBtn.addEventListener('click', performHeaderSearch);
+        headerSearchBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            performHeaderSearch();
+        });
         
         headerSearchInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {

@@ -222,12 +222,28 @@ class AuthController
             $this->redirect('show-login');
         }
 
+        $userId = $user['user_id'] ?? ($user['id'] ?? null);
+        
         $_SESSION['user'] = [
-            'id'       => $user['user_id'] ?? ($user['id'] ?? null),
+            'id'       => $userId,
             'fullname' => $user['full_name'] ?? trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '')),
             'email'    => $user['email'],
             'role'     => $user['role'] ?? 'customer',
         ];
+
+        // Nếu có cart trong session (từ trước khi đăng nhập), sync vào database
+        if (isset($_SESSION['cart']) && !empty($_SESSION['cart']) && $userId) {
+            require_once PATH_MODEL . 'CartModel.php';
+            $cartModel = new CartModel();
+            $cartModel->syncSessionCartToDatabase((int)$userId, $_SESSION['cart']);
+        }
+        
+        // Load cart từ database vào session (ghi đè cart trong session nếu có)
+        if ($userId) {
+            require_once PATH_MODEL . 'CartModel.php';
+            $cartModel = new CartModel();
+            $cartModel->loadCartToSession((int)$userId, false);
+        }
 
         $_SESSION['success'] = 'Đăng nhập thành công.';
         $this->redirect('/');
@@ -238,6 +254,11 @@ class AuthController
      */
     public function logout(): void
     {
+        // Xóa cart trong session khi đăng xuất
+        unset($_SESSION['cart']);
+        unset($_SESSION['applied_coupon']);
+        unset($_SESSION['selected_cart_items']);
+        
         unset($_SESSION['user']);
         session_regenerate_id(true);
         $_SESSION['success'] = 'Bạn đã đăng xuất.';

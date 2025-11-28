@@ -4,59 +4,6 @@ $couponModel = new CouponModel();
 $deletedCoupons = $couponModel->getDeleted();
 ?>
 
-<style>
-    .trash-header {
-        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-        border-radius: 16px;
-        padding: 2rem;
-        color: #fff;
-        margin-bottom: 2rem;
-        box-shadow: 0 10px 30px rgba(220, 53, 69, 0.3);
-    }
-    .trash-header h2 {
-        margin: 0;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-    .admin-table {
-        background: #fff;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    }
-    .table {
-        margin: 0;
-    }
-    .table thead {
-        background: #f8f9fa;
-    }
-    .table thead th {
-        border: none;
-        padding: 1rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.85rem;
-        color: #495057;
-    }
-    .table tbody td {
-        padding: 1rem;
-        vertical-align: middle;
-        border-top: 1px solid #f0f0f0;
-    }
-    .empty-state {
-        text-align: center;
-        padding: 3rem;
-        color: #999;
-    }
-    .empty-state i {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-        display: block;
-    }
-</style>
-
 <div class="container-fluid py-4">
     <div class="trash-header">
         <h2>
