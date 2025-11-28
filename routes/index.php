@@ -43,30 +43,6 @@ match ($action) {
     // Routes quản trị
     'admin-dashboard'    => (new AdminDashboardController)->index(),
     'admin-statistics'   => (new AdminStatisticsController)->index(),
-    // Quản lý danh mục
-    'admin-categories'      => (new AdminCategoryController)->index(),
-    'admin-category-store'  => (new AdminCategoryController)->store(),
-    'admin-category-update' => (new AdminCategoryController)->update(),
-    'admin-category-delete' => (new AdminCategoryController)->delete(),
-    // Quản lý thuộc tính
-    'admin-attributes'            => (new AdminAttributeController)->index(),
-    'admin-attribute-store'       => (new AdminAttributeController)->store(),
-    'admin-attribute-update'      => (new AdminAttributeController)->update(),
-    'admin-attribute-delete'      => (new AdminAttributeController)->delete(),
-    'admin-attribute-value-store' => (new AdminAttributeController)->storeValue(),
-    'admin-attribute-value-update'=> (new AdminAttributeController)->updateValue(),
-    'admin-attribute-value-delete'=> (new AdminAttributeController)->deleteValue(),
-    // Quản lý sản phẩm + biến thể
-    'admin-products'              => (new AdminProductController)->index(),
-    'admin-product-create'        => (new AdminProductController)->create(),
-    'admin-product-edit'          => (new AdminProductController)->edit(),
-    'admin-product-store'         => (new AdminProductController)->store(),
-    'admin-product-update'        => (new AdminProductController)->update(),
-    'admin-product-delete'        => (new AdminProductController)->delete(),
-    'admin-product-variant-store' => (new AdminProductController)->storeVariant(),
-    'admin-product-variant-update'=> (new AdminProductController)->updateVariant(),
-    'admin-product-variant-delete'=> (new AdminProductController)->deleteVariant(),
-    // Quản lý đơn hàng
     'admin-orders'       => (new AdminOrderController)->index(),
     'admin-order-update' => (new AdminOrderController)->updateStatus(),
     // Quản lý tài khoản
@@ -82,6 +58,25 @@ match ($action) {
     'admin-coupons-trash' => (new AdminCouponController)->trash(),
     'admin-coupon-restore' => (new AdminCouponController)->restore(),
     'admin-coupon-force-delete' => (new AdminCouponController)->forceDelete(),
+    
+    // Quản lý danh mục
+    'admin-categories'      => (new AdminCategoryController)->index(),
+    'admin-category-create' => (new AdminCategoryController)->create(),
+    'admin-category-edit'   => (new AdminCategoryController)->edit(),
+    'admin-category-store'  => (new AdminCategoryController)->store(),
+    'admin-category-update' => (new AdminCategoryController)->update(),
+    'admin-category-delete' => (new AdminCategoryController)->delete(),
+    
+    // Quản lý sản phẩm
+    'admin-products'      => (new AdminProductController)->index(),
+    'admin-product-create' => (new AdminProductController)->create(),
+    'admin-product-edit'   => (new AdminProductController)->edit(),
+    'admin-product-store'  => (new AdminProductController)->store(),
+    'admin-product-update' => (new AdminProductController)->update(),
+    'admin-product-delete' => (new AdminProductController)->delete(),
+    'admin-product-variant-store' => (new AdminProductController)->storeVariant(),
+    'admin-product-variant-update' => (new AdminProductController)->updateVariant(),
+    'admin-product-variant-delete' => (new AdminProductController)->deleteVariant(),
     
     // Auth routes
     'show-login'         => (new AuthController)->showLogin(),
