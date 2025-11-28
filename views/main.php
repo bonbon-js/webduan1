@@ -25,7 +25,7 @@
 <body class="bg-white">
 
     <header class="border-bottom">
-        <div class="container header-container d-flex flex-wrap justify-content-between align-items-center">
+        <div class="container header-container d-flex justify-content-between align-items-center">
             <a class="navbar-brand d-flex align-items-center text-decoration-none" href="<?= BASE_URL ?>">
                 <?php 
                 $logoPath = PATH_ROOT . 'assets/images/logo.png';

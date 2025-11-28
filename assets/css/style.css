@@ -8,19 +8,30 @@
    ============================================ */
 header {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 1000;
 }
 
 .header-container {
     padding: 1rem 2rem;
+    flex-wrap: nowrap !important;
+}
+
+.navbar-brand {
+    flex-shrink: 0;
+    margin-right: 2rem;
 }
 
 /* Logo Styling - Đẹp và nổi bật */
 .logo-image {
-    height: 90px;
+    height: 70px;
     width: auto;
     object-fit: contain;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.15));
+    flex-shrink: 0;
 }
 
 .logo-image:hover {
@@ -47,15 +58,17 @@ header {
 
 /* Navigation Menu */
 .nav {
-    gap: 2rem !important;
+    gap: 1.2rem !important;
+    flex-wrap: nowrap;
 }
 
 .nav a {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     font-weight: 600;
     padding: 0.5rem 0;
     position: relative;
     transition: color 0.3s ease;
+    white-space: nowrap;
 }
 
 .nav a::after {
@@ -79,7 +92,9 @@ header {
 
 /* Icon Styling */
 .header-icons {
-    gap: 1.5rem !important;
+    gap: 1rem !important;
+    flex-wrap: nowrap;
+    flex-shrink: 0;
 }
 
 .header-icons a,
@@ -255,19 +270,19 @@ header {
 /* Header Responsive */
 @media (max-width: 992px) {
     .nav {
-        gap: 1rem !important;
+        gap: 0.8rem !important;
     }
 
     .nav a {
-        font-size: 0.85rem;
+        font-size: 0.75rem;
     }
 
     .header-icons {
-        gap: 1rem !important;
+        gap: 0.8rem !important;
     }
 
     .logo-image {
-        height:90px;
+        height: 60px;
     }
 
     .header-search-wrapper.show {
@@ -277,7 +292,7 @@ header {
 
 @media (max-width: 768px) {
     .logo-image {
-        height: 60px;
+        height: 50px;
     }
 
     .logo-text {
@@ -288,8 +303,20 @@ header {
         padding: 0.75rem 1rem;
     }
 
+    .nav {
+        gap: 0.6rem !important;
+    }
+
+    .nav a {
+        font-size: 0.7rem;
+    }
+
+    .header-icons {
+        gap: 0.6rem !important;
+    }
+
     .header-search-wrapper.show {
-        width: 220px;
+        width: 200px;
     }
 
     .header-search-input-container {
