@@ -5330,8 +5330,8 @@ footer {
 
 .profile-form .form-input:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: #000;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
 }
 
 .profile-form .gender-group {
@@ -6267,7 +6267,7 @@ footer {
 }
 
 .stats-grid .stat-icon.blue {
-    background: #3b82f6;
+    background: #000;
 }
 
 .stats-grid .stat-icon.green {
@@ -6568,18 +6568,19 @@ footer {
     background: white;
     border-radius: 6px;
     cursor: pointer;
-    color: #64748b;
+    color: #000;
 }
 
 .pagination-btn:hover {
     background: #f8fafc;
-    border-color: #cbd5e1;
+    border-color: #000;
+    color: #000;
 }
 
 .pagination-btn.active {
-    background: #1e293b;
+    background: #000;
     color: white;
-    border-color: #1e293b;
+    border-color: #000;
 }
 
 .pagination-btn:disabled {
@@ -6630,6 +6631,780 @@ footer {
     border: 1px solid #efefef;
     padding: 30px;
     box-shadow: 0 8px 40px rgba(0,0,0,0.05);
+}
+
+/* ============================================
+   PAGINATION OVERRIDES - BLACK/WHITE THEME
+   ============================================ */
+/* Bootstrap Pagination Override - Black/White Theme */
+.pagination .page-link {
+    color: #000;
+    border-color: #000;
+    background-color: #fff;
+}
+
+.pagination .page-link:hover {
+    color: #000;
+    background-color: #f5f5f5;
+    border-color: #000;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #000;
+    border-color: #000;
+    color: #fff;
+}
+
+.pagination .page-item.disabled .page-link {
+    color: #6c757d;
+    border-color: #dee2e6;
+    background-color: #fff;
+    cursor: not-allowed;
+}
+
+/* ============================================
+   COLLECTION PAGE - MODERN & CENTERED DESIGN
+   ============================================ */
+.collection-page {
+    background: #fff;
+    min-height: 80vh;
+    padding: 3rem 0;
+}
+
+.collection-page .container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.collection-page .text-center {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.collection-page .display-4 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    color: #000;
+    margin-bottom: 1rem;
+}
+
+.collection-page .lead {
+    font-size: 1.25rem;
+    color: #666;
+    font-weight: 300;
+}
+
+.collection-section {
+    margin-bottom: 4rem;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.collection-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid #e9ecef;
+    position: relative;
+}
+
+.collection-header::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 2px;
+    background: #000;
+}
+
+.collection-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #000;
+    margin-bottom: 1rem;
+    letter-spacing: -0.5px;
+}
+
+.collection-description {
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 1.5rem;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+}
+
+.collection-link {
+    color: #000;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    padding: 0.75rem 1.5rem;
+    border: 2px solid #000;
+    border-radius: 30px;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    letter-spacing: 1px;
+}
+
+.collection-link:hover {
+    background: #000;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.collection-product-card {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid #f0f0f0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.collection-product-card:hover {
+    transform: translateY(-12px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    border-color: #000;
+}
+
+.product-image-wrapper {
+    position: relative;
+    width: 100%;
+    padding-top: 125%;
+    overflow: hidden;
+    background: #f8f9fa;
+    display: block;
+}
+
+.product-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.product-image-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ccc;
+    font-size: 3rem;
+}
+
+.product-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    z-index: 2;
+}
+
+.collection-product-card:hover .product-overlay {
+    opacity: 1;
+}
+
+.collection-product-card:hover .product-image {
+    transform: scale(1.15);
+}
+
+.view-product-btn {
+    color: #fff;
+    background: #000;
+    padding: 1rem 2rem;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    border: 2px solid #000;
+}
+
+.view-product-btn:hover {
+    background: #fff;
+    color: #000;
+    transform: scale(1.05);
+}
+
+.product-info {
+    padding: 1.5rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    text-align: center;
+}
+
+.product-name {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+    color: #212529;
+}
+
+.product-name a {
+    color: #212529;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.product-name a:hover {
+    color: #000;
+}
+
+.product-price {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #000;
+    letter-spacing: -0.5px;
+}
+
+@media (max-width: 768px) {
+    .collection-page {
+        padding: 2rem 0;
+    }
+    
+    .collection-page .display-4 {
+        font-size: 2.5rem;
+    }
+    
+    .collection-title {
+        font-size: 1.75rem;
+    }
+    
+    .collection-section {
+        margin-bottom: 3rem;
+    }
+    
+    .collection-product-card {
+        margin-bottom: 1.5rem;
+    }
+    
+    .product-info {
+        padding: 1.25rem;
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================
+   COUPON SECTION - ENHANCED & PROMINENT
+   ============================================ */
+.coupon-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 2px solid #000;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.coupon-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #000 0%, #333 50%, #000 100%);
+}
+
+.coupon-section h5 {
+    color: #000;
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.coupon-section h5::before {
+    content: '🎁';
+    font-size: 1.25rem;
+}
+
+/* Best Coupon Suggestion Box */
+#bestCouponSuggestionInBox {
+    background: linear-gradient(135deg, #fff9e6 0%, #fffbf0 100%);
+    border: 2px solid #000;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+#bestCouponSuggestionInBox .badge {
+    background: #000 !important;
+    color: #fff !important;
+    font-size: 0.7rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+#bestCouponSuggestionInBox strong {
+    color: #000;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+#bestCouponDiscountInBox {
+    color: #000;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+/* Coupon Input Group */
+.coupon-section .input-group {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid #000;
+}
+
+.coupon-section .form-control {
+    border: none;
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+.coupon-section .form-control:focus {
+    outline: none;
+    box-shadow: none;
+    border-color: transparent;
+}
+
+.coupon-section .btn-outline-dark {
+    border: none;
+    background: #000;
+    color: #fff;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+}
+
+.coupon-section .btn-outline-dark:hover {
+    background: #333;
+    color: #fff;
+    transform: scale(1.02);
+}
+
+/* Available Coupons List */
+#availableCouponsList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+#availableCouponsList .list-group-item {
+    background: #fff;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    min-height: auto;
+    word-wrap: break-word;
+    overflow: visible;
+}
+
+#availableCouponsList .list-group-item:hover {
+    border-color: #000;
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.coupon-item {
+    background: #fff;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    word-wrap: break-word;
+    overflow: visible;
+}
+
+.coupon-item:hover {
+    border-color: #000;
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Applied Coupon Display */
+#appliedCouponDisplay {
+    background: linear-gradient(135deg, #f0f0f0 0%, #ffffff 100%);
+    border: 2px solid #000;
+    border-radius: 12px;
+    padding: 1.25rem;
+    position: relative;
+}
+
+#appliedCouponDisplay::before {
+    content: '✓';
+    position: absolute;
+    top: -12px;
+    left: 20px;
+    background: #000;
+    color: #fff;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+#appliedCouponCode {
+    color: #000;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+#appliedCouponDiscount {
+    color: #000;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+/* Checkout Coupon Section */
+.checkout .coupon-section {
+    background: linear-gradient(135deg, #f0f0f0 0%, #ffffff 100%);
+    border: 2px solid #000;
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.checkout .coupon-section label {
+    color: #000;
+    font-weight: 700;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.checkout .coupon-section strong {
+    color: #000;
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.checkout .coupon-section .text-end div {
+    color: #000;
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+
+/* Coupon Message */
+#couponMessage {
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+
+.coupon-message.success {
+    color: #000;
+    font-weight: 600;
+}
+
+.coupon-message.error {
+    color: #dc3545;
+    font-weight: 600;
+}
+
+/* Empty Collection Icon */
+.empty-collection-icon {
+    font-size: 4rem;
+    color: #999;
+}
+
+/* Cart Table Styles */
+.cart-checkbox-col {
+    width: 40px;
+}
+
+.cart-product-col {
+    width: 50%;
+}
+
+/* Coupon Display States */
+.coupon-display-none {
+    display: none;
+}
+
+.coupon-display-block {
+    display: block !important;
+}
+
+.coupon-input-uppercase {
+    text-transform: uppercase !important;
+}
+
+.coupon-badge-small {
+    font-size: 0.7rem !important;
+    padding: 2px 6px !important;
+}
+
+.coupon-item-flex {
+    flex: 1;
+}
+
+/* Discount Amount */
+.discount-amount {
+    color: #000;
+    font-weight: 700;
+}
+
+/* Checkout Applied Coupon */
+.checkout-applied-coupon {
+    background: linear-gradient(135deg, #f0f0f0 0%, #ffffff 100%);
+    border: 2px solid #000;
+}
+
+.checkout-applied-coupon-label {
+    color: #000;
+    font-weight: 600;
+}
+
+.checkout-applied-coupon-code {
+    color: #000;
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.checkout-applied-coupon-amount {
+    color: #000;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.checkout-discount-amount {
+    color: #000;
+    font-weight: 600;
+}
+
+/* ============================================
+   CONTACT PAGE STYLES
+   ============================================ */
+.contact-page {
+    background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
+    min-height: 80vh;
+}
+
+.contact-info-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 1px solid #e9ecef;
+}
+
+.contact-item {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.contact-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #000 0%, #333 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.contact-details h5 {
+    font-size: 1rem;
+    color: #212529;
+}
+
+.contact-form-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border: 1px solid #e9ecef;
+}
+
+.contact-form-card .form-control,
+.contact-form-card .form-select {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.contact-form-card .form-control:focus,
+.contact-form-card .form-select:focus {
+    border-color: #000;
+    box-shadow: 0 0 0 0.2rem rgba(0,0,0,0.1);
+}
+
+.contact-form-card .btn-dark {
+    background: #000;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.contact-form-card .btn-dark:hover {
+    background: #333;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.social-links-contact {
+    display: flex;
+    gap: 1rem;
+}
+
+.social-link {
+    width: 40px;
+    height: 40px;
+    background: #f8f9fa;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #212529;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-size: 1.25rem;
+}
+
+.social-link:hover {
+    background: #000;
+    color: #fff;
+    transform: translateY(-3px);
+}
+
+.map-section {
+    margin-top: 4rem;
+}
+
+.map-placeholder {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.map-placeholder iframe {
+    border-radius: 12px;
+}
+
+@media (max-width: 768px) {
+    .contact-page {
+        padding: 2rem 0;
+    }
+    
+    .contact-info-card,
+    .contact-form-card {
+        margin-bottom: 2rem;
+    }
+}
+
+/* ============================================
+   ORDER DETAIL - REVIEW STYLES
+   ============================================ */
+.rating-input {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    gap: 5px;
+}
+
+.rating-input input[type="radio"] {
+    display: none;
+}
+
+.rating-input .star-label {
+    cursor: pointer;
+    font-size: 24px;
+    color: #ddd;
+    transition: color 0.2s;
+}
+
+.rating-input input[type="radio"]:checked ~ .star-label,
+.rating-input .star-label:hover,
+.rating-input .star-label:hover ~ .star-label {
+    color: #ffc107;
+}
+
+.review-form-container {
+    border-left: 3px solid #000;
+}
+
+.review-submitted {
+    border-left: 3px solid #000;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .coupon-section {
+        padding: 1.25rem;
+    }
+    
+    .coupon-section h5 {
+        font-size: 0.8rem;
+    }
+    
+    #bestCouponSuggestionInBox {
+        padding: 1rem;
+    }
 }
 
 

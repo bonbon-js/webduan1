@@ -17,6 +17,11 @@ match ($action) {
     'posts'          => (new PostController)->index(),
     'post-detail'    => (new PostController)->detail(),
     
+    // Contact & Collection routes
+    'contact'        => (new ContactController)->index(),
+    'contact-submit' => (new ContactController)->submit(),
+    'collection'     => (new CollectionController)->index(),
+    
     // Cart routes
     'cart-list'      => (new CartController)->index(),
     'cart-add'       => (new CartController)->add(),

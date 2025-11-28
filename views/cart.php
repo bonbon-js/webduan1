@@ -18,11 +18,11 @@
                     <table class="cart-table">
                         <thead>
                             <tr>
-                                <th style="width: 40px;">
+                                <th class="cart-checkbox-col">
                                     <input type="checkbox" id="selectAll" name="select_all" onchange="toggleSelectAll(this)" aria-label="Chọn tất cả">
                                     <label for="selectAll" class="visually-hidden">Chọn tất cả</label>
                                 </th>
-                                <th style="width: 50%">Sản phẩm</th>
+                                <th class="cart-product-col">Sản phẩm</th>
                                 <th>Giá</th>
                                 <th>Số lượng</th>
                                 <th>Tổng</th>
@@ -105,14 +105,14 @@
                         <h5 class="mb-3 text-uppercase fs-6 fw-bold">Mã giảm giá</h5>
                         
                         <!-- Lựa chọn tốt nhất (hiển thị trong khung) -->
-                        <div id="bestCouponSuggestionInBox" style="display: none;" class="mb-3 p-3 bg-light rounded border border-warning">
+                        <div id="bestCouponSuggestionInBox" class="coupon-display-none mb-3 p-3 bg-light rounded border border-warning">
                             <div class="d-flex align-items-center gap-2 mb-2">
-                                <span class="badge bg-warning text-dark" style="font-size: 0.7rem; padding: 2px 6px;">
+                                <span class="badge bg-warning text-dark coupon-badge-small">
                                     <i class="bi bi-trophy-fill"></i> Lựa chọn tốt nhất
                                 </span>
                                 <strong id="bestCouponCodeInBox" class="fs-6"></strong>
                             </div>
-                            <div class="text-success fw-bold mb-1" id="bestCouponDiscountInBox"></div>
+                            <div class="text-dark fw-bold mb-1" id="bestCouponDiscountInBox"></div>
                             <small class="text-muted d-block mb-2" id="bestCouponNameInBox"></small>
                             <button type="button" class="btn btn-sm btn-dark" id="applyBestCouponBtnInBox" onclick="applyBestCoupon()">
                                 Áp dụng ngay
@@ -123,10 +123,9 @@
                         <div class="mb-3">
                             <div class="input-group">
                                 <input type="text" 
-                                       class="form-control" 
+                                       class="form-control coupon-input-uppercase" 
                                        id="couponCodeInput" 
-                                       placeholder="Nhập mã giảm giá"
-                                       style="text-transform: uppercase;">
+                                       placeholder="Nhập mã giảm giá">
                                 <button type="button" 
                                         class="btn btn-outline-dark" 
                                         id="applyCouponBtn"
@@ -138,17 +137,17 @@
                         </div>
                         
                         <!-- Danh sách mã khả dụng -->
-                        <div id="availableCouponsSection" style="display: none;">
+                        <div id="availableCouponsSection" class="coupon-display-none">
                             <p class="small text-muted mb-2">Hoặc chọn mã giảm giá:</p>
                             <div id="availableCouponsList" class="list-group"></div>
                         </div>
                         
                         <!-- Mã đã áp dụng -->
-                        <div id="appliedCouponDisplay" style="display: none;" class="mt-3 p-2 bg-light rounded">
+                        <div id="appliedCouponDisplay" class="coupon-display-none mt-3 p-2 bg-light rounded">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <strong id="appliedCouponCode"></strong>
-                                    <small class="d-block text-success" id="appliedCouponDiscount"></small>
+                                    <small class="d-block text-dark" id="appliedCouponDiscount"></small>
                                 </div>
                                 <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeCoupon()">
                                     <i class="bi bi-x"></i>
@@ -162,9 +161,9 @@
                         <span>Tạm tính</span>
                         <span id="subtotal"><?= number_format($total, 0, ',', '.') ?> đ</span>
                     </div>
-                    <div class="summary-row" id="discountRow" style="display: none;">
+                    <div class="summary-row coupon-display-none" id="discountRow">
                         <span>Giảm giá</span>
-                        <span id="discountAmount" style="color: #28a745;">-0 đ</span>
+                        <span id="discountAmount" class="discount-amount">-0 đ</span>
                     </div>
                     <div class="summary-row">
                         <span>Phí vận chuyển</span>
@@ -579,13 +578,13 @@ function loadAvailableCoupons() {
                             
                             item.innerHTML = `
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <div style="flex: 1;">
+                                    <div class="coupon-item-flex">
                                         <div class="d-flex align-items-center gap-2 mb-1">
-                                            ${isBest ? `<span class="badge bg-warning text-dark" style="font-size: 0.7rem; padding: 2px 6px;"><i class="bi bi-trophy-fill"></i> Lựa chọn tốt nhất</span>` : ''}
+                                            ${isBest ? `<span class="badge bg-warning text-dark coupon-badge-small"><i class="bi bi-trophy-fill"></i> Lựa chọn tốt nhất</span>` : ''}
                                             <strong>${coupon.code}</strong>
                                         </div>
                                         <small class="d-block text-muted">${coupon.name || ''}</small>
-                                        <small class="text-success d-block fw-bold">${saveText}</small>
+                                        <small class="text-dark d-block fw-bold">${saveText}</small>
                                         <small class="text-muted d-block">${discountText}${maxDiscount}</small>
                                         ${minOrderText ? `<small class="text-muted d-block mt-1"><i class="bi bi-info-circle"></i> ${minOrderText}</small>` : ''}
                                     </div>
@@ -596,13 +595,25 @@ function loadAvailableCoupons() {
                             listContainer.appendChild(item);
                         });
                         
-                        document.getElementById('availableCouponsSection').style.display = 'block';
+                        const availableSection = document.getElementById('availableCouponsSection');
+                        if (availableSection) {
+                            availableSection.classList.remove('coupon-display-none');
+                            availableSection.classList.add('coupon-display-block');
+                        }
                     } else {
-                        document.getElementById('availableCouponsSection').style.display = 'none';
+                        const availableSection = document.getElementById('availableCouponsSection');
+                        if (availableSection) {
+                            availableSection.classList.add('coupon-display-none');
+                            availableSection.classList.remove('coupon-display-block');
+                        }
                     }
                 });
             } else {
-                document.getElementById('availableCouponsSection').style.display = 'none';
+                const availableSection = document.getElementById('availableCouponsSection');
+                if (availableSection) {
+                    availableSection.classList.add('coupon-display-none');
+                    availableSection.classList.remove('coupon-display-block');
+                }
             }
         })
         .catch(error => {
@@ -610,7 +621,8 @@ function loadAvailableCoupons() {
             // Ẩn section nếu có lỗi
             const section = document.getElementById('availableCouponsSection');
             if (section) {
-                section.style.display = 'none';
+                section.classList.add('coupon-display-none');
+                section.classList.remove('coupon-display-block');
             }
         });
 }
@@ -757,8 +769,16 @@ function selectCoupon(coupon) {
 function showAppliedCoupon(code, name, discountAmount) {
     document.getElementById('appliedCouponCode').textContent = code + ' - ' + name;
     document.getElementById('appliedCouponDiscount').textContent = 'Giảm ' + formatCurrency(discountAmount);
-    document.getElementById('appliedCouponDisplay').style.display = 'block';
-    document.getElementById('availableCouponsSection').style.display = 'none';
+    const appliedDisplay = document.getElementById('appliedCouponDisplay');
+    const availableSection = document.getElementById('availableCouponsSection');
+    if (appliedDisplay) {
+        appliedDisplay.classList.remove('coupon-display-none');
+        appliedDisplay.classList.add('coupon-display-block');
+    }
+    if (availableSection) {
+        availableSection.classList.add('coupon-display-none');
+        availableSection.classList.remove('coupon-display-block');
+    }
 }
 
 // Xóa mã giảm giá
@@ -774,7 +794,11 @@ function removeCoupon() {
     })
     .then(response => response.json())
     .then(data => {
-        document.getElementById('appliedCouponDisplay').style.display = 'none';
+        const appliedDisplay = document.getElementById('appliedCouponDisplay');
+        if (appliedDisplay) {
+            appliedDisplay.classList.add('coupon-display-none');
+            appliedDisplay.classList.remove('coupon-display-block');
+        }
         document.getElementById('couponCodeInput').value = '';
         document.getElementById('couponCodeInput').disabled = false;
         document.getElementById('applyCouponBtn').disabled = false;
@@ -1005,7 +1029,10 @@ function findBestCoupon() {
     // Nếu đã có mã áp dụng, không hiển thị gợi ý
     if (appliedCouponData) {
         const suggestionDiv = document.getElementById('bestCouponSuggestionInBox');
-        if (suggestionDiv) suggestionDiv.style.display = 'none';
+        if (suggestionDiv) {
+            suggestionDiv.classList.add('coupon-display-none');
+            suggestionDiv.classList.remove('coupon-display-block');
+        }
         return;
     }
     
@@ -1058,18 +1085,27 @@ function findBestCoupon() {
                         displayBestCoupon(best);
                     } else {
                         const suggestionDiv = document.getElementById('bestCouponSuggestionInBox');
-                        if (suggestionDiv) suggestionDiv.style.display = 'none';
+                        if (suggestionDiv) {
+                            suggestionDiv.classList.add('coupon-display-none');
+                            suggestionDiv.classList.remove('coupon-display-block');
+                        }
                     }
                 });
             } else {
                 const suggestionDiv = document.getElementById('bestCouponSuggestionInBox');
-                if (suggestionDiv) suggestionDiv.style.display = 'none';
+                if (suggestionDiv) {
+                    suggestionDiv.classList.add('coupon-display-none');
+                    suggestionDiv.classList.remove('coupon-display-block');
+                }
             }
         })
         .catch(error => {
             console.error('Error finding best coupon:', error);
             const suggestionDiv = document.getElementById('bestCouponSuggestionInBox');
-            if (suggestionDiv) suggestionDiv.style.display = 'none';
+            if (suggestionDiv) {
+                suggestionDiv.classList.add('coupon-display-none');
+                suggestionDiv.classList.remove('coupon-display-block');
+            }
         });
 }
 
@@ -1095,7 +1131,8 @@ function displayBestCoupon(best) {
         codeDivInBox.textContent = best.coupon.code;
         discountDivInBox.textContent = `Tiết kiệm ${formatCurrency(best.discount_amount)}`;
         nameDivInBox.textContent = best.coupon.name || '';
-        suggestionDivInBox.style.display = 'block';
+        suggestionDivInBox.classList.remove('coupon-display-none');
+        suggestionDivInBox.classList.add('coupon-display-block');
         console.log('Best coupon displayed');
     } else {
         console.error('Missing elements for displaying best coupon');

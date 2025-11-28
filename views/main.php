@@ -41,12 +41,12 @@
 
             <nav class="nav text-uppercase small">
                 <a class="text-decoration-none text-dark" href="<?= BASE_URL ?>?action=products">Sản phẩm</a>
-                <a class="text-decoration-none text-dark" href="#">Bộ sưu tập</a>
+                <a class="text-decoration-none text-dark" href="<?= BASE_URL ?>?action=collection">Bộ sưu tập</a>
                 <a class="text-decoration-none text-dark" href="<?= BASE_URL ?>?action=posts">Tin tức</a>
                 <?php if (isset($_SESSION['user'])): ?>
                     <a class="text-decoration-none text-dark" href="<?= BASE_URL ?>?action=order-history">Đơn hàng của tôi</a>
                 <?php endif; ?>
-                <a class="text-decoration-none text-dark" href="#">Liên hệ</a>
+                <a class="text-decoration-none text-dark" href="<?= BASE_URL ?>?action=contact">Liên hệ</a>
             </nav>
 
             <div class="d-flex align-items-center header-icons">
@@ -155,7 +155,7 @@
                     <ul class="footer-links">
                         <li><a href="<?= BASE_URL ?>?action=products">Sản Phẩm Mới</a></li>
                         <li><a href="<?= BASE_URL ?>?action=products">Bán Chạy Nhất</a></li>
-                        <li><a href="#">Bộ Sưu Tập</a></li>
+                        <li><a href="<?= BASE_URL ?>?action=collection">Bộ Sưu Tập</a></li>
                         <li><a href="#">Khuyến Mãi</a></li>
                     </ul>
                 </div>
@@ -167,7 +167,7 @@
                         <li><a href="<?= BASE_URL ?>?action=order-history">Trạng Thái Đơn Hàng</a></li>
                         <li><a href="#">Chính Sách Đổi Trả</a></li>
                         <li><a href="#">Hướng Dẫn Chọn Size</a></li>
-                        <li><a href="#">Liên Hệ</a></li>
+                        <li><a href="<?= BASE_URL ?>?action=contact">Liên Hệ</a></li>
                     </ul>
                 </div>
 

@@ -6,15 +6,19 @@ class PasswordResetModel extends BaseModel
 
     public function create(int $userId, string $token, string $otp, string $expiresAt): int
     {
+        // Đảm bảo không có id trong data
+        $data = ['user_id' => $userId, 'token' => $token, 'otp_code' => $otp, 'expires_at' => $expiresAt];
+        $data = $this->removePrimaryKeyFromData($data, $this->table);
+        
         $sql = "INSERT INTO {$this->table} (user_id, token, otp_code, expires_at, is_used, created_at)
                 VALUES (:user_id, :token, :otp_code, :expires_at, 0, NOW())";
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
-            'user_id'    => $userId,
-            'token'      => $token,
-            'otp_code'   => $otp,
-            'expires_at' => $expiresAt,
+            'user_id'    => $data['user_id'],
+            'token'      => $data['token'],
+            'otp_code'   => $data['otp_code'],
+            'expires_at' => $data['expires_at'],
         ]);
 
         return (int)$this->pdo->lastInsertId();

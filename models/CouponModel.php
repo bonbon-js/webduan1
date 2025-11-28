@@ -398,6 +398,9 @@ class CouponModel extends BaseModel
      */
     public function create(array $data): int
     {
+        // Loại bỏ PRIMARY KEY khỏi data
+        $data = $this->removePrimaryKeyFromData($data, $this->table);
+        
         // Nếu là giảm giá cố định, không cho phép max_discount_amount
         if ($data['discount_type'] === 'fixed') {
             $data['max_discount_amount'] = null;

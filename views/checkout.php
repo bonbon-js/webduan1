@@ -78,7 +78,7 @@ function applyCoupon() {
             applyBtn.textContent = 'Đã áp dụng';
             applyBtn.disabled = true;
             applyBtn.classList.remove('btn-outline-dark');
-            applyBtn.classList.add('btn-success');
+            applyBtn.classList.add('btn-dark');
             
             // Thêm nút xóa mã
             if (!document.getElementById('removeCouponBtn')) {
@@ -128,7 +128,7 @@ function removeCoupon() {
     if (applyBtn) {
         applyBtn.disabled = false;
         applyBtn.textContent = 'Áp dụng';
-        applyBtn.classList.remove('btn-success');
+        applyBtn.classList.remove('btn-dark');
         applyBtn.classList.add('btn-outline-dark');
     }
     
@@ -1145,9 +1145,9 @@ function displaySearchResults(results, keyword = '') {
             // Icon theo loại
             let icon = '';
             if (result.type === 'province') {
-                icon = '<i class="bi bi-geo-alt-fill text-primary"></i>';
+                icon = '<i class="bi bi-geo-alt-fill text-dark"></i>';
             } else if (result.type === 'district') {
-                icon = '<i class="bi bi-geo-fill text-info"></i>';
+                icon = '<i class="bi bi-geo-fill text-dark"></i>';
             } else if (result.type === 'ward') {
                 icon = '<i class="bi bi-geo text-secondary"></i>';
             }
@@ -1594,21 +1594,21 @@ function searchAndSelectAddress(provinceName, districtName, wardName, callback) 
                         ?>
                         
                         <?php if ($appliedCoupon): ?>
-                        <div class="coupon-section mb-4" style="background: #e8f5e9; border: 1px solid #4caf50;">
+                        <div class="coupon-section checkout-applied-coupon mb-4">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <label class="form-label mb-1" style="color: #2e7d32; font-weight: 600;">
-                                        <i class="bi bi-check-circle-fill text-success"></i> Mã giảm giá đã áp dụng
+                                    <label class="form-label checkout-applied-coupon-label mb-1">
+                                        <i class="bi bi-check-circle-fill text-dark"></i> Mã giảm giá đã áp dụng
                                     </label>
                                     <div>
-                                        <strong style="color: #000;"><?= htmlspecialchars($appliedCoupon['code']) ?></strong>
+                                        <strong class="checkout-applied-coupon-code"><?= htmlspecialchars($appliedCoupon['code']) ?></strong>
                                         <?php if (!empty($appliedCoupon['name'])): ?>
                                             <small class="d-block text-muted"><?= htmlspecialchars($appliedCoupon['name']) ?></small>
                                         <?php endif; ?>
                                     </div>
                                 </div>
                                 <div class="text-end">
-                                    <div style="color: #28a745; font-weight: 700; font-size: 1.1rem;">
+                                    <div class="checkout-applied-coupon-amount">
                                         -<?= number_format($discountAmount, 0, ',', '.') ?> đ
                                     </div>
                                 </div>
@@ -1631,7 +1631,7 @@ function searchAndSelectAddress(provinceName, districtName, wardName, callback) 
                             <?php if ($appliedCoupon && $discountAmount > 0): ?>
                             <div class="checkout-total-row">
                                 <span>Giảm giá</span>
-                                <span id="discountAmountDisplay" style="color: #28a745; font-weight: 600;">
+                                <span id="discountAmountDisplay" class="checkout-discount-amount">
                                     -<?= number_format($discountAmount, 0, ',', '.') ?> đ
                                 </span>
                             </div>

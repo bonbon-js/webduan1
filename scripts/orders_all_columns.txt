@@ -1,0 +1,9 @@
+=== ALL COLUMNS IN ORDERS TABLE ===
+
+order_id                  int(11)                   NO         PRI        NULL                 auto_increment      
+order_date                datetime                  YES                   NULL                                     
+total_amount              decimal(10,2)             YES                   NULL                                     
+status                    varchar(50)               YES                   NULL                                     
+shipping_address          text                      YES                   NULL                                     
+payment_method            varchar(50)               YES                   NULL                                     
+coupon_id                 int(11)                   YES        MUL        NULL                                     

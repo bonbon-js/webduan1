@@ -78,6 +78,9 @@ class UserAddressModel extends BaseModel
      */
     public function create(array $data): int
     {
+        // Loại bỏ PRIMARY KEY khỏi data
+        $data = $this->removePrimaryKeyFromData($data, $this->table);
+        
         // Nếu địa chỉ này được đặt làm mặc định, bỏ mặc định của các địa chỉ khác
         if (isset($data['is_default']) && $data['is_default'] == 1) {
             $this->unsetDefaultForUser($data['user_id']);

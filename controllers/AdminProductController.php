@@ -80,6 +80,9 @@ class AdminProductController
             exit;
         }
 
+        // Đảm bảo KHÔNG có id trong payload
+        unset($payload['id'], $payload['product_id'], $payload['productId']);
+        
         try {
             $productId = $this->productModel->createProduct($payload);
             set_flash('success', 'Đã tạo sản phẩm. Bạn có thể thêm biến thể ngay bây giờ.');
@@ -226,6 +229,9 @@ class AdminProductController
             exit;
         }
 
+        // Đảm bảo KHÔNG có id trong variantData
+        unset($variantData['id'], $variantData['variant_id'], $variantData['variantId']);
+        
         try {
             $this->productModel->createVariant($productId, $variantData, $valueIds);
             set_flash('success', 'Đã thêm biến thể.');

@@ -41,8 +41,15 @@ class AdminOrderController
         }
 
         try {
+            $oldOrder = $this->orderModel->findWithItems($orderId);
             $this->orderModel->updateStatus($orderId, $status);
-            set_flash('success', 'Cập nhật trạng thái thành công.');
+            
+            // Nếu trạng thái được đặt thành "giao hàng thành công", thông báo cho admin
+            if ($status === OrderModel::STATUS_DELIVERED) {
+                set_flash('success', 'Cập nhật trạng thái thành công. Khách hàng có thể đánh giá sản phẩm khi xem chi tiết đơn hàng.');
+            } else {
+                set_flash('success', 'Cập nhật trạng thái thành công.');
+            }
         } catch (Throwable $exception) {
             set_flash('danger', 'Không thể cập nhật trạng thái: ' . $exception->getMessage());
         }

@@ -10,6 +10,38 @@
             <a href="<?= BASE_URL ?>?action=order-history" class="btn btn-outline-dark">Quay lại danh sách</a>
         </div>
 
+        <?php if ($canReview): 
+            // Kiểm tra xem còn sản phẩm nào chưa đánh giá không
+            $hasUnreviewedItems = false;
+            $firstUnreviewedItemId = null;
+            foreach ($order['items'] as $item) {
+                $orderItemId = 0;
+                if (isset($item['id']) && $item['id']) {
+                    $orderItemId = (int)$item['id'];
+                } elseif (isset($item['order_item_id']) && $item['order_item_id']) {
+                    $orderItemId = (int)$item['order_item_id'];
+                }
+                if ($orderItemId > 0 && !($item['has_reviewed'] ?? false)) {
+                    $hasUnreviewedItems = true;
+                    if (!$firstUnreviewedItemId) {
+                        $firstUnreviewedItemId = $orderItemId;
+                    }
+                }
+            }
+        ?>
+            <?php if ($hasUnreviewedItems): ?>
+                <div class="alert alert-dark alert-dismissible fade show d-flex align-items-center mb-4" role="alert" id="reviewNotification">
+                    <i class="bi bi-star-fill me-2 fs-4"></i>
+                    <div class="flex-grow-1">
+                        <strong>Đơn hàng đã được giao thành công!</strong>
+                        <p class="mb-0">Vui lòng đánh giá sản phẩm bạn đã mua để giúp chúng tôi cải thiện dịch vụ. 
+                        <a href="#reviewItem_<?= $firstUnreviewedItemId ?>" class="alert-link fw-bold">Cuộn xuống để đánh giá ngay</a></p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
+        <?php endif; ?>
+
         <div class="row g-4">
             <!-- Cột trái: thông tin giao nhận + trạng thái + hủy -->
             <div class="col-lg-4">
@@ -69,8 +101,8 @@
                                 <div class="text-end">
                                     <div class="small text-muted">Tạm tính: <?= number_format($order['total_amount'] + $order['discount_amount'], 0, ',', '.') ?> đ</div>
                                     <?php if (!empty($order['coupon_code'])): ?>
-                                        <div class="small text-success">Mã giảm giá: <?= htmlspecialchars($order['coupon_code']) ?> (<?= htmlspecialchars($order['coupon_name'] ?? '') ?>)</div>
-                                        <div class="small text-success">Giảm: -<?= number_format($order['discount_amount'], 0, ',', '.') ?> đ</div>
+                                        <div class="small text-dark">Mã giảm giá: <?= htmlspecialchars($order['coupon_code']) ?> (<?= htmlspecialchars($order['coupon_name'] ?? '') ?>)</div>
+                                        <div class="small text-dark">Giảm: -<?= number_format($order['discount_amount'], 0, ',', '.') ?> đ</div>
                                     <?php endif; ?>
                                     <div class="fw-bold">Tổng cộng: <?= number_format($order['total_amount'], 0, ',', '.') ?> đ</div>
                                 </div>
@@ -115,7 +147,7 @@
                                         <td class="text-end"><?= number_format($item['quantity'] * $item['unit_price'], 0, ',', '.') ?> đ</td>
                                     </tr>
                                     <?php if ($canReview && $orderItemId): ?>
-                                        <tr class="review-row">
+                                        <tr class="review-row" id="reviewItem_<?= $orderItemId ?>">
                                             <td colspan="4" class="border-top-0 pt-0">
                                                 <?php if ($hasReviewed && $existingReview): 
                                                     $reviewImages = [];
@@ -150,7 +182,7 @@
                                                                     </div>
                                                                 <?php endif; ?>
                                                                 <?php if (!empty($existingReview['reply'])): ?>
-                                                                    <div class="mt-2 p-2 bg-white rounded border-start border-3 border-primary">
+                                                                    <div class="mt-2 p-2 bg-white rounded border-start border-3 border-dark">
                                                                         <small class="text-muted d-block mb-1"><strong>Phản hồi từ cửa hàng:</strong></small>
                                                                         <p class="mb-0 small"><?= nl2br(htmlspecialchars($existingReview['reply'])) ?></p>
                                                                     </div>
@@ -211,6 +243,26 @@
 <?php if ($canReview): ?>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Tự động cuộn đến phần đánh giá nếu có thông báo và chưa đánh giá
+    <?php if ($hasUnreviewedItems && $firstUnreviewedItemId): ?>
+    // Kiểm tra xem có phải lần đầu vào trang sau khi admin set status delivered không
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('review') === 'true' || document.getElementById('reviewNotification')) {
+        setTimeout(() => {
+            const reviewElement = document.getElementById('reviewItem_<?= $firstUnreviewedItemId ?>');
+            if (reviewElement) {
+                reviewElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Highlight form đánh giá
+                reviewElement.style.transition = 'background-color 0.3s';
+                reviewElement.style.backgroundColor = '#fff3cd';
+                setTimeout(() => {
+                    reviewElement.style.backgroundColor = '';
+                }, 2000);
+            }
+        }, 500);
+    }
+    <?php endif; ?>
+    
     // Xử lý upload ảnh
     const imageInputs = document.querySelectorAll('.review-image-input');
     imageInputs.forEach(input => {
@@ -333,39 +385,5 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-
-<style>
-.rating-input {
-    display: flex;
-    flex-direction: row-reverse;
-    justify-content: flex-end;
-    gap: 5px;
-}
-
-.rating-input input[type="radio"] {
-    display: none;
-}
-
-.rating-input .star-label {
-    cursor: pointer;
-    font-size: 24px;
-    color: #ddd;
-    transition: color 0.2s;
-}
-
-.rating-input input[type="radio"]:checked ~ .star-label,
-.rating-input .star-label:hover,
-.rating-input .star-label:hover ~ .star-label {
-    color: #ffc107;
-}
-
-.review-form-container {
-    border-left: 3px solid #000;
-}
-
-.review-submitted {
-    border-left: 3px solid #28a745;
-}
-</style>
 <?php endif; ?>
 

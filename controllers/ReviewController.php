@@ -153,16 +153,20 @@ class ReviewController
             exit;
         }
 
+        // Đảm bảo KHÔNG có id trong review data
+        $reviewData = [
+            'order_id' => $orderId,
+            'order_item_id' => $orderItemId,
+            'product_id' => $productId,
+            'user_id' => $userId,
+            'rating' => $rating,
+            'comment' => $comment ?: null,
+            'images' => $images,
+        ];
+        unset($reviewData['id'], $reviewData['review_id'], $reviewData['reviewId']);
+        
         try {
-            $reviewId = $this->reviewModel->create([
-                'order_id' => $orderId,
-                'order_item_id' => $orderItemId,
-                'product_id' => $productId,
-                'user_id' => $userId,
-                'rating' => $rating,
-                'comment' => $comment ?: null,
-                'images' => $images,
-            ]);
+            $reviewId = $this->reviewModel->create($reviewData);
 
             echo json_encode([
                 'success' => true,

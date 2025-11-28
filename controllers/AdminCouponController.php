@@ -92,6 +92,9 @@ class AdminCouponController
             }
         }
 
+        // Đảm bảo KHÔNG có id trong data
+        unset($data['id'], $data['coupon_id'], $data['couponId']);
+        
         try {
             $this->couponModel->create($data);
             set_flash('success', 'Tạo mã giảm giá thành công.');

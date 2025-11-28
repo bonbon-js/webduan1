@@ -141,7 +141,7 @@
                             </div>
                         <?php endif; ?>
                         <?php if (!empty($review['reply'])): ?>
-                            <div class="review-reply mt-3 p-3 bg-light rounded border-start border-3 border-primary">
+                            <div class="review-reply mt-3 p-3 bg-light rounded border-start border-3 border-dark">
                                 <small class="text-muted d-block mb-1"><strong>Phản hồi từ cửa hàng:</strong></small>
                                 <p class="mb-0 small"><?= nl2br(htmlspecialchars($review['reply'])) ?></p>
                             </div>

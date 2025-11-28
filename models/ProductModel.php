@@ -341,6 +341,9 @@ class ProductModel extends BaseModel
      */
     public function createVariant(int $productId, array $variantData, array $valueIds): int
     {
+        // Loại bỏ PRIMARY KEY khỏi variantData
+        $variantData = $this->removePrimaryKeyFromData($variantData, 'product_variants');
+        
         $this->pdo->beginTransaction();
 
         try {
@@ -478,10 +481,14 @@ class ProductModel extends BaseModel
                 continue;
             }
 
+            // Đảm bảo không có id trong data
+            $data = ['product_id' => $productId, 'variant_id' => $variantId, 'value_id' => $valueId];
+            $data = $this->removePrimaryKeyFromData($data, 'product_attribute_values');
+
             $stmt->execute([
-                ':product_id' => $productId,
-                ':variant_id' => $variantId,
-                ':value_id' => $valueId,
+                ':product_id' => $data['product_id'],
+                ':variant_id' => $data['variant_id'],
+                ':value_id' => $data['value_id'],
             ]);
         }
     }
@@ -518,12 +525,16 @@ class ProductModel extends BaseModel
                 $stmt->bindValue(':pid', $productId, PDO::PARAM_INT);
                 $stmt->execute();
             } else {
+                // Đảm bảo không có id trong data
+                $data = ['product_id' => $productId, 'image_url' => $imageUrl, 'is_primary' => 1];
+                $data = $this->removePrimaryKeyFromData($data, 'product_images');
+                
                 $stmt = $this->pdo->prepare("
                     INSERT INTO product_images (product_id, image_url, is_primary)
                     VALUES (:product_id, :image_url, 1)
                 ");
-                $stmt->bindValue(':product_id', $productId, PDO::PARAM_INT);
-                $stmt->bindValue(':image_url', $imageUrl, PDO::PARAM_STR);
+                $stmt->bindValue(':product_id', $data['product_id'], PDO::PARAM_INT);
+                $stmt->bindValue(':image_url', $data['image_url'], PDO::PARAM_STR);
                 $stmt->execute();
             }
         } catch (PDOException $e) {

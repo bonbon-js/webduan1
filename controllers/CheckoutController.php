@@ -217,7 +217,7 @@ class CheckoutController
         // Lưu địa chỉ nếu user chọn và đã đăng nhập
         if (isset($_POST['save_address']) && $_POST['save_address'] == '1' && $userId) {
             try {
-                $this->userAddressModel->create([
+                $addressData = [
                     'user_id' => $userId,
                     'fullname' => trim($_POST['fullname']),
                     'phone' => trim($_POST['phone']),
@@ -227,7 +227,11 @@ class CheckoutController
                     'district' => $_POST['district'] ?? null,
                     'ward' => $_POST['ward'] ?? null,
                     'is_default' => 0, // Không tự động đặt làm mặc định
-                ]);
+                ];
+                // Đảm bảo KHÔNG có id trong addressData
+                unset($addressData['id'], $addressData['address_id'], $addressData['addressId']);
+                
+                $this->userAddressModel->create($addressData);
             } catch (Exception $e) {
                 // Không fail nếu không lưu được địa chỉ, chỉ log
                 error_log('Failed to save address: ' . $e->getMessage());
@@ -235,6 +239,7 @@ class CheckoutController
         }
 
         // Gói dữ liệu đơn hàng chính (bao gồm snapshot mã giảm giá)
+        // QUAN TRỌNG: KHÔNG BAO GIỜ thêm order_id, id, hoặc bất kỳ PRIMARY KEY nào vào đây
         $orderPayload = [
             'user_id'        => $userId,
             'fullname'       => trim($_POST['fullname']),
@@ -253,6 +258,14 @@ class CheckoutController
             'coupon_code'    => $couponCode,  // Snapshot: mã code tại thời điểm đặt hàng
             'coupon_name'    => $couponName,  // Snapshot: tên mã tại thời điểm đặt hàng
         ];
+        
+        // Đảm bảo KHÔNG có order_id hoặc id trong orderPayload
+        unset($orderPayload['order_id'], $orderPayload['id'], $orderPayload['orderId']);
+        
+        // Loại bỏ order_id từ $_POST nếu có (phòng trường hợp form gửi lên)
+        if (isset($_POST['order_id']) || isset($_POST['id'])) {
+            error_log('CheckoutController::process - WARNING: Found order_id or id in $_POST, removing...');
+        }
 
         $paymentMethod = $_POST['payment_method'] ?? 'cod';
         
@@ -420,8 +433,8 @@ class CheckoutController
                 }
             }
             
-            set_flash('success', 'Đặt hàng thành công! Chúng tôi sẽ liên hệ để xác nhận. Bạn có thể theo dõi trạng thái đơn hàng tại "Đơn hàng của tôi".');
-            header('Location: ' . BASE_URL . '?action=order-history');
+            set_flash('success', 'Đặt hàng thành công! Chúng tôi sẽ liên hệ để xác nhận. Bạn có thể theo dõi trạng thái đơn hàng tại đây.');
+            header('Location: ' . BASE_URL . '?action=order-detail&id=' . $orderId);
             exit;
         } catch (Throwable $exception) {
             // Log lỗi chi tiết để debug
@@ -514,6 +527,9 @@ class CheckoutController
                 'is_default' => isset($data['is_default']) && $data['is_default'] == 1 ? 1 : 0,
             ];
 
+            // Đảm bảo KHÔNG có id trong addressData
+            unset($addressData['id'], $addressData['address_id'], $addressData['addressId']);
+            
             if ($addressId) {
                 // Cập nhật địa chỉ
                 $success = $this->userAddressModel->update($addressId, $addressData);
