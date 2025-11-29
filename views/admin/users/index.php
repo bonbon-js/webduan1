@@ -1,67 +1,68 @@
 <style>
     .users-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 16px;
-        padding: 2rem;
+        border-radius: 8px;
+        padding: 0.6rem 0.8rem;
         color: #fff;
-        margin-bottom: 2rem;
-        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        margin-bottom: 0.6rem;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
     .users-header h2 {
         margin: 0;
         font-weight: 700;
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: 0.5rem;
+        font-size: 0.95rem;
     }
     .users-header .icon-wrapper {
-        width: 56px;
-        height: 56px;
+        width: 32px;
+        height: 32px;
         background: rgba(255, 255, 255, 0.2);
-        border-radius: 12px;
+        border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.5rem;
+        font-size: 1rem;
     }
     .users-stats {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 2rem;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 0.3rem;
+        margin-bottom: 0.3rem;
     }
     .stat-card {
         background: #fff;
-        border-radius: 12px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border-radius: 4px;
+        padding: 0.3rem;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
         transition: transform 0.2s, box-shadow 0.2s;
     }
     .stat-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
     }
     .stat-card .stat-value {
-        font-size: 2rem;
+        font-size: 0.9rem;
         font-weight: 700;
         color: #1e293b;
-        margin: 0.5rem 0;
+        margin: 0.08rem 0;
     }
     .stat-card .stat-label {
         color: #64748b;
-        font-size: 0.875rem;
+        font-size: 0.55rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
     .stat-card .stat-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 10px;
+        width: 20px;
+        height: 20px;
+        border-radius: 3px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.5rem;
-        margin-bottom: 1rem;
+        font-size: 0.7rem;
+        margin-bottom: 0.2rem;
     }
     .stat-card.total .stat-icon { background: #dbeafe; color: #3b82f6; }
     .stat-card.admin .stat-icon { background: #fee2e2; color: #ef4444; }
@@ -70,9 +71,9 @@
     
     .admin-table {
         background: #fff;
-        border-radius: 16px;
+        border-radius: 5px;
         overflow: hidden;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     }
     .admin-table table {
         margin: 0;
@@ -84,8 +85,8 @@
         font-weight: 600;
         color: #1e293b;
         border-bottom: 2px solid #e2e8f0;
-        padding: 1.25rem 1rem;
-        font-size: 0.875rem;
+        padding: 0.3rem 0.3rem;
+        font-size: 0.6rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
@@ -101,12 +102,13 @@
         border-bottom: none;
     }
     .admin-table td {
-        padding: 1.25rem 1rem;
+        padding: 0.3rem 0.3rem;
         vertical-align: middle;
+        font-size: 0.65rem;
     }
     .user-avatar {
-        width: 40px;
-        height: 40px;
+        width: 18px;
+        height: 18px;
         border-radius: 50%;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         display: inline-flex;
@@ -114,8 +116,8 @@
         justify-content: center;
         color: #fff;
         font-weight: 600;
-        font-size: 0.875rem;
-        margin-right: 0.75rem;
+        font-size: 0.55rem;
+        margin-right: 0.25rem;
     }
     .user-info {
         display: flex;
@@ -124,23 +126,24 @@
     .user-name {
         font-weight: 600;
         color: #1e293b;
-        margin-bottom: 0.25rem;
+        margin-bottom: 0.02rem;
+        font-size: 0.65rem;
     }
     .user-email {
-        font-size: 0.875rem;
+        font-size: 0.55rem;
         color: #64748b;
     }
     .role-badge {
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
-        font-size: 0.75rem;
+        padding: 0.12rem 0.35rem;
+        border-radius: 6px;
+        font-size: 0.5rem;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        gap: 0.12rem;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     }
     .role-badge.user {
         background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
@@ -154,11 +157,12 @@
         background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
         color: #fff;
         border: none;
-        padding: 0.5rem 0.75rem;
-        border-radius: 8px;
+        padding: 0.4rem 0.6rem;
+        border-radius: 6px;
         cursor: pointer;
         transition: all 0.2s;
         box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+        font-size: 0.75rem;
     }
     .btn-delete:hover {
         transform: translateY(-2px);
@@ -167,13 +171,18 @@
     .current-user-badge {
         background: linear-gradient(135deg, #10b981 0%, #059669 100%);
         color: #fff;
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
-        font-size: 0.75rem;
+        padding: 0.12rem 0.35rem;
+        border-radius: 6px;
+        font-size: 0.5rem;
         font-weight: 600;
         display: inline-flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.12rem;
+    }
+    .admin-table .badge {
+        padding: 0.12rem 0.3rem;
+        font-size: 0.55rem;
+        font-weight: 600;
     }
     .empty-state {
         text-align: center;
@@ -332,7 +341,7 @@ foreach ($users ?? [] as $user) {
                             <?php else: ?>
                                 <form method="POST" action="<?= BASE_URL ?>?action=admin-user-toggle-lock" style="display: inline;" onsubmit="return confirm('<?= $isLocked ? 'Bạn có chắc muốn mở khóa tài khoản này?' : 'Bạn có chắc muốn khóa tài khoản này?' ?>');">
                                     <input type="hidden" name="user_id" value="<?= htmlspecialchars($userId) ?>">
-                                    <button type="submit" class="btn <?= $isLocked ? 'btn-success' : 'btn-warning' ?>" title="<?= $isLocked ? 'Mở khóa tài khoản' : 'Khóa tài khoản' ?>" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">
+                                    <button type="submit" class="btn <?= $isLocked ? 'btn-success' : 'btn-warning' ?>" title="<?= $isLocked ? 'Mở khóa tài khoản' : 'Khóa tài khoản' ?>" style="padding: 0.1rem 0.25rem; font-size: 0.6rem;">
                                         <i class="bi bi-<?= $isLocked ? 'unlock-fill' : 'lock-fill' ?>"></i>
                                         <?= $isLocked ? 'Mở khóa' : 'Khóa' ?>
                                     </button>
