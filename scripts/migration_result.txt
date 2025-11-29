@@ -1,0 +1,84 @@
+Starting migration to fix orders table...
+
+1. Executing: ALTER TABLE `orders` ADD COLUMN `user_id` INT(11) NULL AFTER `order_id`...
+   ✓ Success
+
+2. Executing: ALTER TABLE `orders` ADD COLUMN `fullname` VARCHAR(255) NOT NULL DEFAULT '' AFTE...
+   ✓ Success
+
+3. Executing: ALTER TABLE `orders` ADD COLUMN `email` VARCHAR(255) NOT NULL DEFAULT '' AFTER `...
+   ✓ Success
+
+4. Executing: ALTER TABLE `orders` ADD COLUMN `phone` VARCHAR(20) NOT NULL DEFAULT '' AFTER `e...
+   ✓ Success
+
+5. Executing: ALTER TABLE `orders` ADD COLUMN `address` TEXT NOT NULL AFTER `phone`...
+   ✓ Success
+
+6. Executing: ALTER TABLE `orders` ADD COLUMN `city` VARCHAR(100) NULL AFTER `address`...
+   ✓ Success
+
+7. Executing: ALTER TABLE `orders` ADD COLUMN `district` VARCHAR(100) NULL AFTER `city`...
+   ✓ Success
+
+8. Executing: ALTER TABLE `orders` ADD COLUMN `ward` VARCHAR(100) NULL AFTER `district`...
+   ✓ Success
+
+9. Executing: ALTER TABLE `orders` ADD COLUMN `note` TEXT NULL AFTER `ward`...
+   ✓ Success
+
+10. Executing: ALTER TABLE `orders` ADD COLUMN `order_code` VARCHAR(50) NULL AFTER `note`...
+   ✓ Success
+
+11. Executing: ALTER TABLE `orders` ADD COLUMN `discount_amount` DECIMAL(10,2) DEFAULT 0 AFTER ...
+   ✓ Success
+
+12. Executing: ALTER TABLE `orders` ADD COLUMN `coupon_code` VARCHAR(50) NULL AFTER `coupon_id`...
+   ✓ Success
+
+13. Executing: ALTER TABLE `orders` ADD COLUMN `coupon_name` VARCHAR(255) NULL AFTER `coupon_co...
+   ✓ Success
+
+14. Executing: ALTER TABLE `orders` ADD COLUMN `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP...
+   ✓ Success
+
+15. Executing: ALTER TABLE `orders` ADD COLUMN `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP...
+   ✓ Success
+
+16. Executing: ALTER TABLE `orders` ADD COLUMN `cancel_reason` TEXT NULL AFTER `updated_at`...
+   ✓ Success
+
+17. Executing: ALTER TABLE `orders` ADD INDEX `idx_user_id` (`user_id`)...
+   ✓ Success
+
+18. Executing: ALTER TABLE `orders` ADD UNIQUE INDEX `idx_order_code` (`order_code`)...
+   ✓ Success
+
+
+=== Migration completed! ===
+
+=== New table structure ===
+
+order_id                  int(11)                   PRI       
+user_id                   int(11)                   MUL       
+fullname                  varchar(255)                        
+email                     varchar(255)                        
+phone                     varchar(20)                         
+address                   text                                
+city                      varchar(100)                        
+district                  varchar(100)                        
+ward                      varchar(100)                        
+note                      text                                
+order_code                varchar(50)               UNI       
+order_date                datetime                            
+total_amount              decimal(10,2)                       
+discount_amount           decimal(10,2)                       
+status                    varchar(50)                         
+shipping_address          text                                
+payment_method            varchar(50)                         
+coupon_id                 int(11)                   MUL       
+coupon_code               varchar(50)                         
+coupon_name               varchar(255)                        
+created_at                timestamp                           
+updated_at                timestamp                           
+cancel_reason             text                                

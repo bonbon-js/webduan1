@@ -16,6 +16,9 @@ class UserModel extends BaseModel
 
     public function create(array $data): int
     {
+        // Loại bỏ PRIMARY KEY khỏi data
+        $data = $this->removePrimaryKeyFromData($data, $this->table);
+        
         $sql = "INSERT INTO {$this->table} 
                 (first_name, last_name, gender, birthday, phone, address, email, password, role, created_at, full_name) 
                 VALUES (:first_name, :last_name, :gender, :birthday, :phone, :address, :email, :password, :role, NOW(), :full_name)";

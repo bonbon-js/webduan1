@@ -15,14 +15,18 @@ class CategoryModel extends BaseModel
      */
     public function createCategory(string $name, ?string $description = null): int
     {
+        // Đảm bảo không có id trong data (nếu được truyền dưới dạng array)
+        $data = ['category_name' => $name, 'description' => $description];
+        $data = $this->removePrimaryKeyFromData($data, $this->table);
+        
         $sql = "INSERT INTO {$this->table} (category_name, description)
                 VALUES (:name, :description)";
         $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':name', $name, PDO::PARAM_STR);
+        $stmt->bindValue(':name', $data['category_name'], PDO::PARAM_STR);
         $stmt->bindValue(
             ':description',
-            $description,
-            $description === null ? PDO::PARAM_NULL : PDO::PARAM_STR
+            $data['description'],
+            $data['description'] === null ? PDO::PARAM_NULL : PDO::PARAM_STR
         );
         $stmt->execute();
         return (int)$this->pdo->lastInsertId();

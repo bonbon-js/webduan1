@@ -123,7 +123,7 @@ class AuthController
                 $this->redirect('show-register');
             }
 
-            $userId = $this->userModel->create([
+            $userData = [
                 'first_name' => $firstname,
                 'last_name'  => $lastname,
                 'gender'     => $gender,
@@ -132,7 +132,11 @@ class AuthController
                 'address'    => $address ?: null,
                 'email'      => $email,
                 'password'   => password_hash($password, PASSWORD_BCRYPT),
-            ]);
+            ];
+            // Đảm bảo KHÔNG có id trong userData
+            unset($userData['id'], $userData['user_id'], $userData['userId']);
+            
+            $userId = $this->userModel->create($userData);
 
             if (!$userId || $userId <= 0) {
                 throw new Exception('Không thể tạo tài khoản. Vui lòng thử lại.');

@@ -9,10 +9,72 @@ class ProductModel extends BaseModel
     }
 
     /**
+     * Kiểm tra xem cột deleted_at có tồn tại không
+     */
+    private function hasDeletedAtColumn(): bool
+    {
+        static $hasColumn = null;
+        if ($hasColumn !== null) {
+            return $hasColumn;
+        }
+        
+        try {
+            $stmt = $this->pdo->query("SHOW COLUMNS FROM {$this->table} LIKE 'deleted_at'");
+            $hasColumn = $stmt->rowCount() > 0;
+            return $hasColumn;
+        } catch (Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Kiểm tra xem bảng product_images có tồn tại không
+     */
+    private function hasProductImagesTable(): bool
+    {
+        static $hasTable = null;
+        if ($hasTable !== null) {
+            return $hasTable;
+        }
+        
+        try {
+            $stmt = $this->pdo->query("SHOW TABLES LIKE 'product_images'");
+            $hasTable = $stmt->rowCount() > 0;
+            return $hasTable;
+        } catch (Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Helper để thêm image join vào SQL nếu bảng tồn tại
+     */
+    private function addImageJoin(string $sql, string $alias = 'pi'): string
+    {
+        if ($this->hasProductImagesTable()) {
+            return $sql . " LEFT JOIN product_images {$alias} ON p.product_id = {$alias}.product_id AND {$alias}.is_primary = 1";
+        }
+        return $sql;
+    }
+
+    /**
+     * Helper để thêm image field vào SELECT
+     */
+    private function addImageField(string $sql, string $alias = 'pi'): string
+    {
+        if ($this->hasProductImagesTable()) {
+            return $sql . ", {$alias}.image_url as image";
+        }
+        return $sql . ", NULL as image";
+    }
+
+    /**
      * Lấy danh sách sản phẩm cho trang quản trị
      */
-    public function getAdminProducts(?string $keyword = null, ?int $categoryId = null): array
+    public function getAdminProducts(?string $keyword = null, ?int $categoryId = null, bool $includeDeleted = false): array
     {
+        $hasDeletedAt = $this->hasDeletedAtColumn();
+        
         $sql = "SELECT 
                     p.product_id,
                     p.product_name,
@@ -20,13 +82,30 @@ class ProductModel extends BaseModel
                     p.price,
                     p.stock,
                     c.category_name,
-                    c.category_id,
-                    pi.image_url
-                FROM {$this->table} p
-                LEFT JOIN categories c ON p.category_id = c.category_id
-                LEFT JOIN product_images pi ON p.product_id = pi.product_id AND pi.is_primary = 1
-                WHERE 1=1";
+                    c.category_id";
+        
+        $sql = $this->addImageField($sql, 'pi');
+        $sql = str_replace('as image', 'as image_url', $sql); // Đổi tên field cho admin
+        
+        if ($hasDeletedAt) {
+            $sql .= ", p.deleted_at";
+        }
+        
+        $sql .= " FROM {$this->table} p
+                LEFT JOIN categories c ON p.category_id = c.category_id";
+        
+        $sql = $this->addImageJoin($sql);
+        
+        $sql .= " WHERE 1=1";
         $params = [];
+
+        if ($hasDeletedAt) {
+            if (!$includeDeleted) {
+                $sql .= " AND (p.deleted_at IS NULL OR p.deleted_at = '')";
+            } else {
+                $sql .= " AND (p.deleted_at IS NOT NULL AND p.deleted_at != '')";
+            }
+        }
 
         if ($keyword) {
             $sql .= " AND (p.product_name LIKE :keyword OR p.description LIKE :keyword)";
@@ -119,9 +198,46 @@ class ProductModel extends BaseModel
     }
 
     /**
-     * Xóa sản phẩm và các dữ liệu liên quan
+     * Xóa mềm sản phẩm (soft delete)
      */
     public function deleteProduct(int $productId): bool
+    {
+        if (!$this->hasDeletedAtColumn()) {
+            // Nếu chưa có cột deleted_at, thực hiện xóa vĩnh viễn
+            return $this->forceDeleteProduct($productId);
+        }
+        
+        try {
+            $stmt = $this->pdo->prepare("UPDATE {$this->table} SET deleted_at = NOW() WHERE product_id = :pid");
+            $stmt->bindValue(':pid', $productId, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (Throwable $exception) {
+            throw $exception;
+        }
+    }
+
+    /**
+     * Khôi phục sản phẩm đã xóa
+     */
+    public function restoreProduct(int $productId): bool
+    {
+        if (!$this->hasDeletedAtColumn()) {
+            throw new RuntimeException('Cột deleted_at chưa tồn tại. Vui lòng chạy script SQL để thêm cột.');
+        }
+        
+        try {
+            $stmt = $this->pdo->prepare("UPDATE {$this->table} SET deleted_at = NULL WHERE product_id = :pid");
+            $stmt->bindValue(':pid', $productId, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (Throwable $exception) {
+            throw $exception;
+        }
+    }
+
+    /**
+     * Xóa vĩnh viễn sản phẩm (hard delete)
+     */
+    public function forceDeleteProduct(int $productId): bool
     {
         $this->pdo->beginTransaction();
 
@@ -141,7 +257,6 @@ class ProductModel extends BaseModel
 
                 $stmt = $this->pdo->prepare("DELETE FROM product_attribute_values WHERE variant_id IN ($placeholder)");
                 $stmt->execute($variantIds);
-
             }
 
             $stmt = $this->pdo->prepare("DELETE FROM product_attribute_values WHERE product_id = :pid");
@@ -226,6 +341,9 @@ class ProductModel extends BaseModel
      */
     public function createVariant(int $productId, array $variantData, array $valueIds): int
     {
+        // Loại bỏ PRIMARY KEY khỏi variantData
+        $variantData = $this->removePrimaryKeyFromData($variantData, 'product_variants');
+        
         $this->pdo->beginTransaction();
 
         try {
@@ -363,41 +481,64 @@ class ProductModel extends BaseModel
                 continue;
             }
 
+            // Đảm bảo không có id trong data
+            $data = ['product_id' => $productId, 'variant_id' => $variantId, 'value_id' => $valueId];
+            $data = $this->removePrimaryKeyFromData($data, 'product_attribute_values');
+
             $stmt->execute([
-                ':product_id' => $productId,
-                ':variant_id' => $variantId,
-                ':value_id' => $valueId,
+                ':product_id' => $data['product_id'],
+                ':variant_id' => $data['variant_id'],
+                ':value_id' => $data['value_id'],
             ]);
         }
     }
 
     private function upsertPrimaryImage(int $productId, ?string $imageUrl): void
     {
-        if ($imageUrl === null || $imageUrl === '') {
-            $stmt = $this->pdo->prepare("DELETE FROM product_images WHERE product_id = :pid AND is_primary = 1");
-            $stmt->bindValue(':pid', $productId, PDO::PARAM_INT);
-            $stmt->execute();
+        // Nếu bảng product_images không tồn tại, bỏ qua
+        if (!$this->hasProductImagesTable()) {
             return;
         }
 
-        $stmt = $this->pdo->prepare("SELECT product_image_id FROM product_images WHERE product_id = :pid AND is_primary = 1 LIMIT 1");
-        $stmt->bindValue(':pid', $productId, PDO::PARAM_INT);
-        $stmt->execute();
-        $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($imageUrl === null || $imageUrl === '') {
+            try {
+                $stmt = $this->pdo->prepare("DELETE FROM product_images WHERE product_id = :pid AND is_primary = 1");
+                $stmt->bindValue(':pid', $productId, PDO::PARAM_INT);
+                $stmt->execute();
+            } catch (PDOException $e) {
+                // Bỏ qua lỗi nếu bảng không tồn tại
+            }
+            return;
+        }
 
-        if ($existing) {
-            $stmt = $this->pdo->prepare("UPDATE product_images SET image_url = :image_url WHERE product_image_id = :id");
-            $stmt->bindValue(':image_url', $imageUrl, PDO::PARAM_STR);
-            $stmt->bindValue(':id', $existing['product_image_id'], PDO::PARAM_INT);
+        try {
+            // Kiểm tra xem có ảnh primary nào chưa
+            $stmt = $this->pdo->prepare("SELECT * FROM product_images WHERE product_id = :pid AND is_primary = 1 LIMIT 1");
+            $stmt->bindValue(':pid', $productId, PDO::PARAM_INT);
             $stmt->execute();
-        } else {
-            $stmt = $this->pdo->prepare("
-                INSERT INTO product_images (product_id, image_url, is_primary)
-                VALUES (:product_id, :image_url, 1)
-            ");
-            $stmt->bindValue(':product_id', $productId, PDO::PARAM_INT);
-            $stmt->bindValue(':image_url', $imageUrl, PDO::PARAM_STR);
-            $stmt->execute();
+            $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($existing) {
+                // Cập nhật ảnh hiện có - sử dụng product_id thay vì product_image_id
+                $stmt = $this->pdo->prepare("UPDATE product_images SET image_url = :image_url WHERE product_id = :pid AND is_primary = 1");
+                $stmt->bindValue(':image_url', $imageUrl, PDO::PARAM_STR);
+                $stmt->bindValue(':pid', $productId, PDO::PARAM_INT);
+                $stmt->execute();
+            } else {
+                // Đảm bảo không có id trong data
+                $data = ['product_id' => $productId, 'image_url' => $imageUrl, 'is_primary' => 1];
+                $data = $this->removePrimaryKeyFromData($data, 'product_images');
+                
+                $stmt = $this->pdo->prepare("
+                    INSERT INTO product_images (product_id, image_url, is_primary)
+                    VALUES (:product_id, :image_url, 1)
+                ");
+                $stmt->bindValue(':product_id', $data['product_id'], PDO::PARAM_INT);
+                $stmt->bindValue(':image_url', $data['image_url'], PDO::PARAM_STR);
+                $stmt->execute();
+            }
+        } catch (PDOException $e) {
+            // Bỏ qua lỗi nếu bảng không tồn tại
         }
     }
 
@@ -484,12 +625,16 @@ class ProductModel extends BaseModel
                     p.description,
                     p.price,
                     p.stock,
-                    c.category_name as category,
-                    pi.image_url as image
-                FROM {$this->table} p
-                LEFT JOIN categories c ON p.category_id = c.category_id
-                LEFT JOIN product_images pi ON p.product_id = pi.product_id AND pi.is_primary = 1
-                ORDER BY p.created_at DESC";
+                    c.category_name as category";
+        
+        $sql = $this->addImageField($sql);
+        
+        $sql .= " FROM {$this->table} p
+                LEFT JOIN categories c ON p.category_id = c.category_id";
+        
+        $sql = $this->addImageJoin($sql);
+        
+        $sql .= " ORDER BY p.product_id DESC";
         
         if ($limit) {
             $sql .= " LIMIT :limit";
@@ -591,6 +736,7 @@ class ProductModel extends BaseModel
 						p.description,
 						p.price,
 						p.stock,
+
 						c.category_name as category,
 						pi.image_url as image
 					FROM {$this->table} p
@@ -633,12 +779,16 @@ class ProductModel extends BaseModel
                     p.price,
                     p.stock,
                     c.category_name as category,
-                    c.category_id,
-                    pi.image_url as image
-                FROM {$this->table} p
-                LEFT JOIN categories c ON p.category_id = c.category_id
-                LEFT JOIN product_images pi ON p.product_id = pi.product_id AND pi.is_primary = 1
-                WHERE p.product_id = :id";
+                    c.category_id";
+        
+        $sql = $this->addImageField($sql);
+        
+        $sql .= " FROM {$this->table} p
+                LEFT JOIN categories c ON p.category_id = c.category_id";
+        
+        $sql = $this->addImageJoin($sql);
+        
+        $sql .= " WHERE p.product_id = :id";
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
@@ -661,13 +811,17 @@ class ProductModel extends BaseModel
                     p.description,
                     p.price,
                     p.stock,
-                    c.category_name as category,
-                    pi.image_url as image
-                FROM {$this->table} p
-                LEFT JOIN categories c ON p.category_id = c.category_id
-                LEFT JOIN product_images pi ON p.product_id = pi.product_id AND pi.is_primary = 1
-                WHERE p.category_id = :category_id
-                ORDER BY p.created_at DESC";
+                    c.category_name as category";
+        
+        $sql = $this->addImageField($sql);
+        
+        $sql .= " FROM {$this->table} p
+                LEFT JOIN categories c ON p.category_id = c.category_id";
+        
+        $sql = $this->addImageJoin($sql);
+        
+        $sql .= " WHERE p.category_id = :category_id
+                ORDER BY p.product_id DESC";
         
         if ($limit) {
             $sql .= " LIMIT :limit";
@@ -809,14 +963,18 @@ class ProductModel extends BaseModel
                     p.description,
                     p.price,
                     p.stock,
-                    c.category_name as category,
-                    pi.image_url as image
-                FROM {$this->table} p
-                LEFT JOIN categories c ON p.category_id = c.category_id
-                LEFT JOIN product_images pi ON p.product_id = pi.product_id AND pi.is_primary = 1
-                WHERE p.category_id = :category_id
+                    c.category_name as category";
+        
+        $sql = $this->addImageField($sql);
+        
+        $sql .= " FROM {$this->table} p
+                LEFT JOIN categories c ON p.category_id = c.category_id";
+        
+        $sql = $this->addImageJoin($sql);
+        
+        $sql .= " WHERE p.category_id = :category_id
                   AND p.product_id <> :exclude_id
-                ORDER BY p.created_at DESC
+                ORDER BY p.product_id DESC
                 LIMIT :limit";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':category_id', $categoryId, PDO::PARAM_INT);
@@ -841,6 +999,7 @@ class ProductModel extends BaseModel
                     p.description,
                     p.price,
                     p.stock,
+
                     c.category_name as category,
                     pi.image_url as image
                 FROM {$this->table} p

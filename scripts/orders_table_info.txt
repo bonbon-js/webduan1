@@ -1,0 +1,19 @@
+=== COLUMNS IN ORDERS TABLE ===
+
+Field: order_id             Type: int(11)              Key: PRI   Extra: auto_increment      
+Field: order_date           Type: datetime             Key:       Extra:                     
+Field: total_amount         Type: decimal(10,2)        Key:       Extra:                     
+Field: status               Type: varchar(50)          Key:       Extra:                     
+Field: shipping_address     Type: text                 Key:       Extra:                     
+Field: payment_method       Type: varchar(50)          Key:       Extra:                     
+Field: coupon_id            Type: int(11)              Key: MUL   Extra:                     
+
+
+=== AUTO_INCREMENT VALUE ===
+
+Auto_increment: 10
+
+
+=== SAMPLE QUERY TO CHECK PRIMARY KEY ===
+
+Primary Key Column: order_id

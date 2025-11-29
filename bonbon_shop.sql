@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1
--- Thời gian đã tạo: Th10 28, 2025 lúc 02:13 AM
+-- Thời gian đã tạo: Th10 28, 2025 lúc 05:26 AM
 -- Phiên bản máy phục vụ: 10.4.32-MariaDB
--- Phiên bản PHP: 8.1.25
+-- Phiên bản PHP: 8.0.30
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -93,7 +93,8 @@ CREATE TABLE `carts` (
 
 INSERT INTO `carts` (`cart_id`, `user_id`, `created_at`) VALUES
 (2, 1, '2025-11-27 03:46:22'),
-(3, 3, '2025-11-27 21:03:46');
+(3, 3, '2025-11-27 21:03:46'),
+(4, 4, '2025-11-28 11:02:59');
 
 -- --------------------------------------------------------
 
@@ -118,7 +119,8 @@ INSERT INTO `cart_items` (`cart_item_id`, `cart_id`, `product_id`, `variant_id`,
 (11, 2, 1, NULL, 1),
 (12, 2, 3, 10, 1),
 (13, 3, 2, NULL, 1),
-(14, 2, 9, NULL, 1);
+(14, 2, 9, NULL, 1),
+(15, 4, 13, NULL, 1);
 
 -- --------------------------------------------------------
 
@@ -138,6 +140,7 @@ CREATE TABLE `categories` (
 --
 
 INSERT INTO `categories` (`category_id`, `category_name`, `description`, `created_at`) VALUES
+(0, 'link', 'slall', NULL),
 (1, 'Áo Polo', 'Áo polo nam cao cấp, phong cách lịch lãm', '2025-11-26 18:07:33'),
 (2, 'Áo Khoác', 'Áo khoác nam thời trang, giữ ấm tốt', '2025-11-26 18:07:33'),
 (3, 'Hoodie', 'Áo hoodie nam trẻ trung, năng động', '2025-11-26 18:07:33'),
@@ -191,7 +194,6 @@ INSERT INTO `coupons` (`coupon_id`, `code`, `name`, `description`, `discount_typ
 
 CREATE TABLE `orders` (
   `order_id` int(11) NOT NULL,
-  `user_id` int(11) DEFAULT NULL,
   `order_date` datetime DEFAULT NULL,
   `total_amount` decimal(10,2) DEFAULT NULL,
   `status` varchar(50) DEFAULT NULL,
@@ -326,29 +328,33 @@ CREATE TABLE `products` (
   `price` decimal(10,2) DEFAULT NULL,
   `stock` int(11) DEFAULT NULL,
   `category_id` int(11) DEFAULT NULL,
-  `created_at` datetime DEFAULT NULL
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL ON UPDATE current_timestamp(),
+  `deleted_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `products`
 --
 
-INSERT INTO `products` (`product_id`, `product_name`, `description`, `price`, `stock`, `category_id`, `created_at`) VALUES
-(1, 'Áo Polo Essential', 'Áo polo nam thiết kế tối giản, chất liệu cotton cao cấp, thoáng mát', 399000.00, 100, 1, '2025-11-26 18:07:33'),
-(2, 'Áo Khoác Dệt Kim', 'Áo khoác dệt kim ấm áp, phù hợp mùa thu đông', 659000.00, 50, 2, '2025-11-26 18:07:33'),
-(3, 'Áo Hoodie Urban', 'Hoodie phong cách đường phố, chất liệu nỉ mềm mại', 549000.00, 80, 3, '2025-11-26 18:07:33'),
-(4, 'Quần Kaki Slimfit', 'Quần kaki ôm vừa phải, form dáng hiện đại', 489000.00, 120, 4, '2025-11-26 18:07:33'),
-(5, 'Áo Sơ Mi Cotton', 'Áo sơ mi cotton 100%, phù hợp công sở', 429000.00, 90, 5, '2025-11-26 18:07:33'),
-(6, 'Áo Polo Stripe', 'Áo polo họa tiết sọc ngang, trẻ trung năng động', 419000.00, 70, 1, '2025-11-26 18:07:33'),
-(7, 'Áo Khoác Utility', 'Áo khoác nhiều túi tiện dụng, phong cách quân đội', 699000.00, 40, 2, '2025-11-26 18:07:33'),
-(8, 'Quần Jean Darkwash', 'Quần jean màu tối, bền đẹp theo thời gian', 559000.00, 60, 4, '2025-11-26 18:07:33'),
-(9, 'Áo Polo Premium', 'Áo polo cao cấp, chất liệu pique cotton, logo thêu tinh tế', 499000.00, 55, 1, '2025-11-26 18:07:33'),
-(10, 'Áo Khoác Bomber', 'Áo khoác bomber phong cách pilot, chống gió tốt', 799000.00, 35, 2, '2025-11-26 18:07:33'),
-(11, 'Áo Hoodie Zip', 'Hoodie có khóa kéo, tiện lợi và năng động', 589000.00, 65, 3, '2025-11-26 18:07:33'),
-(12, 'Quần Jogger', 'Quần jogger thể thao, co giãn thoải mái', 449000.00, 85, 4, '2025-11-26 18:07:33'),
-(13, 'Áo Sơ Mi Oxford', 'Áo sơ mi vải oxford cao cấp, form regular fit', 479000.00, 70, 5, '2025-11-26 18:07:33'),
-(14, 'Áo Khoác Denim', 'Áo khoác jean classic, phong cách bất hủ', 729000.00, 45, 2, '2025-11-26 18:07:33'),
-(15, 'Quần Short Kaki', 'Quần short kaki mùa hè, thoáng mát', 359000.00, 95, 4, '2025-11-26 18:07:33');
+INSERT INTO `products` (`product_id`, `product_name`, `description`, `price`, `stock`, `category_id`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'Áo Polo Essential', 'Áo polo nam thiết kế tối giản, chất liệu cotton cao cấp, thoáng mát', 399000.00, 100, 1, '2025-11-26 18:07:33', NULL, NULL),
+(2, 'Áo Khoác Dệt Kim', 'Áo khoác dệt kim ấm áp, phù hợp mùa thu đông', 659000.00, 50, 2, '2025-11-26 18:07:33', NULL, NULL),
+(3, 'Áo Hoodie Urban', 'Hoodie phong cách đường phố, chất liệu nỉ mềm mại', 549000.00, 80, 3, '2025-11-26 18:07:33', NULL, NULL),
+(4, 'Quần Kaki Slimfit', 'Quần kaki ôm vừa phải, form dáng hiện đại', 489000.00, 120, 4, '2025-11-26 18:07:33', NULL, NULL),
+(5, 'Áo Sơ Mi Cotton', 'Áo sơ mi cotton 100%, phù hợp công sở', 429000.00, 90, 5, '2025-11-26 18:07:33', NULL, NULL),
+(6, 'Áo Polo Stripe', 'Áo polo họa tiết sọc ngang, trẻ trung năng động', 419000.00, 70, 1, '2025-11-26 18:07:33', NULL, NULL),
+(7, 'Áo Khoác Utility', 'Áo khoác nhiều túi tiện dụng, phong cách quân đội', 699000.00, 40, 2, '2025-11-26 18:07:33', NULL, NULL),
+(8, 'Quần Jean Darkwash', 'Quần jean màu tối, bền đẹp theo thời gian', 559000.00, 60, 4, '2025-11-26 18:07:33', NULL, NULL),
+(9, 'Áo Polo Premium', 'Áo polo cao cấp, chất liệu pique cotton, logo thêu tinh tế', 499000.00, 55, 1, '2025-11-26 18:07:33', NULL, NULL),
+(10, 'Áo Khoác Bomber', 'Áo khoác bomber phong cách pilot, chống gió tốt', 799000.00, 35, 2, '2025-11-26 18:07:33', NULL, NULL),
+(11, 'Áo Hoodie Zip', 'Hoodie có khóa kéo, tiện lợi và năng động', 589000.00, 65, 3, '2025-11-26 18:07:33', NULL, NULL),
+(12, 'Quần Jogger', 'Quần jogger thể thao, co giãn thoải mái', 449000.00, 85, 4, '2025-11-26 18:07:33', NULL, NULL),
+(13, 'Áo Sơ Mi Oxford', 'Áo sơ mi vải oxford cao cấp, form regular fit', 479000.00, 70, 5, '2025-11-26 18:07:33', NULL, NULL),
+(14, 'Áo Khoác Denim', 'Áo khoác jean classic, phong cách bất hủ', 729000.00, 45, 2, '2025-11-26 18:07:33', NULL, NULL),
+(15, 'Quần Short Kakoo', 'Quần short kaki mùa hè, thoáng mát', 35900000.00, 95, 4, '2025-11-26 18:07:33', '2025-11-28 10:52:19', NULL),
+(0, 'Bố Hiệp vĩ đại', 'dg', 10000.00, 11, 2, NULL, NULL, NULL),
+(0, 'h', 'lll', 200000.00, 19, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -555,7 +561,8 @@ INSERT INTO `product_images` (`image_id`, `product_id`, `image_url`, `is_primary
 (42, 14, 'https://images.unsplash.com/photo-1460353581641-37baddab0fa2?auto=format&fit=crop&w=600&q=80', 0),
 (43, 14, 'https://images.unsplash.com/photo-1537832816519-689ad163238b?auto=format&fit=crop&w=600&q=80', 0),
 (44, 15, 'https://images.unsplash.com/photo-1460353581641-37baddab0fa2?auto=format&fit=crop&w=600&q=80', 0),
-(45, 15, 'https://images.unsplash.com/photo-1537832816519-689ad163238b?auto=format&fit=crop&w=600&q=80', 0);
+(45, 15, 'https://images.unsplash.com/photo-1537832816519-689ad163238b?auto=format&fit=crop&w=600&q=80', 0),
+(0, 0, 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAkGBxITEhUTExIVFhUXFRUVFRcVGBUXFRUXFRUXFxcYFRcYHSggGBolHRUVITEhJSkrLi4uFx8zODMtNygtLisBCgoKDg0OGhAQGy0fHx0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLf/AABEIAKgBLAMBIgACEQEDEQH/', 1);
 
 -- --------------------------------------------------------
 
@@ -675,17 +682,19 @@ CREATE TABLE `users` (
   `first_name` varchar(80) DEFAULT NULL,
   `last_name` varchar(80) DEFAULT NULL,
   `gender` enum('female','male') DEFAULT NULL,
-  `birthday` date DEFAULT NULL
+  `birthday` date DEFAULT NULL,
+  `is_locked` tinyint(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Đang đổ dữ liệu cho bảng `users`
 --
 
-INSERT INTO `users` (`user_id`, `full_name`, `email`, `password`, `phone`, `address`, `role`, `session_token`, `session_expires`, `created_at`, `first_name`, `last_name`, `gender`, `birthday`) VALUES
-(1, 'fff rể', 'le3221981@gmail.com', '$2y$10$pfMflz91BmTYXGRLRd6rP.jE97atHKYzaq/AFn.Rb87JvWNp0EOEi', '0393561314', 'Hà Nội', 'admin', NULL, NULL, '2025-11-27 10:34:49', 'fff', 'rể', 'male', '2007-11-01'),
-(2, 'ee re', 'nguyenvanlinh25062006@gmail.com', '$2y$10$7d.4VUybvBcNL6thEsZb0.v9u554mW2Z377NpwHtaohJ67e2DW7Ay', '0333044840', 'Hà Nội', 'customer', '6ee393e0b6c046db44e7ecb65de566bfad15df7492cff3707877d1295675fabb', '2025-11-28 05:29:48', '2025-11-27 11:29:48', 'ee', 're', 'female', '2000-02-23'),
-(3, 'Lê Phương Hà', 'phuongha9112006@gmail.com', '$2y$10$uBEzaOf/IQF3O53pHU4NqeSfdH.uiDcnjvtxKNtP10QEKfNc0vHCq', '0343748764', 'Thanh Hóa', 'customer', NULL, NULL, '2025-11-27 21:01:53', 'Lê', 'Phương Hà', 'female', '2006-11-09');
+INSERT INTO `users` (`user_id`, `full_name`, `email`, `password`, `phone`, `address`, `role`, `session_token`, `session_expires`, `created_at`, `first_name`, `last_name`, `gender`, `birthday`, `is_locked`) VALUES
+(1, 'fff rể', 'le3221981@gmail.com', '$2y$10$pfMflz91BmTYXGRLRd6rP.jE97atHKYzaq/AFn.Rb87JvWNp0EOEi', '0393561314', 'Hà Nội', 'admin', NULL, NULL, '2025-11-27 10:34:49', 'fff', 'rể', 'male', '2007-11-01', 0),
+(2, 'ee re', 'nguyenvanlinh25062006@gmail.com', '$2y$10$7d.4VUybvBcNL6thEsZb0.v9u554mW2Z377NpwHtaohJ67e2DW7Ay', '0333044840', 'Hà Nội', 'customer', '6ee393e0b6c046db44e7ecb65de566bfad15df7492cff3707877d1295675fabb', '2025-11-28 05:29:48', '2025-11-27 11:29:48', 'ee', 're', 'female', '2000-02-23', 0),
+(3, 'Lê Phương Hà', 'phuongha9112006@gmail.com', '$2y$10$uBEzaOf/IQF3O53pHU4NqeSfdH.uiDcnjvtxKNtP10QEKfNc0vHCq', '0343748764', 'Thanh Hóa', 'customer', NULL, NULL, '2025-11-27 21:01:53', 'Lê', 'Phương Hà', 'female', '2006-11-09', 0),
+(4, 'Phạm Văn Hiệp', 'phamvanhiep210306@gmail.com', '$2y$10$RwV7yFPY7.AKBdiEjR9MROkPj.k9sZu.Nb57XK97Aj.745qjaRLSe', '9749264441', 'sn:245 đường thanh chương phố tân trọng phường quảng phú', 'customer', NULL, NULL, '2025-11-28 11:02:33', 'Phạm', 'Văn Hiệp', 'male', '2006-03-21', 0);
 
 --
 -- Chỉ mục cho các bảng đã đổ
@@ -738,7 +747,6 @@ ALTER TABLE `coupons`
 --
 ALTER TABLE `orders`
   ADD PRIMARY KEY (`order_id`),
-  ADD KEY `user_id` (`user_id`),
   ADD KEY `coupon_id` (`coupon_id`);
 
 --
@@ -786,19 +794,25 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT cho bảng `carts`
 --
 ALTER TABLE `carts`
-  MODIFY `cart_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `cart_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT cho bảng `cart_items`
 --
 ALTER TABLE `cart_items`
-  MODIFY `cart_item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `cart_item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+
+--
+-- AUTO_INCREMENT cho bảng `orders`
+--
+ALTER TABLE `orders`
+  MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT cho bảng `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

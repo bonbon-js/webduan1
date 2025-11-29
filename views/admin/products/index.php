@@ -31,6 +31,23 @@
         box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
         color: #fff;
     }
+    .btn-back {
+        background: #64748b;
+        color: #fff;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+    }
+    .btn-back:hover {
+        background: #475569;
+        color: #fff;
+    }
     .admin-table {
         background: #fff;
         border-radius: 12px;
@@ -166,10 +183,16 @@
 
 <div class="products-header">
     <h1>Quản lý sản phẩm</h1>
-    <a href="<?= BASE_URL ?>?action=admin-product-create" class="btn-add-product">
-        <i class="bi bi-plus-lg"></i>
-        Thêm sản phẩm mới
-    </a>
+    <div style="display: flex; gap: 1rem; align-items: center;">
+        <a href="<?= BASE_URL ?>?action=admin-products-trash" class="btn-back" style="background: #64748b;">
+            <i class="bi bi-trash"></i>
+            Thùng rác
+        </a>
+        <a href="<?= BASE_URL ?>?action=admin-product-create" class="btn-add-product">
+            <i class="bi bi-plus-lg"></i>
+            Thêm sản phẩm mới
+        </a>
+    </div>
 </div>
 
 <div class="admin-table">
@@ -250,4 +273,5 @@
         </tbody>
     </table>
 </div>
+
 

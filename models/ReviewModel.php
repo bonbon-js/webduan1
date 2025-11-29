@@ -16,6 +16,9 @@ class ReviewModel extends BaseModel
      */
     public function create(array $data): int
     {
+        // Loại bỏ PRIMARY KEY khỏi data
+        $data = $this->removePrimaryKeyFromData($data, $this->table);
+        
         // Lưu images dưới dạng JSON nếu có
         $imagesJson = null;
         if (!empty($data['images']) && is_array($data['images'])) {

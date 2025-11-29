@@ -15,7 +15,7 @@
             <?php endif; ?>
 
             <?php if (isset($_SESSION['success'])): ?>
-                <div class="alert alert-success">
+                <div class="alert alert-dark">
                     <?= $_SESSION['success'] ?>
                     <?php unset($_SESSION['success']); ?>
                 </div>

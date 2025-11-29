@@ -64,8 +64,12 @@ class AttributeModel extends BaseModel
 
     public function createAttribute(string $name): int
     {
+        // Đảm bảo không có id trong data
+        $data = ['attribute_name' => $name];
+        $data = $this->removePrimaryKeyFromData($data, $this->table);
+        
         $stmt = $this->pdo->prepare("INSERT INTO {$this->table} (attribute_name) VALUES (:name)");
-        $stmt->bindValue(':name', $name, PDO::PARAM_STR);
+        $stmt->bindValue(':name', $data['attribute_name'], PDO::PARAM_STR);
         $stmt->execute();
         return (int)$this->pdo->lastInsertId();
     }
@@ -108,12 +112,16 @@ class AttributeModel extends BaseModel
 
     public function createValue(int $attributeId, string $valueName): int
     {
+        // Đảm bảo không có id trong data
+        $data = ['attribute_id' => $attributeId, 'value_name' => $valueName];
+        $data = $this->removePrimaryKeyFromData($data, 'attribute_values');
+        
         $stmt = $this->pdo->prepare("
             INSERT INTO attribute_values (attribute_id, value_name)
             VALUES (:attribute_id, :value_name)
         ");
-        $stmt->bindValue(':attribute_id', $attributeId, PDO::PARAM_INT);
-        $stmt->bindValue(':value_name', $valueName, PDO::PARAM_STR);
+        $stmt->bindValue(':attribute_id', $data['attribute_id'], PDO::PARAM_INT);
+        $stmt->bindValue(':value_name', $data['value_name'], PDO::PARAM_STR);
         $stmt->execute();
         return (int)$this->pdo->lastInsertId();
     }

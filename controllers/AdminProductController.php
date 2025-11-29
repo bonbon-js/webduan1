@@ -80,6 +80,9 @@ class AdminProductController
             exit;
         }
 
+        // Đảm bảo KHÔNG có id trong payload
+        unset($payload['id'], $payload['product_id'], $payload['productId']);
+        
         try {
             $productId = $this->productModel->createProduct($payload);
             set_flash('success', 'Đã tạo sản phẩm. Bạn có thể thêm biến thể ngay bây giờ.');
@@ -133,12 +136,72 @@ class AdminProductController
 
         try {
             $this->productModel->deleteProduct($productId);
-            set_flash('success', 'Đã xóa sản phẩm.');
+            set_flash('success', 'Đã xóa sản phẩm vào thùng rác. Bạn có thể khôi phục sau.');
         } catch (Throwable $exception) {
             set_flash('danger', 'Không thể xóa sản phẩm: ' . $exception->getMessage());
         }
 
         header('Location: ' . BASE_URL . '?action=admin-products');
+        exit;
+    }
+
+    public function trash(): void
+    {
+        $this->requireAdmin();
+
+        $keyword = trim($_GET['keyword'] ?? '');
+        $categoryId = isset($_GET['category_id']) ? (int)$_GET['category_id'] : null;
+
+        $products = $this->productModel->getAdminProducts($keyword ?: null, $categoryId ?: null, true);
+        $categories = $this->categoryModel->getAllCategories();
+
+        $title = 'Thùng rác sản phẩm';
+        $view  = 'admin/products/trash';
+
+        require_once PATH_VIEW . 'admin/layout.php';
+    }
+
+    public function restore(): void
+    {
+        $this->requireAdmin();
+
+        $productId = isset($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
+        if ($productId <= 0) {
+            set_flash('danger', 'Sản phẩm không hợp lệ.');
+            header('Location: ' . BASE_URL . '?action=admin-products-trash');
+            exit;
+        }
+
+        try {
+            $this->productModel->restoreProduct($productId);
+            set_flash('success', 'Đã khôi phục sản phẩm.');
+        } catch (Throwable $exception) {
+            set_flash('danger', 'Không thể khôi phục sản phẩm: ' . $exception->getMessage());
+        }
+
+        header('Location: ' . BASE_URL . '?action=admin-products-trash');
+        exit;
+    }
+
+    public function forceDelete(): void
+    {
+        $this->requireAdmin();
+
+        $productId = isset($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
+        if ($productId <= 0) {
+            set_flash('danger', 'Sản phẩm không hợp lệ.');
+            header('Location: ' . BASE_URL . '?action=admin-products-trash');
+            exit;
+        }
+
+        try {
+            $this->productModel->forceDeleteProduct($productId);
+            set_flash('success', 'Đã xóa vĩnh viễn sản phẩm.');
+        } catch (Throwable $exception) {
+            set_flash('danger', 'Không thể xóa vĩnh viễn sản phẩm: ' . $exception->getMessage());
+        }
+
+        header('Location: ' . BASE_URL . '?action=admin-products-trash');
         exit;
     }
 
@@ -166,6 +229,9 @@ class AdminProductController
             exit;
         }
 
+        // Đảm bảo KHÔNG có id trong variantData
+        unset($variantData['id'], $variantData['variant_id'], $variantData['variantId']);
+        
         try {
             $this->productModel->createVariant($productId, $variantData, $valueIds);
             set_flash('success', 'Đã thêm biến thể.');

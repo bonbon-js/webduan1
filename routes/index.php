@@ -17,6 +17,11 @@ match ($action) {
     'posts'          => (new PostController)->index(),
     'post-detail'    => (new PostController)->detail(),
     
+    // Contact & Collection routes
+    'contact'        => (new ContactController)->index(),
+    'contact-submit' => (new ContactController)->submit(),
+    'collection'     => (new CollectionController)->index(),
+    
     // Cart routes
     'cart-list'      => (new CartController)->index(),
     'cart-add'       => (new CartController)->add(),
@@ -74,6 +79,37 @@ match ($action) {
     'admin-coupons-trash' => (new AdminCouponController)->trash(),
     'admin-coupon-restore' => (new AdminCouponController)->restore(),
     'admin-coupon-force-delete' => (new AdminCouponController)->forceDelete(),
+    
+    // Quản lý danh mục
+    'admin-categories'      => (new AdminCategoryController)->index(),
+    'admin-category-create' => (new AdminCategoryController)->create(),
+    'admin-category-edit'   => (new AdminCategoryController)->edit(),
+    'admin-category-store'  => (new AdminCategoryController)->store(),
+    'admin-category-update' => (new AdminCategoryController)->update(),
+    'admin-category-delete' => (new AdminCategoryController)->delete(),
+    
+    // Quản lý thuộc tính
+    'admin-attributes'      => (new AdminAttributeController)->index(),
+    'admin-attribute-store' => (new AdminAttributeController)->store(),
+    'admin-attribute-update' => (new AdminAttributeController)->update(),
+    'admin-attribute-delete' => (new AdminAttributeController)->delete(),
+    'admin-attribute-value-store' => (new AdminAttributeController)->storeValue(),
+    'admin-attribute-value-update' => (new AdminAttributeController)->updateValue(),
+    'admin-attribute-value-delete' => (new AdminAttributeController)->deleteValue(),
+    
+    // Quản lý sản phẩm
+    'admin-products'      => (new AdminProductController)->index(),
+    'admin-products-trash' => (new AdminProductController)->trash(),
+    'admin-product-create' => (new AdminProductController)->create(),
+    'admin-product-edit'   => (new AdminProductController)->edit(),
+    'admin-product-store'  => (new AdminProductController)->store(),
+    'admin-product-update' => (new AdminProductController)->update(),
+    'admin-product-delete' => (new AdminProductController)->delete(),
+    'admin-product-restore' => (new AdminProductController)->restore(),
+    'admin-product-force-delete' => (new AdminProductController)->forceDelete(),
+    'admin-product-variant-store' => (new AdminProductController)->storeVariant(),
+    'admin-product-variant-update' => (new AdminProductController)->updateVariant(),
+    'admin-product-variant-delete' => (new AdminProductController)->deleteVariant(),
     
     // Auth routes
     'show-login'         => (new AuthController)->showLogin(),
