@@ -7407,5 +7407,684 @@ footer {
     }
 }
 
+/* ============================================
+   RESPONSIVE STYLES FOR ALL PAGES
+   Admin & User Interface
+   ============================================ */
 
+/* ============================================
+   ADMIN LAYOUT RESPONSIVE
+   ============================================ */
+
+/* Tablet và nhỏ hơn - Ẩn sidebar, hiển thị menu toggle */
+@media (max-width: 992px) {
+        .admin-menu-toggle {
+        display: none;
+        background: none;
+        border: none;
+        color: #fff;
+        font-size: 1.5rem;
+        cursor: pointer;
+        margin-right: 1rem;
+        padding: 0.5rem;
+    }
+    
+    .admin-menu-toggle:hover {
+        opacity: 0.8;
+    }
+    
+    .admin-sidebar {
+        position: fixed;
+        left: -260px;
+        top: 60px;
+        z-index: 1000;
+        transition: left 0.3s ease;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .admin-sidebar.show {
+        left: 0;
+    }
+    
+    .admin-content {
+        margin-left: 0;
+        padding: 1.5rem 1rem;
+    }
+    
+    .admin-header {
+        padding: 1rem;
+        position: relative;
+    }
+    
+    /* Overlay khi sidebar mở */
+    .admin-sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 60px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+    }
+    
+    .admin-sidebar-overlay.show {
+        display: block;
+    }
+}
+
+/* Mobile - Cải thiện spacing và font size */
+@media (max-width: 768px) {
+    .admin-header {
+        padding: 0.75rem 1rem;
+    }
+    
+    .admin-header h5 {
+        font-size: 1rem;
+    }
+    
+    .admin-content {
+        padding: 1rem 0.75rem;
+    }
+    
+    .admin-sidebar {
+        width: 240px;
+    }
+    
+    .admin-sidebar .brand {
+        padding: 0 1.5rem 1.5rem;
+        font-size: 1.2rem;
+    }
+    
+    .admin-sidebar .nav-item {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.9rem;
+    }
+    
+    /* Admin tables responsive */
+    .admin-table {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .admin-table table {
+        min-width: 800px;
+    }
+    
+    /* Cards responsive */
+    .card {
+        margin-bottom: 1rem;
+    }
+    
+    /* Form responsive */
+    .form-row,
+    .row.g-3,
+    .row.g-4 {
+        margin-left: -0.5rem;
+        margin-right: -0.5rem;
+    }
+    
+    .form-row > *,
+    .row.g-3 > *,
+    .row.g-4 > * {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+}
+
+/* ============================================
+   USER PAGES RESPONSIVE
+   ============================================ */
+
+/* Orders History Page */
+@media (max-width: 768px) {
+    .orders-page {
+        padding: 40px 0;
+    }
+    
+    .order-card {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .order-card .row {
+        margin: 0;
+    }
+    
+    .order-card .col-md-3,
+    .order-card .col-md-2 {
+        margin-bottom: 1rem;
+        text-align: left !important;
+    }
+    
+    .order-actions {
+        text-align: left !important;
+        margin-top: 1rem;
+    }
+    
+    .order-actions .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Order items preview */
+    .order-items-preview .row {
+        margin: 0;
+    }
+    
+    .order-items-preview .col-md-6,
+    .order-items-preview .col-lg-4 {
+        margin-bottom: 0.75rem;
+    }
+}
+
+/* Order Detail Page */
+@media (max-width: 992px) {
+    .order-detail-page .row {
+        margin: 0;
+    }
+    
+    .order-detail-page .col-lg-4,
+    .order-detail-page .col-lg-8 {
+        margin-bottom: 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .order-detail-page {
+        padding: 1rem 0;
+    }
+    
+    .order-summary-card,
+    .order-items-card {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    /* Status timeline */
+    .status-timeline {
+        font-size: 0.85rem;
+    }
+    
+    .status-step-item {
+        margin-bottom: 0.75rem;
+    }
+    
+    /* Review form */
+    .review-form-container {
+        padding: 1rem !important;
+    }
+    
+    .review-form-container h6 {
+        font-size: 1rem;
+    }
+    
+    /* Table responsive */
+    .order-items-card .table-responsive {
+        font-size: 0.85rem;
+    }
+    
+    .order-items-card .table td,
+    .order-items-card .table th {
+        padding: 0.5rem;
+    }
+    
+    /* Product image in table */
+    .order-items-card .table td img {
+        width: 50px !important;
+        height: 50px !important;
+    }
+}
+
+/* Cart Page */
+@media (max-width: 768px) {
+    .cart-page {
+        padding: 1rem 0;
+    }
+    
+    .cart-item {
+        flex-direction: column;
+        padding: 1rem;
+    }
+    
+    .cart-item-image {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+    
+    .cart-item-details {
+        width: 100%;
+    }
+    
+    .cart-summary {
+        margin-top: 2rem;
+        position: sticky;
+        bottom: 0;
+        background: #fff;
+        padding: 1rem;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    }
+}
+
+/* Checkout Page */
+@media (max-width: 768px) {
+    .checkout-page {
+        padding: 1rem 0;
+    }
+    
+    .checkout-form .row {
+        margin: 0;
+    }
+    
+    .checkout-summary {
+        margin-top: 2rem;
+        position: sticky;
+        bottom: 0;
+        background: #fff;
+        padding: 1rem;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .address-card {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+}
+
+/* Products Page */
+@media (max-width: 768px) {
+    .products-page {
+        padding: 1rem 0;
+    }
+    
+    .products-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 1rem;
+    }
+    
+    .product-card {
+        margin-bottom: 1rem;
+    }
+    
+    .product-filters {
+        margin-bottom: 1rem;
+    }
+    
+    .product-filters .card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Product Detail Page */
+@media (max-width: 768px) {
+    .product-detail-page {
+        padding: 1rem 0;
+    }
+    
+    .product-images {
+        margin-bottom: 2rem;
+    }
+    
+    .product-info {
+        padding: 1rem;
+    }
+    
+    .product-variants {
+        margin: 1rem 0;
+    }
+    
+    .product-actions {
+        flex-direction: column;
+    }
+    
+    .product-actions .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* ============================================
+   ADMIN TABLES RESPONSIVE
+   ============================================ */
+
+@media (max-width: 992px) {
+    .admin-table {
+        overflow-x: auto;
+    }
+    
+    .admin-table table {
+        min-width: 800px;
+        font-size: 0.9rem;
+    }
+    
+    .admin-table th,
+    .admin-table td {
+        padding: 0.75rem 0.5rem;
+        white-space: nowrap;
+    }
+    
+    /* Reviews table */
+    .admin-table .comment-preview,
+    .admin-table .reply-preview {
+        max-width: 150px !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-table table {
+        min-width: 1000px;
+        font-size: 0.85rem;
+    }
+    
+    .admin-table th,
+    .admin-table td {
+        padding: 0.5rem 0.25rem;
+        font-size: 0.8rem;
+    }
+    
+    /* Button groups responsive */
+    .btn-group-sm {
+        flex-direction: column;
+    }
+    
+    .btn-group-sm .btn {
+        width: 100%;
+        margin-bottom: 0.25rem;
+    }
+}
+
+/* ============================================
+   ADMIN FORMS RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .admin-form .row {
+        margin: 0;
+    }
+    
+    .admin-form .col-md-6,
+    .admin-form .col-md-4,
+    .admin-form .col-md-3 {
+        margin-bottom: 1rem;
+    }
+    
+    .admin-form .form-label {
+        font-size: 0.9rem;
+    }
+    
+    .admin-form .form-control,
+    .admin-form .form-select {
+        font-size: 0.9rem;
+    }
+    
+    .admin-form .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .admin-form .btn-group .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* ============================================
+   HEADER & NAVIGATION RESPONSIVE
+   ============================================ */
+
+@media (max-width: 576px) {
+    .header-container {
+        padding: 0.5rem 0.75rem;
+        flex-wrap: wrap;
+    }
+    
+    .navbar-brand {
+        margin-right: 0.5rem;
+    }
+    
+    .logo-image {
+        height: 40px;
+    }
+    
+    .logo-text {
+        font-size: 1.5rem;
+    }
+    
+    .nav {
+        order: 3;
+        width: 100%;
+        margin-top: 0.5rem;
+        flex-wrap: wrap;
+        gap: 0.5rem !important;
+    }
+    
+    .nav a {
+        font-size: 0.65rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .header-icons {
+        gap: 0.5rem !important;
+    }
+    
+    .header-search-wrapper.show {
+        width: 100%;
+        max-width: 100%;
+        margin-right: 0;
+        margin-top: 0.5rem;
+        order: 4;
+    }
+}
+
+/* ============================================
+   MODAL RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+    
+    .modal-dialog.modal-lg {
+        max-width: calc(100% - 1rem);
+    }
+    
+    .modal-content {
+        border-radius: 8px;
+    }
+    
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+        padding: 1rem;
+    }
+    
+    .modal-title {
+        font-size: 1.1rem;
+    }
+}
+
+/* ============================================
+   TOAST NOTIFICATIONS RESPONSIVE
+   ============================================ */
+
+@media (max-width: 576px) {
+    #toastContainer {
+        left: 0.5rem !important;
+        right: 0.5rem !important;
+        padding: 0.5rem !important;
+    }
+    
+    .toast {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .toast-header {
+        font-size: 0.9rem;
+    }
+    
+    .toast-body {
+        font-size: 0.85rem;
+    }
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+/* Hide on mobile */
+@media (max-width: 768px) {
+    .hide-mobile {
+        display: none !important;
+    }
+}
+
+/* Show only on mobile */
+.show-mobile {
+    display: none !important;
+}
+
+@media (max-width: 768px) {
+    .show-mobile {
+        display: block !important;
+    }
+}
+
+/* Text alignment responsive */
+@media (max-width: 768px) {
+    .text-md-end {
+        text-align: left !important;
+    }
+    
+    .text-md-center {
+        text-align: center !important;
+    }
+    
+    .text-md-start {
+        text-align: left !important;
+    }
+}
+
+/* Button groups responsive */
+@media (max-width: 576px) {
+    .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn-group .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+        border-radius: 0.375rem !important;
+    }
+}
+
+/* Reviews admin table responsive */
+@media (max-width: 992px) {
+    .admin-reviews-table .comment-preview,
+    .admin-reviews-table .reply-preview {
+        max-width: 200px !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-reviews-table .comment-preview,
+    .admin-reviews-table .reply-preview {
+        max-width: 150px !important;
+        font-size: 0.8rem;
+    }
+    
+    .admin-reviews-table .review-images-preview img {
+        width: 40px !important;
+        height: 40px !important;
+    }
+}
+
+/* Admin orders table responsive */
+@media (max-width: 768px) {
+    .admin-orders-table {
+        font-size: 0.8rem;
+    }
+    
+    .admin-orders-table .badge {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+    }
+}
+
+/* Admin statistics responsive */
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1rem;
+    }
+    
+    .stat-card {
+        padding: 1rem;
+    }
+}
+
+/* Checkout form responsive */
+@media (max-width: 576px) {
+    .checkout-form .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .checkout-form .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Product grid responsive */
+@media (max-width: 576px) {
+    .products-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* Home page hero responsive */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2rem !important;
+    }
+    
+    .hero-description {
+        font-size: 0.9rem !important;
+    }
+}
+
+/* Collection page responsive */
+@media (max-width: 768px) {
+    .collection-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+/* Contact page responsive */
+@media (max-width: 768px) {
+    .contact-form {
+        padding: 1rem;
+    }
+    
+    .contact-info {
+        margin-top: 2rem;
+    }
+}
+
+/* Profile page responsive */
+@media (max-width: 768px) {
+    .profile-page {
+        padding: 1rem 0;
+    }
+    
+    .profile-sidebar {
+        margin-bottom: 2rem;
+    }
+    
+    .profile-content {
+        padding: 1rem;
+    }
+}
 

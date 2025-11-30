@@ -11,12 +11,15 @@
 </head>
 <body>
     <header class="admin-header">
+        <button class="admin-menu-toggle d-md-none" type="button" id="adminMenuToggle" aria-label="Toggle menu">
+            <i class="bi bi-list"></i>
+        </button>
         <div>
             <h5 class="mb-0">Bảng điều khiển quản trị</h5>
         </div>
         <div class="dropdown">
             <button class="btn btn-link text-white text-decoration-none dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                <i class="bi bi-person-circle"></i> Administrator
+                <i class="bi bi-person-circle"></i> <span class="d-none d-md-inline">Administrator</span>
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
                 <li><a class="dropdown-item" href="<?= BASE_URL ?>">Xem website</a></li>
@@ -26,8 +29,10 @@
         </div>
     </header>
 
+    <div class="admin-sidebar-overlay" id="adminSidebarOverlay"></div>
+
     <div class="d-flex">
-        <aside class="admin-sidebar">
+        <aside class="admin-sidebar" id="adminSidebar">
             <div class="brand">
                 <?php 
                 $logoPath = PATH_ROOT . 'assets/images/logo.png';
@@ -112,6 +117,30 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Admin sidebar toggle for mobile
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuToggle = document.getElementById('adminMenuToggle');
+            const sidebar = document.getElementById('adminSidebar');
+            const overlay = document.getElementById('adminSidebarOverlay');
+            
+            if (menuToggle && sidebar) {
+                menuToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('show');
+                    if (overlay) {
+                        overlay.classList.toggle('show');
+                    }
+                });
+                
+                if (overlay) {
+                    overlay.addEventListener('click', function() {
+                        sidebar.classList.remove('show');
+                        overlay.classList.remove('show');
+                    });
+                }
+            }
+        });
+    </script>
 </body>
 </html>
 
