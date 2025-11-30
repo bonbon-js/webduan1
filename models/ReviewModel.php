@@ -16,36 +16,85 @@ class ReviewModel extends BaseModel
      */
     public function create(array $data): int
     {
-        // Loại bỏ PRIMARY KEY khỏi data
-        $data = $this->removePrimaryKeyFromData($data, $this->table);
-        
-        // Lưu images dưới dạng JSON nếu có
-        $imagesJson = null;
-        if (!empty($data['images']) && is_array($data['images'])) {
-            $imagesJson = json_encode($data['images']);
-        } elseif (!empty($data['images']) && is_string($data['images'])) {
-            $imagesJson = $data['images'];
+        try {
+            // QUAN TRỌNG: Chỉ loại bỏ PRIMARY KEY của bảng reviews (review_id hoặc id)
+            // KHÔNG loại bỏ các FOREIGN KEY như order_id, order_item_id, product_id, user_id
+            // Vì chúng là dữ liệu cần thiết để insert
+            if (isset($data['review_id'])) {
+                unset($data['review_id']);
+            }
+            if (isset($data['id'])) {
+                unset($data['id']);
+            }
+            
+            // Log để debug
+            error_log("ReviewModel::create - Data after removing PK: " . json_encode(array_keys($data)));
+            
+            // Validate dữ liệu bắt buộc (không dùng empty() vì 0 cũng là giá trị hợp lệ cho một số trường)
+            $orderId = isset($data['order_id']) ? (int)$data['order_id'] : 0;
+            $orderItemId = isset($data['order_item_id']) ? (int)$data['order_item_id'] : 0;
+            $productId = isset($data['product_id']) ? (int)$data['product_id'] : 0;
+            $userId = isset($data['user_id']) ? (int)$data['user_id'] : 0;
+            $rating = isset($data['rating']) ? (int)$data['rating'] : 0;
+            
+            // Kiểm tra các trường bắt buộc
+            if ($orderId <= 0) {
+                throw new Exception('Thiếu order_id hoặc order_id không hợp lệ');
+            }
+            if ($orderItemId <= 0) {
+                throw new Exception('Thiếu order_item_id hoặc order_item_id không hợp lệ');
+            }
+            if ($productId <= 0) {
+                throw new Exception('Thiếu product_id hoặc product_id không hợp lệ');
+            }
+            if ($userId <= 0) {
+                throw new Exception('Thiếu user_id hoặc user_id không hợp lệ');
+            }
+            if ($rating < 1 || $rating > 5) {
+                throw new Exception('Rating phải từ 1 đến 5 sao');
+            }
+            
+            // Lưu images dưới dạng JSON nếu có
+            $imagesJson = null;
+            if (!empty($data['images']) && is_array($data['images'])) {
+                $imagesJson = json_encode($data['images']);
+            } elseif (!empty($data['images']) && is_string($data['images'])) {
+                $imagesJson = $data['images'];
+            }
+
+            $stmt = $this->pdo->prepare("
+                INSERT INTO {$this->table} (
+                    order_id, order_item_id, product_id, user_id, rating, comment, images
+                ) VALUES (
+                    :order_id, :order_item_id, :product_id, :user_id, :rating, :comment, :images
+                )
+            ");
+
+            $stmt->execute([
+                ':order_id' => $orderId,
+                ':order_item_id' => $orderItemId,
+                ':product_id' => $productId,
+                ':user_id' => $userId,
+                ':rating' => $rating,
+                ':comment' => !empty($data['comment']) ? trim($data['comment']) : null,
+                ':images' => $imagesJson,
+            ]);
+
+            $reviewId = (int)$this->pdo->lastInsertId();
+            
+            if ($reviewId <= 0) {
+                error_log("ReviewModel::create - lastInsertId returned 0 or negative. Data: " . json_encode($data));
+                throw new Exception('Không thể tạo đánh giá. Vui lòng thử lại.');
+            }
+            
+            return $reviewId;
+        } catch (PDOException $e) {
+            error_log("ReviewModel::create - PDO Error: " . $e->getMessage() . " | Data: " . json_encode($data));
+            throw new Exception('Lỗi database khi tạo đánh giá: ' . $e->getMessage());
+        } catch (Exception $e) {
+            error_log("ReviewModel::create - Error: " . $e->getMessage() . " | Data: " . json_encode($data));
+            throw $e;
         }
-
-        $stmt = $this->pdo->prepare("
-            INSERT INTO {$this->table} (
-                order_id, order_item_id, product_id, user_id, rating, comment, images
-            ) VALUES (
-                :order_id, :order_item_id, :product_id, :user_id, :rating, :comment, :images
-            )
-        ");
-
-        $stmt->execute([
-            ':order_id' => $data['order_id'],
-            ':order_item_id' => $data['order_item_id'],
-            ':product_id' => $data['product_id'],
-            ':user_id' => $data['user_id'],
-            ':rating' => $data['rating'],
-            ':comment' => $data['comment'] ?? null,
-            ':images' => $imagesJson,
-        ]);
-
-        return (int)$this->pdo->lastInsertId();
     }
 
     /**
@@ -107,7 +156,7 @@ class ReviewModel extends BaseModel
      */
     public function getByOrder(int $orderId): array
     {
-        // Sử dụng LEFT JOIN để tránh lỗi nếu order_items không có cột id
+        // Bảng order_items có PRIMARY KEY là 'id', không có cột 'order_item_id'
         $stmt = $this->pdo->prepare("
             SELECT 
                 r.*,
@@ -117,7 +166,7 @@ class ReviewModel extends BaseModel
                 oi.variant_color
             FROM {$this->table} r
             INNER JOIN users u ON r.user_id = u.user_id
-            LEFT JOIN order_items oi ON r.order_item_id = oi.id OR r.order_item_id = oi.order_item_id
+            LEFT JOIN order_items oi ON r.order_item_id = oi.id
             INNER JOIN products p ON r.product_id = p.product_id
             WHERE r.order_id = :order_id
             ORDER BY r.created_at DESC
@@ -130,7 +179,7 @@ class ReviewModel extends BaseModel
     /**
      * Lấy tất cả đánh giá (cho admin)
      */
-    public function getAll(?string $keyword = null, ?int $productId = null, ?int $rating = null): array
+    public function getAll(?string $keyword = null, ?int $productId = null, ?int $rating = null, ?string $status = null): array
     {
         $conditions = ['1=1'];
         $params = [];
@@ -150,6 +199,13 @@ class ReviewModel extends BaseModel
             $params[':rating'] = $rating;
         }
 
+        // Lọc theo trạng thái (hidden/visible)
+        if ($status === 'hidden') {
+            $conditions[] = "r.is_hidden = 1";
+        } elseif ($status === 'visible') {
+            $conditions[] = "(r.is_hidden = 0 OR r.is_hidden IS NULL)";
+        }
+
         $whereClause = implode(' AND ', $conditions);
 
         $stmt = $this->pdo->prepare("
@@ -164,7 +220,7 @@ class ReviewModel extends BaseModel
             FROM {$this->table} r
             INNER JOIN users u ON r.user_id = u.user_id
             INNER JOIN products p ON r.product_id = p.product_id
-            LEFT JOIN order_items oi ON (r.order_item_id = oi.id OR r.order_item_id = oi.order_item_id)
+            LEFT JOIN order_items oi ON r.order_item_id = oi.id
             WHERE {$whereClause}
             ORDER BY r.created_at DESC
         ");

@@ -434,6 +434,7 @@ class CheckoutController
             }
             
             set_flash('success', 'Đặt hàng thành công! Chúng tôi sẽ liên hệ để xác nhận. Bạn có thể theo dõi trạng thái đơn hàng tại đây.');
+            // Chuyển hướng sang trang chi tiết đơn hàng vừa đặt để hiển thị thông tin chi tiết
             header('Location: ' . BASE_URL . '?action=order-detail&id=' . $orderId);
             exit;
         } catch (Throwable $exception) {

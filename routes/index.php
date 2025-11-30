@@ -111,6 +111,12 @@ match ($action) {
     'admin-product-variant-update' => (new AdminProductController)->updateVariant(),
     'admin-product-variant-delete' => (new AdminProductController)->deleteVariant(),
     
+    // Quản lý đánh giá/bình luận
+    'admin-reviews'       => (new AdminReviewController)->index(),
+    'admin-review-reply' => (new AdminReviewController)->reply(),
+    'admin-review-toggle-hidden' => (new AdminReviewController)->toggleHidden(),
+    'admin-review-delete' => (new AdminReviewController)->delete(),
+    
     // Auth routes
     'show-login'         => (new AuthController)->showLogin(),
     'show-register'      => (new AuthController)->showRegister(),

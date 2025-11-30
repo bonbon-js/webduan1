@@ -76,6 +76,7 @@
                             <th>Sản phẩm</th>
                             <th>Đánh giá</th>
                             <th>Bình luận</th>
+                            <th>Ảnh</th>
                             <th>Phản hồi</th>
                             <th>Trạng thái</th>
                             <th>Ngày tạo</th>
@@ -83,7 +84,14 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($reviews as $review): ?>
+                        <?php foreach ($reviews as $review): 
+                            // Parse images từ JSON
+                            $reviewImages = [];
+                            if (!empty($review['images'])) {
+                                $images = json_decode($review['images'], true);
+                                $reviewImages = is_array($images) ? $images : [];
+                            }
+                        ?>
                             <tr class="<?= $review['is_hidden'] ? 'table-secondary' : '' ?>">
                                 <td>
                                     <div>
@@ -127,13 +135,50 @@
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <?php if (!empty($review['reply'])): ?>
-                                        <div class="reply-preview" style="max-width: 200px;">
-                                            <?= nl2br(htmlspecialchars(mb_substr($review['reply'], 0, 100))) ?>
-                                            <?= mb_strlen($review['reply']) > 100 ? '...' : '' ?>
+                                    <?php if (!empty($reviewImages)): ?>
+                                        <div class="d-flex flex-wrap gap-1">
+                                            <?php foreach (array_slice($reviewImages, 0, 3) as $img): ?>
+                                                <a href="<?= htmlspecialchars($img) ?>" target="_blank" class="review-image-thumbnail">
+                                                    <img src="<?= htmlspecialchars($img) ?>" 
+                                                         alt="Review image" 
+                                                         class="img-thumbnail" 
+                                                         style="width: 50px; height: 50px; object-fit: cover; cursor: pointer;">
+                                                </a>
+                                            <?php endforeach; ?>
+                                            <?php if (count($reviewImages) > 3): ?>
+                                                <span class="badge bg-secondary" title="Còn <?= count($reviewImages) - 3 ?> ảnh">+<?= count($reviewImages) - 3 ?></span>
+                                            <?php endif; ?>
                                         </div>
                                     <?php else: ?>
-                                        <span class="text-muted">Chưa phản hồi</span>
+                                        <span class="text-muted">-</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <?php if (!empty($review['reply'])): ?>
+                                        <div class="reply-preview border-start border-3 border-primary ps-2" style="max-width: 250px;">
+                                            <small class="text-muted d-block mb-1">
+                                                <i class="bi bi-reply-fill"></i> <strong>Phản hồi từ cửa hàng:</strong>
+                                            </small>
+                                            <div class="text-dark">
+                                                <?= nl2br(htmlspecialchars(mb_substr($review['reply'], 0, 150))) ?>
+                                                <?= mb_strlen($review['reply']) > 150 ? '...' : '' ?>
+                                            </div>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-link p-0 mt-1" 
+                                                    onclick="openReplyModal(<?= $review['review_id'] ?>, '<?= htmlspecialchars(addslashes($review['reply'] ?? '')) ?>')"
+                                                    style="font-size: 0.75rem;">
+                                                <i class="bi bi-pencil"></i> Sửa phản hồi
+                                            </button>
+                                        </div>
+                                    <?php else: ?>
+                                        <span class="text-muted small">Chưa phản hồi</span>
+                                        <br>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-primary mt-1" 
+                                                onclick="openReplyModal(<?= $review['review_id'] ?>, '')"
+                                                style="font-size: 0.75rem;">
+                                            <i class="bi bi-reply"></i> Phản hồi ngay
+                                        </button>
                                     <?php endif; ?>
                                 </td>
                                 <td>
@@ -179,24 +224,40 @@
 
 <!-- Modal Phản hồi -->
 <div class="modal fade" id="replyModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Phản hồi đánh giá</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-reply-fill me-2"></i>Phản hồi đánh giá
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <form id="replyForm">
                     <input type="hidden" id="replyReviewId" name="review_id">
                     <div class="mb-3">
-                        <label class="form-label">Nội dung phản hồi</label>
-                        <textarea class="form-control" id="replyContent" name="reply" rows="4" required></textarea>
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-chat-left-text me-1"></i>Nội dung phản hồi
+                        </label>
+                        <textarea class="form-control" 
+                                  id="replyContent" 
+                                  name="reply" 
+                                  rows="5" 
+                                  placeholder="Nhập nội dung phản hồi cho khách hàng..." 
+                                  required></textarea>
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>Phản hồi này sẽ hiển thị công khai dưới đánh giá của khách hàng.
+                        </small>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                <button type="button" class="btn btn-primary" onclick="submitReply()">Gửi phản hồi</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Hủy
+                </button>
+                <button type="button" class="btn btn-primary" onclick="submitReply()">
+                    <i class="bi bi-send me-1"></i>Gửi phản hồi
+                </button>
             </div>
         </div>
     </div>
@@ -212,7 +273,11 @@ document.addEventListener('DOMContentLoaded', function() {
 function openReplyModal(reviewId, currentReply) {
     document.getElementById('replyReviewId').value = reviewId;
     document.getElementById('replyContent').value = currentReply || '';
+    // Focus vào textarea khi mở modal
     replyModal.show();
+    setTimeout(() => {
+        document.getElementById('replyContent').focus();
+    }, 300);
 }
 
 function submitReply() {

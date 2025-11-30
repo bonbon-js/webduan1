@@ -64,7 +64,8 @@ class OrderModel extends BaseModel
 
         try {
             // Loại bỏ PRIMARY KEY khỏi orderData bằng helper function
-            $orderData = $this->removePrimaryKeyFromData($orderData);
+            // Truyền tên bảng để xác định chính xác PRIMARY KEY
+            $orderData = $this->removePrimaryKeyFromData($orderData, 'orders_new');
             
             // Nếu chưa truyền total_amount thì tự tính từ danh sách item
             $total = $orderData['total_amount'] ?? 0;
@@ -74,159 +75,68 @@ class OrderModel extends BaseModel
                 }, 0);
             }
 
-            // Xác định tên bảng (có thể là 'orders' hoặc 'orders_new')
-            // Kiểm tra xem bảng nào có các cột cần thiết
-            $tableName = 'orders';
-            $existingColumns = $this->getExistingColumns($tableName);
+            // Luôn sử dụng bảng 'orders_new' vì có đầy đủ các cột cần thiết
+            $tableName = 'orders_new';
+            $primaryKeyColumn = 'id'; // PRIMARY KEY của orders_new là 'id'
             
-            // Nếu bảng 'orders' không có cột 'fullname', thử 'orders_new'
-            if (!in_array('fullname', $existingColumns) && !in_array('full_name', $existingColumns)) {
-                $tableName = 'orders_new';
-                $existingColumns = $this->getExistingColumns($tableName);
-                error_log("OrderModel::create - Using table 'orders_new' instead of 'orders'");
-            } else {
-                // Đảm bảo tableName được set đúng
-                $tableName = 'orders';
-            }
-            
-            // Kiểm tra PRIMARY KEY của bảng đang dùng
-            $primaryKeyColumn = $this->getPrimaryKeyColumn($tableName);
-            error_log("OrderModel::create - Table: $tableName, Primary Key: " . ($primaryKeyColumn ?? 'NULL'));
-            error_log("OrderModel::create - All existing columns: " . implode(', ', $existingColumns));
-            
-            // QUAN TRỌNG: Loại bỏ MỌI cột có tên 'id' hoặc 'order_id' khỏi existingColumns
-            // Bất kể nó có phải PRIMARY KEY hay không, vì có thể gây nhầm lẫn
-            $existingColumns = array_filter($existingColumns, function($col) use ($primaryKeyColumn) {
-                $forbidden = ['id', 'order_id'];
-                if ($primaryKeyColumn) {
-                    $forbidden[] = $primaryKeyColumn;
-                }
-                foreach ($forbidden as $f) {
-                    if (strcasecmp($col, $f) === 0) {
-                        error_log("OrderModel::create - Removed column '$col' from existingColumns (matches forbidden '$f')");
-                        return false;
-                    }
-                }
-                return true;
-            });
-            $existingColumns = array_values($existingColumns); // Re-index
-            
-            // Danh sách các tên có thể là PRIMARY KEY - TUYỆT ĐỐI KHÔNG thêm vào INSERT
-            // QUAN TRỌNG: 'id' là PRIMARY KEY của orders_new, 'order_id' là của orders
-            $forbiddenPrimaryKeyNames = ['id', 'order_id', 'orderId', 'orderId', 'pk', 'primary_key'];
-            if ($primaryKeyColumn) {
-                $forbiddenPrimaryKeyNames[] = $primaryKeyColumn;
-                // Thêm cả lowercase và uppercase variants
-                $forbiddenPrimaryKeyNames[] = strtolower($primaryKeyColumn);
-                $forbiddenPrimaryKeyNames[] = strtoupper($primaryKeyColumn);
-            }
-            $forbiddenPrimaryKeyNames = array_unique($forbiddenPrimaryKeyNames);
-            
-            // Hàm helper để kiểm tra xem cột có phải PRIMARY KEY không
-            // CHẶT CHẼ: Kiểm tra cả PRIMARY KEY thực tế và danh sách cấm
-            $isPrimaryKey = function($colName) use ($primaryKeyColumn, $forbiddenPrimaryKeyNames) {
-                if (!$colName) return true;
-                
-                // Kiểm tra với PRIMARY KEY thực tế
-                if ($primaryKeyColumn && strcasecmp($colName, $primaryKeyColumn) === 0) {
-                    return true;
-                }
-                
-                // Kiểm tra với danh sách cấm
-                foreach ($forbiddenPrimaryKeyNames as $forbidden) {
-                    if (strcasecmp($colName, $forbidden) === 0) {
-                        return true;
-                    }
-                }
-                
-                // Kiểm tra nếu tên cột chứa 'id' và có độ dài bằng với một trong các tên cấm
-                foreach (['id', 'order_id'] as $forbidden) {
-                    if (strlen($colName) === strlen($forbidden) && stripos($colName, $forbidden) !== false) {
-                        return true;
-                    }
-                }
-                
-                return false;
-            };
-            
-            // Tìm tên cột đúng (có thể có biến thể)
-            // QUAN TRỌNG: Đảm bảo không map đến cột 'id' hoặc 'order_id'
-            $columnMap = [
-                'fullname' => $this->findColumnName($existingColumns, ['fullname', 'full_name', 'name', 'customer_name']),
-                'email' => $this->findColumnName($existingColumns, ['email', 'customer_email']),
-                'phone' => $this->findColumnName($existingColumns, ['phone', 'phone_number', 'tel']),
-                'address' => $this->findColumnName($existingColumns, ['address', 'delivery_address', 'shipping_address']),
-                'user_id' => $this->findColumnName($existingColumns, ['user_id', 'customer_id']),
-                'payment_method' => $this->findColumnName($existingColumns, ['payment_method', 'payment']),
-                'status' => $this->findColumnName($existingColumns, ['status', 'order_status']),
-                'total_amount' => $this->findColumnName($existingColumns, ['total_amount', 'total', 'amount']),
+            // Định nghĩa rõ ràng danh sách cột được phép INSERT (KHÔNG BAO GỒM PRIMARY KEY 'id')
+            // Danh sách này dựa trên cấu trúc bảng orders_new
+            $allowedColumns = [
+                'order_code', 'user_id', 'fullname', 'email', 'phone', 'address',
+                'city', 'district', 'ward', 'note', 'payment_method', 'status',
+                'total_amount', 'coupon_id', 'discount_amount', 'coupon_code', 'coupon_name'
             ];
             
-            // Đảm bảo không có cột nào trong columnMap là PRIMARY KEY
-            foreach ($columnMap as $key => $colName) {
-                if ($colName && $isPrimaryKey($colName)) {
-                    error_log("OrderModel::create - ColumnMap '$key' maps to PRIMARY KEY '$colName', removing...");
-                    $columnMap[$key] = null;
-                }
-            }
-            
-            // Xây dựng danh sách cột và giá trị động (chỉ thêm các cột tồn tại)
+            // Xây dựng danh sách cột và giá trị để INSERT
             $insertColumns = [];
             $insertValues = [];
             $orderPayload = [];
             
-            // Thêm các cột bắt buộc nếu tồn tại (trừ PRIMARY KEY)
-            if ($columnMap['user_id'] && !$isPrimaryKey($columnMap['user_id'])) {
-                $insertColumns[] = $columnMap['user_id'];
+            // Thêm các cột bắt buộc
+            if (isset($orderData['user_id'])) {
+                $insertColumns[] = 'user_id';
                 $insertValues[] = ':user_id';
-                $orderPayload[':user_id'] = $orderData['user_id'] ?? null;
+                $orderPayload[':user_id'] = $orderData['user_id'];
             }
             
-            if ($columnMap['fullname'] && !$isPrimaryKey($columnMap['fullname'])) {
-                $insertColumns[] = $columnMap['fullname'];
+            if (isset($orderData['fullname'])) {
+                $insertColumns[] = 'fullname';
                 $insertValues[] = ':fullname';
                 $orderPayload[':fullname'] = $orderData['fullname'];
             }
             
-            if ($columnMap['email'] && !$isPrimaryKey($columnMap['email'])) {
-                $insertColumns[] = $columnMap['email'];
+            if (isset($orderData['email'])) {
+                $insertColumns[] = 'email';
                 $insertValues[] = ':email';
                 $orderPayload[':email'] = $orderData['email'];
             }
             
-            if ($columnMap['phone'] && !$isPrimaryKey($columnMap['phone'])) {
-                $insertColumns[] = $columnMap['phone'];
+            if (isset($orderData['phone'])) {
+                $insertColumns[] = 'phone';
                 $insertValues[] = ':phone';
                 $orderPayload[':phone'] = $orderData['phone'];
             }
             
-            if ($columnMap['address'] && !$isPrimaryKey($columnMap['address'])) {
-                $insertColumns[] = $columnMap['address'];
+            if (isset($orderData['address'])) {
+                $insertColumns[] = 'address';
                 $insertValues[] = ':address';
                 $orderPayload[':address'] = $orderData['address'];
             }
             
-            if ($columnMap['payment_method'] && !$isPrimaryKey($columnMap['payment_method'])) {
-                $insertColumns[] = $columnMap['payment_method'];
-                $insertValues[] = ':payment_method';
-                $orderPayload[':payment_method'] = $orderData['payment_method'] ?? 'cod';
-            }
+            $insertColumns[] = 'payment_method';
+            $insertValues[] = ':payment_method';
+            $orderPayload[':payment_method'] = $orderData['payment_method'] ?? 'cod';
             
-            if ($columnMap['status'] && !$isPrimaryKey($columnMap['status'])) {
-                $insertColumns[] = $columnMap['status'];
-                $insertValues[] = ':status';
-                $orderPayload[':status'] = $orderData['status'] ?? self::STATUS_CONFIRMED;
-            }
+            $insertColumns[] = 'status';
+            $insertValues[] = ':status';
+            $orderPayload[':status'] = $orderData['status'] ?? self::STATUS_CONFIRMED;
             
-            if ($columnMap['total_amount'] && !$isPrimaryKey($columnMap['total_amount'])) {
-                $insertColumns[] = $columnMap['total_amount'];
-                $insertValues[] = ':total_amount';
-                $orderPayload[':total_amount'] = $total;
-            }
+            $insertColumns[] = 'total_amount';
+            $insertValues[] = ':total_amount';
+            $orderPayload[':total_amount'] = $total;
             
-            // Thêm các cột tùy chọn nếu tồn tại
-            // QUAN TRỌNG: KHÔNG BAO GIỜ thêm order_id hoặc bất kỳ PRIMARY KEY nào vào đây
-            $optionalColumns = [
+            // Thêm các cột tùy chọn
+            $optionalData = [
                 'order_code' => $orderData['order_code'] ?? $this->generateOrderCode(),
                 'city' => $orderData['city'] ?? null,
                 'district' => $orderData['district'] ?? null,
@@ -238,334 +148,34 @@ class OrderModel extends BaseModel
                 'coupon_name' => $orderData['coupon_name'] ?? null,
             ];
             
-            // Danh sách các tên có thể là PRIMARY KEY - TUYỆT ĐỐI KHÔNG thêm vào INSERT
-            // (Đã được định nghĩa ở trên)
-            
-            foreach ($optionalColumns as $col => $value) {
-                // TUYỆT ĐỐI KHÔNG thêm PRIMARY KEY vào INSERT
-                // Kiểm tra: 1) Cột phải tồn tại, 2) Không phải PRIMARY KEY, 3) Không phải 'id' hoặc 'order_id'
-                if (in_array($col, $existingColumns) && !$isPrimaryKey($col)) {
-                    // Kiểm tra lại lần nữa để chắc chắn
-                    $isForbidden = false;
-                    foreach (['id', 'order_id'] as $forbidden) {
-                        if (strcasecmp($col, $forbidden) === 0) {
-                            $isForbidden = true;
-                            error_log("OrderModel::create - Skipped column '$col' (matches forbidden '$forbidden')");
-                            break;
-                        }
-                    }
-                    
-                    if (!$isForbidden) {
-                        $insertColumns[] = $col;
-                        $insertValues[] = ':' . $col;
-                        $orderPayload[':' . $col] = $value;
-                    }
-                } else {
-                    error_log("OrderModel::create - Skipped column '$col' (might be PRIMARY KEY or not exists)");
+            foreach ($optionalData as $col => $value) {
+                // Chỉ thêm nếu cột nằm trong danh sách được phép và không phải PRIMARY KEY
+                if (in_array($col, $allowedColumns) && $col !== $primaryKeyColumn) {
+                    $insertColumns[] = $col;
+                    $insertValues[] = ':' . $col;
+                    $orderPayload[':' . $col] = $value;
                 }
             }
-            
-            // Kiểm tra lại: Loại bỏ BẤT KỲ cột nào có thể là PRIMARY KEY
-            $filteredColumns = [];
-            $filteredValues = [];
-            $filteredPayload = [];
-            
-            foreach ($insertColumns as $index => $col) {
-                if (!$isPrimaryKey($col)) {
-                    $filteredColumns[] = $col;
-                    $filteredValues[] = $insertValues[$index];
-                    $param = ':' . $col;
-                    if (isset($orderPayload[$param])) {
-                        $filteredPayload[$param] = $orderPayload[$param];
-                    }
-                } else {
-                    error_log("OrderModel::create - FORCE REMOVED PRIMARY KEY column: $col");
-                }
-            }
-            
-            $insertColumns = $filteredColumns;
-            $insertValues = $filteredValues;
-            $orderPayload = $filteredPayload;
-            
-            // Validate: Phải có ít nhất các cột cơ bản
-            if (empty($insertColumns)) {
-                $errorMsg = "Không tìm thấy cột nào phù hợp trong bảng $tableName. ";
-                $errorMsg .= 'Các cột hiện có: ' . implode(', ', $existingColumns);
-                error_log("OrderModel::create - Table: $tableName, Available columns: " . implode(', ', $existingColumns));
-                throw new Exception($errorMsg);
-            }
-            
-            // Log để debug - CHI TIẾT
-            error_log('OrderModel::create - ========== DEBUG INFO ==========');
-            error_log('OrderModel::create - Table: ' . $tableName);
-            error_log('OrderModel::create - Primary Key Column: ' . ($primaryKeyColumn ?? 'NULL'));
-            error_log('OrderModel::create - All existing columns (after filter): ' . implode(', ', $existingColumns));
-            error_log('OrderModel::create - Forbidden names: ' . implode(', ', $forbiddenPrimaryKeyNames));
-            error_log('OrderModel::create - Inserting columns: ' . implode(', ', $insertColumns));
-            error_log('OrderModel::create - Inserting values count: ' . count($insertValues));
-            error_log('OrderModel::create - Payload keys: ' . implode(', ', array_keys($orderPayload)));
-            
-            // Kiểm tra xem có cột 'id' nào trong insertColumns không
-            foreach ($insertColumns as $idx => $col) {
-                if (strcasecmp($col, 'id') === 0 || strcasecmp($col, 'order_id') === 0) {
-                    error_log("OrderModel::create - WARNING: Found forbidden column '$col' at index $idx in insertColumns!");
-                }
-            }
-            error_log('OrderModel::create - =================================');
             
             // KIỂM TRA CUỐI CÙNG: Đảm bảo KHÔNG có PRIMARY KEY trong insertColumns
-            if ($primaryKeyColumn) {
-                foreach ($insertColumns as $col) {
-                    if (strcasecmp($col, $primaryKeyColumn) === 0) {
-                        $errorMsg = "LỖI: PRIMARY KEY '$primaryKeyColumn' vẫn còn trong insertColumns sau khi đã filter!";
-                        error_log($errorMsg);
-                        error_log("All columns: " . implode(', ', $insertColumns));
-                        throw new Exception($errorMsg);
-                    }
-                }
-            }
-            
-            // Kiểm tra các tên cấm
-            foreach (['id', 'order_id'] as $forbidden) {
-                foreach ($insertColumns as $col) {
-                    if (strcasecmp($col, $forbidden) === 0) {
-                        $errorMsg = "LỖI: Cột cấm '$forbidden' vẫn còn trong insertColumns!";
-                        error_log($errorMsg);
-                        error_log("All columns: " . implode(', ', $insertColumns));
-                        throw new Exception($errorMsg);
-                    }
-                }
-            }
-
-            // Đảm bảo PRIMARY KEY không có trong danh sách cột
-            if ($primaryKeyColumn && in_array($primaryKeyColumn, $insertColumns)) {
-                $errorMsg = "Lỗi: PRIMARY KEY ($primaryKeyColumn) đã được thêm vào INSERT statement. Điều này không được phép.";
-                error_log($errorMsg);
-                throw new Exception($errorMsg);
-            }
-
-            // Loại bỏ PRIMARY KEY khỏi insertColumns và orderPayload nếu vô tình có
-            // QUAN TRỌNG: Phải đồng bộ giữa insertColumns, insertValues và orderPayload
-            $absolutelyForbiddenFinal = ['id', 'order_id'];
-            if ($primaryKeyColumn) {
-                $absolutelyForbiddenFinal[] = $primaryKeyColumn;
-            }
-            $absolutelyForbiddenFinal = array_unique($absolutelyForbiddenFinal);
-            
-            $finalColumns = [];
-            $finalValues = [];
-            $finalPayload = [];
-            
-            foreach ($insertColumns as $index => $col) {
-                $shouldRemove = false;
-                foreach ($absolutelyForbiddenFinal as $forbidden) {
-                    if (strcasecmp($col, $forbidden) === 0) {
-                        $shouldRemove = true;
-                        error_log("OrderModel::create - FINAL REMOVAL: Removing PRIMARY KEY column '$col' (matches '$forbidden') at index $index");
-                        break;
-                    }
-                }
-                
-                if (!$shouldRemove) {
-                    $finalColumns[] = $col;
-                    if (isset($insertValues[$index])) {
-                        $finalValues[] = $insertValues[$index];
-                    }
-                    $param = ':' . $col;
-                    if (isset($orderPayload[$param])) {
-                        $finalPayload[$param] = $orderPayload[$param];
-                    }
-                }
-            }
-            
-            $insertColumns = $finalColumns;
-            $insertValues = $finalValues;
-            $orderPayload = $finalPayload;
-            
-            // Loại bỏ khỏi orderPayload nếu vẫn còn
-            if ($primaryKeyColumn) {
-                $pkParam = ':' . $primaryKeyColumn;
-                if (isset($orderPayload[$pkParam])) {
-                    unset($orderPayload[$pkParam]);
-                    error_log("OrderModel::create - Removed PRIMARY KEY parameter from payload: $pkParam");
-                }
-            }
-
-            // Kiểm tra lại lần cuối: Đảm bảo PRIMARY KEY KHÔNG BAO GIỜ có trong SQL
-            // Kiểm tra từng cột trong insertColumns
             foreach ($insertColumns as $col) {
-                foreach ($absolutelyForbiddenFinal as $forbidden) {
-                    if (strcasecmp($col, $forbidden) === 0) {
-                        $errorMsg = "LỖI NGHIÊM TRỌNG: Cột PRIMARY KEY '$col' (matches '$forbidden') vẫn còn trong insertColumns sau khi đã loại bỏ!";
-                        error_log($errorMsg);
-                        error_log("OrderModel::create - Primary Key Column detected: " . ($primaryKeyColumn ?? 'NULL'));
-                        error_log("OrderModel::create - Insert columns: " . implode(', ', $insertColumns));
-                        error_log("OrderModel::create - Payload keys: " . implode(', ', array_keys($orderPayload)));
-                        throw new Exception($errorMsg);
-                    }
+                if ($col === 'id' || $col === 'order_id' || $col === $primaryKeyColumn) {
+                    throw new Exception("LỖI NGHIÊM TRỌNG: PRIMARY KEY '$col' đã được thêm vào INSERT statement!");
                 }
             }
-            
-            // Kiểm tra lại bằng cách so sánh với isPrimaryKey function
-            foreach ($insertColumns as $col) {
-                if ($isPrimaryKey($col)) {
-                    $errorMsg = "LỖI NGHIÊM TRỌNG: Cột PRIMARY KEY '$col' đã xuất hiện trong INSERT statement! Điều này KHÔNG ĐƯỢC PHÉP!";
-                    error_log($errorMsg);
-                    error_log("OrderModel::create - Primary Key Column detected: " . ($primaryKeyColumn ?? 'NULL'));
-                    error_log("OrderModel::create - Insert columns: " . implode(', ', $insertColumns));
-                    error_log("OrderModel::create - Payload keys: " . implode(', ', array_keys($orderPayload)));
-                    throw new Exception($errorMsg);
-                }
-            }
-            
-            // Log để debug
-            error_log('OrderModel::create - After final removal, columns: ' . implode(', ', $insertColumns));
-            error_log('OrderModel::create - After final removal, forbidden list: ' . implode(', ', $absolutelyForbiddenFinal));
             
             // Validate: Phải có ít nhất một cột
             if (empty($insertColumns)) {
-                $errorMsg = "LỖI: Sau khi loại bỏ PRIMARY KEY, không còn cột nào để INSERT!";
-                error_log($errorMsg);
-                error_log("Table: $tableName");
-                error_log("Primary Key: " . ($primaryKeyColumn ?? 'NULL'));
-                error_log("All existing columns: " . implode(', ', $existingColumns));
-                throw new Exception($errorMsg);
+                throw new Exception("LỖI: Không có cột nào để INSERT vào bảng $tableName!");
             }
             
-            error_log("OrderModel::create - FINAL CLEAN columns: " . implode(', ', $insertColumns));
-            
-            // Validate: Phải có ít nhất một cột
-            if (empty($insertColumns)) {
-                $errorMsg = "LỖI: Sau khi loại bỏ tất cả cột cấm, không còn cột nào để INSERT!";
-                error_log($errorMsg);
-                error_log("Table: $tableName");
-                error_log("Primary Key: " . ($primaryKeyColumn ?? 'NULL'));
-                throw new Exception($errorMsg);
-            }
-            
-            // Lưu order cha
+            // Xây dựng SQL statement
             $columnsStr = implode(', ', $insertColumns);
             $valuesStr = implode(', ', $insertValues);
-            
-            // Kiểm tra lại lần cuối bằng string search: Đảm bảo PRIMARY KEY không có trong SQL
-            $allForbidden = array_unique(array_map('strtolower', $forbiddenPrimaryKeyNames));
-            foreach ($allForbidden as $forbidden) {
-                // Kiểm tra trong columnsStr và valuesStr
-                if (stripos($columnsStr, $forbidden) !== false || stripos($valuesStr, ':' . $forbidden) !== false) {
-                    $errorMsg = "LỖI NGHIÊM TRỌNG: PRIMARY KEY '$forbidden' vẫn xuất hiện trong SQL statement sau khi đã kiểm tra!";
-                    error_log($errorMsg);
-                    error_log("SQL: INSERT INTO $tableName ($columnsStr) VALUES ($valuesStr)");
-                    error_log("Primary Key Column: " . ($primaryKeyColumn ?? 'NULL'));
-                    error_log("All forbidden names: " . implode(', ', $forbiddenPrimaryKeyNames));
-                    error_log("Insert columns: " . implode(', ', $insertColumns));
-                    error_log("Table: $tableName");
-                    error_log("Columns string: $columnsStr");
-                    error_log("Values string: $valuesStr");
-                    throw new Exception($errorMsg);
-                }
-            }
-            
-            // Kiểm tra lại bằng cách so sánh từng cột trong columnsStr
-            $columnsArray = array_map('trim', explode(',', $columnsStr));
-            foreach ($columnsArray as $col) {
-                foreach ($absolutelyForbiddenFinal as $forbidden) {
-                    if (strcasecmp(trim($col), $forbidden) === 0) {
-                        $errorMsg = "LỖI NGHIÊM TRỌNG: Cột '$col' (matches '$forbidden') vẫn còn trong columnsStr!";
-                        error_log($errorMsg);
-                        error_log("Columns string: $columnsStr");
-                        error_log("Table: $tableName");
-                        throw new Exception($errorMsg);
-                    }
-                }
-            }
-            
-            // Kiểm tra lại bằng cách so sánh từng cột - CHẶT CHẼ HƠN
-            foreach ($insertColumns as $colIndex => $col) {
-                // Kiểm tra với PRIMARY KEY
-                if ($primaryKeyColumn && strcasecmp($col, $primaryKeyColumn) === 0) {
-                    $errorMsg = "LỖI NGHIÊM TRỌNG: PRIMARY KEY '$primaryKeyColumn' vẫn còn ở vị trí $colIndex!";
-                    error_log($errorMsg);
-                    error_log("All columns: " . implode(', ', $insertColumns));
-                    error_log("Table: $tableName");
-                    throw new Exception($errorMsg);
-                }
-                
-                // Kiểm tra với danh sách cấm
-                foreach ($absolutelyForbiddenFinal as $forbidden) {
-                    if (strcasecmp($col, $forbidden) === 0) {
-                        $errorMsg = "LỖI NGHIÊM TRỌNG: Cột '$col' (matches '$forbidden') vẫn còn ở vị trí $colIndex sau khi đã loại bỏ!";
-                        error_log($errorMsg);
-                        error_log("All columns: " . implode(', ', $insertColumns));
-                        error_log("Table: $tableName");
-                        error_log("Forbidden list: " . implode(', ', $absolutelyForbiddenFinal));
-                        throw new Exception($errorMsg);
-                    }
-                }
-                
-                // Kiểm tra bằng cách tìm trong string (case-insensitive)
-                foreach ($absolutelyForbiddenFinal as $forbidden) {
-                    if (stripos($col, $forbidden) !== false && strlen($col) === strlen($forbidden)) {
-                        $errorMsg = "LỖI NGHIÊM TRỌNG: Cột '$col' có thể là '$forbidden' (string match)!";
-                        error_log($errorMsg);
-                        error_log("All columns: " . implode(', ', $insertColumns));
-                        error_log("Table: $tableName");
-                        throw new Exception($errorMsg);
-                    }
-                }
-            }
-            
-            // Log để debug
-            error_log("OrderModel::create - Final check passed. Primary Key: " . ($primaryKeyColumn ?? 'NULL'));
-            error_log("OrderModel::create - Final columns: " . $columnsStr);
-            error_log("OrderModel::create - Table: $tableName");
-            
-            // Kiểm tra và sửa AUTO_INCREMENT nếu cần (chỉ khi lastInsertId trả về 0)
-            // Không gọi ở đây để tránh làm chậm, sẽ gọi sau nếu cần
-            
             $sql = "INSERT INTO $tableName ($columnsStr) VALUES ($valuesStr)";
-            error_log("OrderModel::create - Table: $tableName");
-            error_log('OrderModel::create - SQL: ' . $sql);
-            error_log('OrderModel::create - Primary Key Column (should NOT be in SQL): ' . ($primaryKeyColumn ?? 'NULL'));
-            error_log('OrderModel::create - Payload keys: ' . implode(', ', array_keys($orderPayload)));
             
-            // KIỂM TRA CUỐI CÙNG TRƯỚC KHI EXECUTE: Đảm bảo SQL không chứa 'id' hoặc 'order_id'
-            $absolutelyForbiddenInSQL = ['id', 'order_id'];
-            if ($primaryKeyColumn) {
-                $absolutelyForbiddenInSQL[] = $primaryKeyColumn;
-            }
-            
-            // Tạo regex pattern để tìm PRIMARY KEY trong SQL (chính xác hơn)
-            foreach ($absolutelyForbiddenInSQL as $forbidden) {
-                // Pattern: tìm 'id' hoặc 'order_id' trong danh sách columns
-                // Có thể xuất hiện ở: đầu danh sách (id, ...), giữa danh sách (..., id, ...), cuối danh sách (..., id)
-                $pattern = '/\b' . preg_quote($forbidden, '/') . '\b/i';
-                
-                // Kiểm tra trong phần columns của INSERT statement
-                if (preg_match($pattern, $columnsStr)) {
-                    $errorMsg = "LỖI NGHIÊM TRỌNG: SQL statement vẫn chứa PRIMARY KEY '$forbidden' trong columns! SQL: $sql";
-                    error_log($errorMsg);
-                    error_log("Table: $tableName");
-                    error_log("Primary Key: " . ($primaryKeyColumn ?? 'NULL'));
-                    error_log("Columns string: " . $columnsStr);
-                    error_log("Insert columns array: " . implode(', ', $insertColumns));
-                    throw new Exception($errorMsg);
-                }
-                
-                // Kiểm tra lại bằng cách tách columns và so sánh từng cột
-                $columnsArray = array_map('trim', explode(',', $columnsStr));
-                foreach ($columnsArray as $col) {
-                    if (strcasecmp(trim($col), $forbidden) === 0) {
-                        $errorMsg = "LỖI NGHIÊM TRỌNG: PRIMARY KEY '$forbidden' vẫn xuất hiện trong SQL statement sau khi đã kiểm tra! SQL: $sql";
-                        error_log($errorMsg);
-                        error_log("Table: $tableName");
-                        error_log("Primary Key: " . ($primaryKeyColumn ?? 'NULL'));
-                        error_log("Columns string: " . $columnsStr);
-                        error_log("Columns array: " . implode(', ', $columnsArray));
-                        error_log("Insert columns array: " . implode(', ', $insertColumns));
-                        throw new Exception($errorMsg);
-                    }
-                }
-            }
+            error_log("OrderModel::create - SQL: $sql");
+            error_log("OrderModel::create - Columns: " . implode(', ', $insertColumns));
             
             $stmt = $this->pdo->prepare($sql);
 
@@ -642,54 +252,61 @@ class OrderModel extends BaseModel
     // Lấy lịch sử đơn hàng dành cho user
     public function getHistory(?int $userId, ?string $email): array
     {
-        // Kiểm tra các cột có tồn tại không
-        $existingColumns = $this->getExistingColumns('orders');
-        
-        // Tìm tên cột user_id (có thể là user_id hoặc customer_id)
-        $userIdColumn = $this->findColumnName($existingColumns, ['user_id', 'customer_id']);
-        
-        if (!$userIdColumn) {
-            // Nếu không có cột user_id, trả về mảng rỗng
-            error_log('OrderModel::getHistory - No user_id column found in orders table');
+        // Nếu không có cả user_id và email, trả về mảng rỗng
+        if (!$userId && !$email) {
+            error_log("OrderModel::getHistory - No user_id or email provided");
             return [];
         }
         
-        $query = "SELECT * FROM orders";
+        // Sử dụng bảng orders_new với PRIMARY KEY là 'id'
+        // Tìm theo user_id HOẶC email (nếu user_id không khớp thì vẫn tìm được theo email)
+        $query = "SELECT * FROM orders_new WHERE (";
         $params = [];
-
-        // Chỉ sử dụng user_id để tìm kiếm (đảm bảo an toàn và đơn giản)
+        $conditions = [];
+        
         if ($userId) {
-            $query .= " WHERE $userIdColumn = :user_id";
+            $conditions[] = "user_id = :user_id";
             $params[':user_id'] = $userId;
+        }
+        
+        if ($email) {
+            $conditions[] = "email = :email";
+            $params[':email'] = $email;
+        }
+        
+        // Nếu có cả user_id và email, dùng OR để tìm theo cả hai
+        // Nếu chỉ có một trong hai, chỉ tìm theo cái đó
+        if (count($conditions) > 0) {
+            $query .= implode(" OR ", $conditions);
         } else {
-            // Nếu không có user_id, trả về mảng rỗng
+            error_log("OrderModel::getHistory - No valid conditions");
             return [];
         }
+        
+        $query .= ") ORDER BY id DESC";
+        
+        error_log("OrderModel::getHistory - Query: $query");
+        error_log("OrderModel::getHistory - Params: " . json_encode($params));
 
-        // Sắp xếp theo order_id (mới nhất trước) - không dùng created_at vì có thể không tồn tại
-        // Tìm tên cột PRIMARY KEY để sắp xếp
-        $pkColumn = $this->getPrimaryKeyColumn('orders');
-        if ($pkColumn) {
-            $query .= " ORDER BY $pkColumn DESC";
-        } else {
-            // Nếu không tìm thấy PRIMARY KEY, thử dùng order_id hoặc id
-            if (in_array('order_id', $existingColumns)) {
-                $query .= " ORDER BY order_id DESC";
-            } elseif (in_array('id', $existingColumns)) {
-                $query .= " ORDER BY id DESC";
-            }
+        try {
+            $stmt = $this->pdo->prepare($query);
+            $stmt->execute($params);
+            $results = $stmt->fetchAll();
+            
+            error_log("OrderModel::getHistory - Found " . count($results) . " orders");
+            
+            return $results;
+        } catch (PDOException $e) {
+            error_log("OrderModel::getHistory - Error: " . $e->getMessage());
+            return [];
         }
-
-        $stmt = $this->pdo->prepare($query);
-        $stmt->execute($params);
-        return $stmt->fetchAll();
     }
 
     // Lấy thông tin đơn hàng + danh sách sản phẩm (dùng cho chi tiết)
     public function findWithItems(int $orderId): ?array
     {
-        // Tìm bằng order_id hoặc id (thử cả hai)
-        $stmt = $this->pdo->prepare("SELECT * FROM orders WHERE order_id = :id OR id = :id LIMIT 1");
+        // Sử dụng bảng orders_new với PRIMARY KEY là 'id'
+        $stmt = $this->pdo->prepare("SELECT * FROM orders_new WHERE id = :id LIMIT 1");
         $stmt->execute([':id' => $orderId]);
         $order = $stmt->fetch();
 
@@ -712,12 +329,13 @@ class OrderModel extends BaseModel
     // Trang admin: lấy tất cả đơn + lọc theo keyword/status
     public function getAll(?string $keyword = null, ?string $status = null): array
     {
-        $query = "SELECT * FROM orders WHERE 1=1";
+        // Sử dụng bảng orders_new
+        $query = "SELECT * FROM orders_new WHERE 1=1";
         $params = [];
 
         if ($keyword) {
-            // Chỉ tìm kiếm theo fullname và phone vì order_code có thể không tồn tại
-            $query .= " AND (fullname LIKE :keyword OR phone LIKE :keyword)";
+            // Tìm kiếm theo fullname, phone, hoặc order_code
+            $query .= " AND (fullname LIKE :keyword OR phone LIKE :keyword OR order_code LIKE :keyword)";
             $params[':keyword'] = '%' . $keyword . '%';
         }
 
@@ -726,8 +344,8 @@ class OrderModel extends BaseModel
             $params[':status'] = $status;
         }
 
-        // Bỏ ORDER BY vì không có cột phù hợp để sắp xếp
-        // $query .= " ORDER BY ...";
+        // Sắp xếp theo id (mới nhất trước)
+        $query .= " ORDER BY id DESC";
 
         $stmt = $this->pdo->prepare($query);
         $stmt->execute($params);
@@ -741,11 +359,11 @@ class OrderModel extends BaseModel
             throw new InvalidArgumentException('Trạng thái không hợp lệ.');
         }
 
-        // Thử cập nhật bằng order_id hoặc id
+        // Sử dụng bảng orders_new với PRIMARY KEY là 'id'
         $stmt = $this->pdo->prepare("
-            UPDATE orders 
+            UPDATE orders_new 
             SET status = :status, updated_at = CURRENT_TIMESTAMP 
-            WHERE order_id = :id OR id = :id
+            WHERE id = :id
         ");
 
         return $stmt->execute([
@@ -757,11 +375,11 @@ class OrderModel extends BaseModel
     // Người dùng hủy đơn (ghi nhận lý do nếu có)
     public function cancel(int $orderId, ?string $reason = null): bool
     {
-        // Thử cập nhật bằng order_id hoặc id
+        // Sử dụng bảng orders_new với PRIMARY KEY là 'id'
         $stmt = $this->pdo->prepare("
-            UPDATE orders 
+            UPDATE orders_new 
             SET status = :status, cancel_reason = :reason, updated_at = CURRENT_TIMESTAMP 
-            WHERE order_id = :id OR id = :id
+            WHERE id = :id
         ");
 
         return $stmt->execute([
@@ -915,7 +533,7 @@ class OrderModel extends BaseModel
     // Lấy tổng số đơn hàng
     public function getTotalCount(): int
     {
-        $stmt = $this->pdo->query("SELECT COUNT(*) AS total FROM orders");
+        $stmt = $this->pdo->query("SELECT COUNT(*) AS total FROM orders_new");
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return (int)($result['total'] ?? 0);
     }
@@ -924,7 +542,7 @@ class OrderModel extends BaseModel
     public function getTotalRevenue(): float
     {
         try {
-            $stmt = $this->pdo->query("SELECT COALESCE(SUM(total_amount), 0) AS total FROM orders WHERE status = 'delivered'");
+            $stmt = $this->pdo->query("SELECT COALESCE(SUM(total_amount), 0) AS total FROM orders_new WHERE status = 'delivered'");
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             return (float)($result['total'] ?? 0);
         } catch (Exception $e) {
@@ -943,19 +561,17 @@ class OrderModel extends BaseModel
             $month = date('Y-m', strtotime("-$i months"));
             $monthLabel = date('M', strtotime("-$i months"));
             
-            // Query đơn giản - lấy tất cả đơn đã giao
-            // Vì không biết cột ngày chính xác, sẽ trả về 0 hoặc random data
+            // Sử dụng bảng orders_new với cột created_at để lọc theo tháng
             try {
                 $stmt = $this->pdo->prepare("
                     SELECT COALESCE(SUM(total_amount), 0) AS revenue 
-                    FROM orders 
+                    FROM orders_new 
                     WHERE status = 'delivered'
+                    AND DATE_FORMAT(created_at, '%Y-%m') = :month
                 ");
-                $stmt->execute();
+                $stmt->execute([':month' => $month]);
                 $result = $stmt->fetch(PDO::FETCH_ASSOC);
-                $totalRevenue = (float)($result['revenue'] ?? 0);
-                // Chia đều cho các tháng (tạm thời)
-                $revenue[] = $totalRevenue / $months;
+                $revenue[] = (float)($result['revenue'] ?? 0);
             } catch (Exception $e) {
                 $revenue[] = 0;
             }

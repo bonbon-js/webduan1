@@ -18,11 +18,12 @@ class AdminReviewController
     {
         $this->requireAdmin();
 
-        $keyword = $_GET['keyword'] ?? null;
+        $keyword = isset($_GET['keyword']) && trim($_GET['keyword']) !== '' ? trim($_GET['keyword']) : null;
         $productId = isset($_GET['product_id']) ? (int)$_GET['product_id'] : null;
         $rating = isset($_GET['rating']) ? (int)$_GET['rating'] : null;
+        $status = isset($_GET['status']) && trim($_GET['status']) !== '' ? trim($_GET['status']) : null;
 
-        $reviews = $this->reviewModel->getAll($keyword, $productId, $rating);
+        $reviews = $this->reviewModel->getAll($keyword, $productId, $rating, $status);
 
         $view = 'admin/reviews/index';
         $title = 'Quản lý đánh giá';

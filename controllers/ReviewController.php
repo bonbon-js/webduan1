@@ -86,7 +86,11 @@ class ReviewController
             exit;
         }
 
-        $userId = (int)$_SESSION['user']['id'];
+        // Lấy user_id từ session (có thể là 'id' hoặc 'user_id')
+        $user = $_SESSION['user'] ?? [];
+        $userId = (int)($user['user_id'] ?? $user['id'] ?? 0);
+        $userEmail = $user['email'] ?? null;
+        
         $data = json_decode(file_get_contents('php://input'), true);
 
         $orderItemId = (int)($data['order_item_id'] ?? 0);
@@ -114,10 +118,23 @@ class ReviewController
             exit;
         }
 
+        // Kiểm tra quyền: so sánh user_id HOẶC email
         $canView = false;
-        if (($order['user_id'] ?? 0) == $userId) {
+        $orderUserId = (int)($order['user_id'] ?? 0);
+        $orderEmail = $order['email'] ?? null;
+        
+        // Kiểm tra theo user_id
+        if ($userId > 0 && $orderUserId > 0 && $orderUserId == $userId) {
             $canView = true;
         }
+        
+        // Nếu user_id không khớp, kiểm tra theo email
+        if (!$canView && $userEmail && $orderEmail && strtolower(trim($userEmail)) === strtolower(trim($orderEmail))) {
+            $canView = true;
+        }
+        
+        // Log để debug
+        error_log("ReviewController::submit - User ID: $userId, Order User ID: $orderUserId, User Email: " . ($userEmail ?? 'N/A') . ", Order Email: " . ($orderEmail ?? 'N/A') . ", CanView: " . ($canView ? 'true' : 'false'));
 
         if (!$canView) {
             echo json_encode(['success' => false, 'message' => 'Bạn không có quyền đánh giá đơn hàng này']);
@@ -168,12 +185,22 @@ class ReviewController
         try {
             $reviewId = $this->reviewModel->create($reviewData);
 
+            if (!$reviewId || $reviewId <= 0) {
+                error_log("ReviewController::submit - Failed to create review. Review ID: $reviewId");
+                echo json_encode(['success' => false, 'message' => 'Không thể tạo đánh giá. Vui lòng thử lại.']);
+                exit;
+            }
+
             echo json_encode([
                 'success' => true,
                 'message' => 'Đánh giá thành công',
                 'review_id' => $reviewId,
             ]);
+        } catch (PDOException $e) {
+            error_log("ReviewController::submit - PDO Error: " . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'Lỗi database: ' . $e->getMessage()]);
         } catch (Exception $e) {
+            error_log("ReviewController::submit - Error: " . $e->getMessage());
             echo json_encode(['success' => false, 'message' => 'Có lỗi xảy ra: ' . $e->getMessage()]);
         }
     }

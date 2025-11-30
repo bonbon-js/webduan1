@@ -15,7 +15,29 @@ class OrderController
     public function history(): void
     {
         $user = $this->requireUser();
-        $orders = $this->orderModel->getHistory($user['id'] ?? null, $user['email'] ?? null);
+        
+        // Lấy user_id từ nhiều nguồn có thể (user_id hoặc id)
+        $userId = (int)($user['user_id'] ?? $user['id'] ?? 0);
+        $userEmail = $user['email'] ?? null;
+        
+        // Debug: Log để kiểm tra
+        error_log("OrderController::history - User ID: $userId, Email: " . ($userEmail ?? 'N/A'));
+        error_log("OrderController::history - User data: " . json_encode(array_keys($user)));
+        
+        $orders = $this->orderModel->getHistory($userId, $userEmail);
+        
+        error_log("OrderController::history - Found " . count($orders) . " orders");
+
+        // Load items cho mỗi đơn hàng để hiển thị sản phẩm
+        foreach ($orders as &$order) {
+            $orderId = (int)($order['id'] ?? 0);
+            if ($orderId > 0) {
+                $order['items'] = $this->orderModel->getItems($orderId);
+            } else {
+                $order['items'] = [];
+            }
+        }
+        unset($order);
 
         $view = 'orders/history';
         $title = 'Đơn hàng của tôi';
@@ -48,8 +70,10 @@ class OrderController
         $canCancel = $this->orderModel->canCancel($order);
         
         // Load thông tin đánh giá nếu đơn hàng đã được giao
+        // QUAN TRỌNG: Khi trạng thái là "delivered", tự động cho phép đánh giá
         $reviews = [];
         $canReview = ($order['status'] === OrderModel::STATUS_DELIVERED);
+        
         if ($canReview) {
             require_once PATH_MODEL . 'ReviewModel.php';
             $reviewModel = new ReviewModel();
@@ -84,6 +108,12 @@ class OrderController
                 }
             }
             unset($item);
+            
+            // Nếu có tham số review=true trong URL, đánh dấu để tự động cuộn đến form đánh giá
+            // (Khi admin vừa cập nhật trạng thái thành delivered)
+            if (isset($_GET['review']) && $_GET['review'] === 'true') {
+                // Có thể thêm logic ở đây nếu cần
+            }
         }
         
         $view = 'orders/detail';
@@ -144,7 +174,23 @@ class OrderController
             return true;
         }
 
-        return (int)($order['user_id'] ?? 0) === (int)($user['id'] ?? 0)
-            || ($user['email'] ?? null) === ($order['email'] ?? null);
+        // Lấy user_id từ nhiều nguồn
+        $userId = (int)($user['user_id'] ?? $user['id'] ?? 0);
+        $orderUserId = (int)($order['user_id'] ?? 0);
+        
+        // Kiểm tra theo user_id
+        if ($userId > 0 && $orderUserId > 0 && $orderUserId === $userId) {
+            return true;
+        }
+        
+        // Kiểm tra theo email nếu user_id không khớp
+        $userEmail = $user['email'] ?? null;
+        $orderEmail = $order['email'] ?? null;
+        
+        if ($userEmail && $orderEmail && strtolower(trim($userEmail)) === strtolower(trim($orderEmail))) {
+            return true;
+        }
+        
+        return false;
     }
 }
