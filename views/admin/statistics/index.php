@@ -2,6 +2,7 @@
 require_once PATH_MODEL . 'OrderModel.php';
 ?>
 
+<style>
     .pagination-btn:hover {
         background: #f8fafc;
     }
