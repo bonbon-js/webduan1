@@ -346,10 +346,16 @@ class CheckoutController
                 }
                 
                 // Tạo URL thanh toán VNPay
+                // Lưu ý: order_info không được vượt quá 255 ký tự
+                $orderInfo = 'Thanh toan don hang #' . $orderId;
+                if (strlen($orderInfo) > 255) {
+                    $orderInfo = substr($orderInfo, 0, 252) . '...';
+                }
+                
                 $vnpayUrl = $vnpay->createPaymentUrl([
                     'txn_ref' => $orderId . '_' . time(),
                     'amount' => $finalTotal,
-                    'order_info' => 'Thanh toan don hang #' . $orderId,
+                    'order_info' => $orderInfo,
                     'return_url' => BASE_URL . '?action=vnpay-return&order_id=' . $orderId,
                 ]);
                 

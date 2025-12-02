@@ -40,7 +40,11 @@ define('MAIL_FROM_NAME', 'bonbon_shop');
 
 // VNPay Configuration
 // Lấy thông tin từ https://sandbox.vnpayment.vn/apis/docs/
-define('VNPAY_TMN_CODE', ''); // Điền mã website của bạn
-define('VNPAY_HASH_SECRET', ''); // Điền mã bảo mật từ VNPay
+define('VNPAY_TMN_CODE', '1ZGKCU42'); // Điền mã website của bạn
+define('VNPAY_HASH_SECRET', 'Z4VL78GMY70MK3S4E624BLLRFODGMQGG'); // Điền mã bảo mật từ VNPay
 define('VNPAY_URL', 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'); // Sandbox URL
+define('VNPAY_IPN_URL', BASE_URL . '?action=vnpay-ipn'); // IPN callback URL
+// VNPAY_ENABLE_IPN: Bật/tắt IPN. Nếu false, sẽ không gửi IPN URL lên VNPay (hữu ích khi test local)
+// Lưu ý: Khi test local (localhost), VNPay không thể truy cập IPN URL, nên có thể tắt IPN
+define('VNPAY_ENABLE_IPN', false); // Đặt true nếu có public URL (ngrok, domain thật, etc.)
 // Production URL: 'https://www.vnpayment.vn/paymentv2/vpcpay.html'

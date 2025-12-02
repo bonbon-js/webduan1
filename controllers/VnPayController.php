@@ -15,11 +15,143 @@ class VnPayController
     }
 
     /**
-     * Xử lý callback từ VNPay sau khi thanh toán
+     * Xử lý IPN (Instant Payment Notification) từ VNPay
+     * IPN được gọi tự động bởi VNPay server để thông báo kết quả thanh toán
+     */
+    public function ipn(): void
+    {
+        // IPN phải trả về JSON, không redirect
+        header('Content-Type: application/json; charset=utf-8');
+        
+        // Lấy tất cả tham số từ GET hoặc POST
+        $inputData = [];
+        foreach ($_GET as $key => $value) {
+            if (substr($key, 0, 4) == "vnp_") {
+                $inputData[$key] = $value;
+            }
+        }
+        foreach ($_POST as $key => $value) {
+            if (substr($key, 0, 4) == "vnp_") {
+                $inputData[$key] = $value;
+            }
+        }
+        
+        $returnData = [
+            'RspCode' => '99',
+            'Message' => 'Unknown error'
+        ];
+        
+        try {
+            // Validate callback từ VNPay
+            $result = $this->vnpay->validateCallback($inputData);
+            
+            if (!$result['success']) {
+                $returnData = [
+                    'RspCode' => '97',
+                    'Message' => 'Invalid signature'
+                ];
+                echo json_encode($returnData);
+                exit;
+            }
+            
+            // Lấy order_id từ vnp_TxnRef (format: orderId_timestamp)
+            $txnRef = $result['txn_ref'] ?? '';
+            $orderIdParts = explode('_', $txnRef);
+            $orderId = (int)($orderIdParts[0] ?? 0);
+            
+            if (!$orderId) {
+                $returnData = [
+                    'RspCode' => '01',
+                    'Message' => 'Order not found'
+                ];
+                echo json_encode($returnData);
+                exit;
+            }
+            
+            // Lấy thông tin đơn hàng
+            $order = $this->orderModel->findWithItems($orderId);
+            
+            if (!$order) {
+                $returnData = [
+                    'RspCode' => '01',
+                    'Message' => 'Order not found'
+                ];
+                echo json_encode($returnData);
+                exit;
+            }
+            
+            // Kiểm tra số tiền
+            $vnpAmount = $result['amount'] ?? 0;
+            $orderAmount = (float)($order['total_amount'] ?? 0);
+            
+            // So sánh số tiền (cho phép sai số nhỏ do làm tròn)
+            if (abs($vnpAmount - $orderAmount) > 1000) {
+                $returnData = [
+                    'RspCode' => '04',
+                    'Message' => 'Invalid amount'
+                ];
+                echo json_encode($returnData);
+                exit;
+            }
+            
+            // Kiểm tra trạng thái đơn hàng - chỉ xử lý nếu chưa được xác nhận thanh toán
+            // Nếu đơn hàng đã được xác nhận (status = confirmed), không cần xử lý lại
+            if ($order['status'] !== OrderModel::STATUS_CONFIRMED && 
+                $order['payment_method'] === 'banking') {
+                
+                // Kiểm tra response code
+                $responseCode = $result['response_code'] ?? '';
+                
+                if ($responseCode === '00') {
+                    // Thanh toán thành công - cập nhật trạng thái đơn hàng
+                    // Đơn hàng đã được tạo với status = confirmed, nên không cần cập nhật
+                    // Nhưng có thể lưu thông tin giao dịch nếu cần
+                    
+                    $returnData = [
+                        'RspCode' => '00',
+                        'Message' => 'Confirm Success'
+                    ];
+                } else {
+                    // Thanh toán thất bại
+                    $returnData = [
+                        'RspCode' => '00', // Vẫn trả về 00 để VNPay biết đã nhận được
+                        'Message' => 'Payment failed'
+                    ];
+                }
+            } else {
+                // Đơn hàng đã được xác nhận trước đó
+                $returnData = [
+                    'RspCode' => '02',
+                    'Message' => 'Order already confirmed'
+                ];
+            }
+            
+        } catch (Exception $e) {
+            error_log('VNPay IPN Error: ' . $e->getMessage());
+            $returnData = [
+                'RspCode' => '99',
+                'Message' => 'Unknown error: ' . $e->getMessage()
+            ];
+        }
+        
+        echo json_encode($returnData);
+        exit;
+    }
+
+    /**
+     * Xử lý callback từ VNPay sau khi thanh toán (return URL)
      */
     public function return(): void
     {
+        // Lấy order_id từ query string hoặc từ vnp_TxnRef
         $orderId = isset($_GET['order_id']) ? (int)$_GET['order_id'] : 0;
+        
+        // Nếu không có order_id trong query, thử lấy từ vnp_TxnRef
+        if (!$orderId && isset($_GET['vnp_TxnRef'])) {
+            $txnRef = $_GET['vnp_TxnRef'];
+            $orderIdParts = explode('_', $txnRef);
+            $orderId = (int)($orderIdParts[0] ?? 0);
+        }
         
         if (!$orderId) {
             set_flash('danger', 'Không tìm thấy đơn hàng.');
@@ -34,11 +166,24 @@ class VnPayController
             // Thanh toán thành công
             $order = $this->orderModel->findWithItems($orderId);
             
-            if ($order && $order['status'] === OrderModel::STATUS_CONFIRMED) {
-                // Đơn hàng đã được tạo, không cần làm gì thêm
-                // Có thể cập nhật thông tin thanh toán vào đơn hàng nếu cần
+            if (!$order) {
+                set_flash('danger', 'Không tìm thấy đơn hàng.');
+                header('Location: ' . BASE_URL . '?action=order-history');
+                exit;
             }
             
+            // Kiểm tra số tiền để đảm bảo an toàn
+            $vnpAmount = $result['amount'] ?? 0;
+            $orderAmount = (float)($order['total_amount'] ?? 0);
+            
+            if (abs($vnpAmount - $orderAmount) > 1000) {
+                error_log("VNPay Return: Amount mismatch. Order: $orderAmount, VNPay: $vnpAmount");
+                set_flash('warning', 'Có sự không khớp về số tiền. Vui lòng liên hệ hỗ trợ.');
+                header('Location: ' . BASE_URL . '?action=order-detail&id=' . $orderId);
+                exit;
+            }
+            
+            // Đơn hàng đã được tạo với status = confirmed, không cần cập nhật
             // Xóa đơn hàng tạm khỏi session
             unset($_SESSION['pending_vnpay_order']);
             
@@ -53,25 +198,52 @@ class VnPayController
             unset($_SESSION['selected_cart_items']);
             unset($_SESSION['applied_coupon']);
             
-            set_flash('success', 'Thanh toán thành công! Đơn hàng của bạn đã được xác nhận.');
-            header('Location: ' . BASE_URL . '?action=order-history');
+            set_flash('success', 'Thanh toán thành công! Đơn hàng #' . $order['order_code'] . ' của bạn đã được xác nhận.');
+            header('Location: ' . BASE_URL . '?action=order-detail&id=' . $orderId);
             exit;
         } else {
             // Thanh toán thất bại hoặc bị hủy
             $order = $this->orderModel->findWithItems($orderId);
             
-            if ($order) {
-                // Có thể hủy đơn hàng hoặc giữ nguyên để user thanh toán lại
-                // Ở đây ta sẽ giữ nguyên và thông báo
+            if (!$order) {
+                set_flash('danger', 'Không tìm thấy đơn hàng.');
+                header('Location: ' . BASE_URL . '?action=order-history');
+                exit;
             }
             
             unset($_SESSION['pending_vnpay_order']);
             
-            $message = $result['message'] ?? 'Thanh toán không thành công. Vui lòng thử lại.';
+            // Lấy thông báo lỗi chi tiết từ VNPay
+            $responseCode = $result['response_code'] ?? '';
+            $message = $this->getVnPayErrorMessage($responseCode);
+            
             set_flash('warning', $message);
             header('Location: ' . BASE_URL . '?action=order-detail&id=' . $orderId);
             exit;
         }
+    }
+    
+    /**
+     * Lấy thông báo lỗi từ mã response code của VNPay
+     */
+    private function getVnPayErrorMessage(string $responseCode): string
+    {
+        $messages = [
+            '00' => 'Giao dịch thành công',
+            '07' => 'Trừ tiền thành công. Giao dịch bị nghi ngờ (liên quan tới lừa đảo, giao dịch bất thường).',
+            '09' => 'Thẻ/Tài khoản chưa đăng ký dịch vụ InternetBanking',
+            '10' => 'Xác thực thông tin thẻ/tài khoản không đúng. Quá 3 lần',
+            '11' => 'Đã hết hạn chờ thanh toán. Vui lòng thực hiện lại giao dịch.',
+            '12' => 'Thẻ/Tài khoản bị khóa.',
+            '13' => 'Nhập sai mật khẩu xác thực giao dịch (OTP). Quá số lần quy định.',
+            '51' => 'Tài khoản không đủ số dư để thực hiện giao dịch.',
+            '65' => 'Tài khoản đã vượt quá hạn mức giao dịch trong ngày.',
+            '75' => 'Ngân hàng thanh toán đang bảo trì.',
+            '79' => 'Nhập sai mật khẩu thanh toán quá số lần quy định.',
+            '99' => 'Lỗi không xác định.',
+        ];
+        
+        return $messages[$responseCode] ?? 'Thanh toán không thành công. Mã lỗi: ' . $responseCode;
     }
 }
 

@@ -39,6 +39,7 @@ match ($action) {
     
     // VNPay routes
     'vnpay-return'   => (new VnPayController)->return(),
+    'vnpay-ipn'      => (new VnPayController)->ipn(),
     
     // Address routes
     'address-provinces' => (new AddressController)->getProvinces(),
