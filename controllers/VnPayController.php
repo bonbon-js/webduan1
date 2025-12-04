@@ -14,10 +14,7 @@ class VnPayController
         $this->orderModel = new OrderModel();
     }
 
-    /**
-     * Xử lý IPN (Instant Payment Notification) từ VNPay
-     * IPN được gọi tự động bởi VNPay server để thông báo kết quả thanh toán
-     */
+   
     public function ipn(): void
     {
         // IPN phải trả về JSON, không redirect
