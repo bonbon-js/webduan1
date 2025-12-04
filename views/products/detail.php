@@ -52,10 +52,16 @@
                 </div>
 
                 <!-- Actions -->
+                <?php if (!isset($_SESSION['user']['role']) || $_SESSION['user']['role'] !== 'admin'): ?>
                 <div>
                     <button type="button" class="btn btn-add-to-cart" onclick="addToCart()">Thêm vào giỏ hàng</button>
                     <button type="button" class="btn btn-buy-now" onclick="buyNow()">Mua ngay</button>
                 </div>
+                <?php else: ?>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> Tài khoản quản trị chỉ có thể xem sản phẩm, không thể mua hàng.
+                </div>
+                <?php endif; ?>
             </form>
         </div>
     </div>

@@ -43,7 +43,7 @@
                 <a class="text-decoration-none text-dark" href="<?= BASE_URL ?>?action=products">Sản phẩm</a>
                 <a class="text-decoration-none text-dark" href="<?= BASE_URL ?>?action=collection">Bộ sưu tập</a>
                 <a class="text-decoration-none text-dark" href="<?= BASE_URL ?>?action=posts">Tin tức</a>
-                <?php if (isset($_SESSION['user'])): ?>
+                <?php if (isset($_SESSION['user']) && (!isset($_SESSION['user']['role']) || $_SESSION['user']['role'] !== 'admin')): ?>
                     <a class="text-decoration-none text-dark" href="<?= BASE_URL ?>?action=order-history">Đơn hàng của tôi</a>
                 <?php endif; ?>
                 <a class="text-decoration-none text-dark" href="<?= BASE_URL ?>?action=contact">Liên hệ</a>
@@ -89,6 +89,7 @@
                     <a class="text-dark" href="<?= BASE_URL ?>?action=show-login" title="Đăng nhập"><i class="bi bi-person-circle"></i></a>
                 <?php endif; ?>
                 
+                <?php if (!isset($_SESSION['user']['role']) || $_SESSION['user']['role'] !== 'admin'): ?>
                 <?php
                 $cartCount = 0;
                 if (isset($_SESSION['user']) && isset($_SESSION['cart'])) {
@@ -101,6 +102,7 @@
                     <i class="bi bi-bag"></i>
                     <span class="cart-badge" id="cartBadge"><?= $cartCount ?></span>
                 </a>
+                <?php endif; ?>
             </div>
         </div>
     </header>

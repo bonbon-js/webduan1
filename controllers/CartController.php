@@ -15,6 +15,13 @@ class CartController
     }
     public function index()
     {
+        // Chặn admin không được xem giỏ hàng
+        if (isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'admin') {
+            set_flash('warning', 'Tài khoản quản trị không thể mua hàng. Vui lòng sử dụng tài khoản khách hàng.');
+            header('Location: ' . BASE_URL . '?action=admin-dashboard');
+            exit;
+        }
+
         // Nếu user đã đăng nhập, load giỏ hàng từ database
         if (isset($_SESSION['user']) && isset($_SESSION['user']['id'])) {
             $userId = (int)$_SESSION['user']['id'];
@@ -72,6 +79,15 @@ class CartController
                 'success' => false, 
                 'require_login' => true,
                 'message' => 'Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng'
+            ]);
+            exit;
+        }
+
+        // Chặn admin không được thêm vào giỏ hàng
+        if (isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'admin') {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Tài khoản quản trị không thể mua hàng. Vui lòng sử dụng tài khoản khách hàng.'
             ]);
             exit;
         }

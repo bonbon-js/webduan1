@@ -19,6 +19,13 @@ class CheckoutController
 
     public function index()
     {
+        // Chặn admin không được checkout
+        if (isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'admin') {
+            set_flash('warning', 'Tài khoản quản trị không thể mua hàng. Vui lòng sử dụng tài khoản khách hàng.');
+            header('Location: ' . BASE_URL . '?action=admin-dashboard');
+            exit;
+        }
+
         $cart = $_SESSION['cart'] ?? [];
         if (empty($cart)) {
             header('Location: ' . BASE_URL . '?action=cart-list');
@@ -95,6 +102,13 @@ class CheckoutController
 
     public function process()
     {
+        // Chặn admin không được đặt hàng
+        if (isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'admin') {
+            set_flash('warning', 'Tài khoản quản trị không thể mua hàng. Vui lòng sử dụng tài khoản khách hàng.');
+            header('Location: ' . BASE_URL . '?action=admin-dashboard');
+            exit;
+        }
+
         $cart = $_SESSION['cart'] ?? [];
         if (empty($cart)) {
             set_flash('warning', 'Giỏ hàng trống, không thể đặt hàng.');

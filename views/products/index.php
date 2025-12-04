@@ -80,9 +80,11 @@
                         <div class="product-card-image-wrapper">
                             <img src="<?= $product['image'] ?>" alt="<?= $product['name'] ?>">
                             <div class="product-card-overlay">
+                                <?php if (!isset($_SESSION['user']['role']) || $_SESSION['user']['role'] !== 'admin'): ?>
                                 <div class="product-card-icon" onclick="openQuickAdd(<?= $product['id'] ?? 0 ?>, '<?= htmlspecialchars($product['name']) ?>', <?= $product['price'] ?>, '<?= $product['image'] ?>')" title="Thêm vào giỏ hàng">
                                     <i class="bi bi-bag-plus"></i>
                                 </div>
+                                <?php endif; ?>
                                 <a href="<?= BASE_URL ?>?action=product-detail&id=<?= $product['id'] ?>" class="product-card-icon" title="Xem chi tiết">
                                     <i class="bi bi-eye"></i>
                                 </a>

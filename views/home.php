@@ -397,9 +397,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="product-card-image-wrapper">
                         <img src="<?= $product['image'] ?>" alt="<?= $product['name'] ?>">
                         <div class="product-card-overlay">
+                            <?php if (!isset($_SESSION['user']['role']) || $_SESSION['user']['role'] !== 'admin'): ?>
                             <div class="product-card-icon" onclick="openQuickAdd(<?= $product['id'] ?? 0 ?>, '<?= htmlspecialchars($product['name']) ?>', <?= $product['price'] ?>, '<?= $product['image'] ?>')" title="Thêm vào giỏ hàng">
                                 <i class="bi bi-bag-plus"></i>
                             </div>
+                            <?php endif; ?>
                             <div class="product-card-icon" onclick="quickView(<?= $product['id'] ?? 0 ?>)" title="Xem nhanh">
                                 <i class="bi bi-eye"></i>
                             </div>

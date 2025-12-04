@@ -250,7 +250,13 @@ class AuthController
         }
 
         $_SESSION['success'] = 'Đăng nhập thành công.';
-        $this->redirect('/');
+        
+        // Nếu là admin, chuyển hướng về trang quản lý
+        if (isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'admin') {
+            $this->redirect('admin-dashboard');
+        } else {
+            $this->redirect('/');
+        }
     }
 
     /**
