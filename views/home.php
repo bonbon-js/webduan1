@@ -284,7 +284,20 @@ document.addEventListener('DOMContentLoaded', function() {
         const input = document.getElementById('qaQuantity');
         let val = parseInt(input.value) + change;
         if (val < 1) val = 1;
+        if (val > 999) val = 999;
         input.value = val;
+    }
+    
+    // Validate quantity when user types manually
+    function validateQaQuantity(input) {
+        let val = parseInt(input.value);
+        if (isNaN(val) || val < 1) {
+            input.value = 1;
+        } else if (val > 999) {
+            input.value = 999;
+        } else {
+            input.value = val;
+        }
     }
     
     // Submit Quick Add
@@ -504,7 +517,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <label for="qaQuantity" class="form-label small text-uppercase fw-bold text-muted mb-2">Số lượng</label>
                                 <div class="input-group" style="width: 120px;">
                                     <button class="btn btn-outline-secondary rounded-0" type="button" onclick="changeQaQty(-1)" aria-label="Giảm số lượng">-</button>
-                                    <input type="number" class="form-control text-center border-secondary border-start-0 border-end-0" id="qaQuantity" name="quantity" value="1" min="1" readonly aria-label="Số lượng sản phẩm">
+                                    <input type="number" class="form-control text-center border-secondary border-start-0 border-end-0" id="qaQuantity" name="quantity" value="1" min="1" max="999" aria-label="Số lượng sản phẩm" onchange="validateQaQuantity(this)">
                                     <button class="btn btn-outline-secondary rounded-0" type="button" onclick="changeQaQty(1)" aria-label="Tăng số lượng">+</button>
                                 </div>
                             </div>
