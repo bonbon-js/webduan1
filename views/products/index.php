@@ -110,7 +110,9 @@
             <ul class="pagination justify-content-center">
                 <?php if ($currentPage > 1): ?>
                     <li class="page-item">
-                        <a class="page-link" href="<?= BASE_URL ?>?action=products&page=<?= $currentPage - 1 ?><?= isset($_GET['q']) ? '&q=' . urlencode($_GET['q']) : '' ?><?= isset($_GET['category_id']) ? '&category_id=' . (int)$_GET['category_id'] : '' ?><?= isset($_GET['price']) ? '&price=' . urlencode($_GET['price']) : '' ?>">Trước</a>
+                        <a class="page-link" href="<?= BASE_URL ?>?action=products&page=<?= $currentPage - 1 ?><?= isset($_GET['q']) ? '&q=' . urlencode($_GET['q']) : '' ?><?= isset($_GET['category_id']) ? '&category_id=' . (int)$_GET['category_id'] : '' ?><?= isset($_GET['price']) ? '&price=' . urlencode($_GET['price']) : '' ?>" aria-label="Trang trước">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
                     </li>
                 <?php endif; ?>
                 
@@ -122,7 +124,9 @@
                 
                 <?php if ($currentPage < $totalPages): ?>
                     <li class="page-item">
-                        <a class="page-link" href="<?= BASE_URL ?>?action=products&page=<?= $currentPage + 1 ?><?= isset($_GET['q']) ? '&q=' . urlencode($_GET['q']) : '' ?><?= isset($_GET['category_id']) ? '&category_id=' . (int)$_GET['category_id'] : '' ?><?= isset($_GET['price']) ? '&price=' . urlencode($_GET['price']) : '' ?>">Sau</a>
+                        <a class="page-link" href="<?= BASE_URL ?>?action=products&page=<?= $currentPage + 1 ?><?= isset($_GET['q']) ? '&q=' . urlencode($_GET['q']) : '' ?><?= isset($_GET['category_id']) ? '&category_id=' . (int)$_GET['category_id'] : '' ?><?= isset($_GET['price']) ? '&price=' . urlencode($_GET['price']) : '' ?>" aria-label="Trang sau">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
                     </li>
                 <?php endif; ?>
             </ul>

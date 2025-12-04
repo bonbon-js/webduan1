@@ -65,7 +65,7 @@
                                     <td>
                                         <div class="qty-input-group">
                                             <button class="qty-btn" onclick="updateQty('<?= htmlspecialchars($cartKey) ?>', -1)" aria-label="Giảm số lượng">-</button>
-                                            <input type="number" class="qty-input" id="qty_<?= htmlspecialchars($cartKey) ?>" name="quantity[<?= htmlspecialchars($cartKey) ?>]" value="<?= $item['quantity'] ?>" min="1" readonly aria-label="Số lượng sản phẩm">
+                                            <input type="number" class="qty-input" id="qty_<?= htmlspecialchars($cartKey) ?>" name="quantity[<?= htmlspecialchars($cartKey) ?>]" value="<?= $item['quantity'] ?>" min="1" max="999" aria-label="Số lượng sản phẩm" onchange="updateQtyManual('<?= htmlspecialchars($cartKey) ?>', this)">
                                             <button class="qty-btn" onclick="updateQty('<?= htmlspecialchars($cartKey) ?>', 1)" aria-label="Tăng số lượng">+</button>
                                         </div>
                                     </td>
@@ -192,6 +192,7 @@ function updateQty(cartKey, change) {
     let newQty = parseInt(input.value) + change;
     
     if (newQty < 1) return;
+    if (newQty > 999) newQty = 999;
     
     // Gọi API cập nhật
     fetch('<?= BASE_URL ?>?action=cart-update', {
@@ -239,6 +240,59 @@ function updateQty(cartKey, change) {
             alert('Có lỗi xảy ra khi cập nhật số lượng: ' + (data.message || ''));
             // Khôi phục giá trị cũ nếu có lỗi
             input.value = parseInt(input.value) - change;
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        alert('Có lỗi xảy ra khi cập nhật số lượng');
+    });
+}
+
+// Update quantity when user types manually
+function updateQtyManual(cartKey, input) {
+    let newQty = parseInt(input.value);
+    
+    // Validate input
+    if (isNaN(newQty) || newQty < 1) {
+        input.value = 1;
+        newQty = 1;
+    } else if (newQty > 999) {
+        input.value = 999;
+        newQty = 999;
+    }
+    
+    const row = document.querySelector(`tr[data-cart-key="${cartKey}"]`);
+    
+    // Call API to update
+    fetch('<?= BASE_URL ?>?action=cart-update', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            cart_key: cartKey,
+            quantity: newQty
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update data attributes and total
+            const itemPrice = parseFloat(row.dataset.itemPrice) || 0;
+            const itemTotal = itemPrice * newQty;
+            row.dataset.itemQuantity = newQty;
+            row.dataset.itemTotal = itemTotal;
+            
+            // Update total display
+            const totalCell = row.querySelector('td:nth-child(5)');
+            if (totalCell) {
+                totalCell.textContent = formatCurrency(itemTotal);
+            }
+            
+            // Update buy total if item is selected
+            updateBuyTotal();
+        } else {
+            alert('Có lỗi xảy ra khi cập nhật số lượng: ' + (data.message || ''));
         }
     })
     .catch(err => {

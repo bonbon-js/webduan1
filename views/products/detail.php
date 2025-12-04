@@ -46,7 +46,7 @@
                     <label for="productQuantity">Số lượng</label>
                     <div class="quantity-input-group">
                         <button type="button" onclick="changeQuantity(-1)" aria-label="Giảm số lượng">-</button>
-                        <input type="number" id="productQuantity" name="quantity" value="1" min="1" readonly aria-label="Số lượng sản phẩm">
+                        <input type="number" id="productQuantity" name="quantity" value="1" min="1" max="999" aria-label="Số lượng sản phẩm" onchange="validateQuantity(this)">
                         <button type="button" onclick="changeQuantity(1)" aria-label="Tăng số lượng">+</button>
                     </div>
                 </div>
@@ -329,7 +329,20 @@
         const input = document.getElementById('productQuantity');
         let val = parseInt(input.value) + change;
         if (val < 1) val = 1;
+        if (val > 999) val = 999;
         input.value = val;
+    }
+
+    // Validate quantity when user types manually
+    function validateQuantity(input) {
+        let val = parseInt(input.value);
+        if (isNaN(val) || val < 1) {
+            input.value = 1;
+        } else if (val > 999) {
+            input.value = 999;
+        } else {
+            input.value = val;
+        }
     }
 
     // Add to cart
