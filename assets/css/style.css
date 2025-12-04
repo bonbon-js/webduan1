@@ -1011,22 +1011,35 @@ body {
     --bs-gutter-y: 24px;
 }
 
-.btn-outline-dark {
-    border-radius: 30px;
-    padding: 14px 40px;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    border: 2px solid #000;
-    color: #000;
-    background: transparent;
-    font-weight: 600;
-    font-size: 12px;
-    transition: all 0.3s ease;
+.btn-outline-dark,
+a.btn-outline-dark {
+    border-radius: 30px !important;
+    padding: 14px 40px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 2px !important;
+    border: 2px solid #000 !important;
+    color: #000 !important;
+    background: transparent !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+    transition: all 0.3s ease !important;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1 !important;
+    vertical-align: middle !important;
 }
 
-.btn-outline-dark:hover {
-    background: #000;
-    color: #fff;
+.btn-outline-dark:hover,
+a.btn-outline-dark:hover,
+.btn-outline-dark:focus,
+a.btn-outline-dark:focus,
+.btn-outline-dark:active,
+a.btn-outline-dark:active {
+    background: #000 !important;
+    color: #fff !important;
+    text-decoration: none !important;
 }
 
 .info-columns {
@@ -2415,6 +2428,18 @@ footer {
     line-height: 1 !important;
     height: 14px !important;
     display: block !important;
+}
+
+/* Hide spinner arrows for all number inputs */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield !important;
+    appearance: textfield !important;
 }
 
 .products-section {

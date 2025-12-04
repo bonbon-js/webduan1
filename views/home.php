@@ -420,8 +420,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                         </div>
                     </div>
-                    <p class="text-uppercase small text-muted mb-1"><?= $product['category'] ?></p>
-                    <h3 class="h6"><?= $product['name'] ?></h3>
+                    <p class="text-uppercase small text-muted mb-1"><?= htmlspecialchars($product['category'] ?? 'ÁO POLO') ?></p>
+                    <h3 class="h6"><?= htmlspecialchars($product['name']) ?></h3>
                     <p class="fw-semibold"><?= number_format($product['price'], 0, ',', '.') ?> đ</p>
                 </article>
             </div>
