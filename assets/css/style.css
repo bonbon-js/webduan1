@@ -4,6 +4,30 @@
    ============================================ */
 
 /* ============================================
+   0. GLOBAL FONT SETTINGS
+   ============================================ */
+* {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Tiêu đề sử dụng Playfair Display */
+h1, h2, h3, h4, h5, h6,
+.hero-title,
+.section-title,
+.footer-heading,
+.checkout-title,
+.cart-title,
+.news-title,
+.product-title {
+    font-family: 'Playfair Display', serif;
+}
+
+/* Body và các phần tử khác sử dụng Inter */
+body, p, span, a, button, input, textarea, select, label, div {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ============================================
    1. HEADER STYLES (main.php)
    ============================================ */
 header {
@@ -489,7 +513,7 @@ body {
    3. HOME PAGE STYLES (home.php)
    ============================================ */
 body {
-    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     color: #1a1a1a;
     background: #ffffff;
     padding: 0;
