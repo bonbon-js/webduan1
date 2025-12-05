@@ -179,6 +179,8 @@
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
     }
+    
+
 </style>
 
 <div class="products-header">
@@ -192,6 +194,62 @@
             <i class="bi bi-plus-lg"></i>
             Thêm sản phẩm mới
         </a>
+    </div>
+</div>
+
+<!-- Form tìm kiếm và lọc -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" action="<?= BASE_URL ?>" id="searchForm">
+            <input type="hidden" name="action" value="admin-products">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label small text-uppercase fw-bold">Tìm kiếm</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" 
+                               name="keyword" 
+                               class="form-control" 
+                               placeholder="Tên sản phẩm..." 
+                               value="<?= htmlspecialchars($_GET['keyword'] ?? '') ?>">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-uppercase fw-bold">Danh mục</label>
+                    <select name="category" class="form-select">
+                        <option value="">Tất cả danh mục</option>
+                        <?php if (!empty($categories)): ?>
+                            <?php foreach ($categories as $cat): ?>
+                                <option value="<?= $cat['category_id'] ?>" 
+                                    <?= ($_GET['category'] ?? '') == $cat['category_id'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($cat['category_name']) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-uppercase fw-bold">Mức giá</label>
+                    <select name="price_range" class="form-select">
+                        <option value="">Tất cả mức giá</option>
+                        <option value="0-500000" <?= ($_GET['price_range'] ?? '') == '0-500000' ? 'selected' : '' ?>>Dưới 500.000đ</option>
+                        <option value="500000-1000000" <?= ($_GET['price_range'] ?? '') == '500000-1000000' ? 'selected' : '' ?>>500.000đ - 1.000.000đ</option>
+                        <option value="1000000-2000000" <?= ($_GET['price_range'] ?? '') == '1000000-2000000' ? 'selected' : '' ?>>1.000.000đ - 2.000.000đ</option>
+                        <option value="2000000-999999999" <?= ($_GET['price_range'] ?? '') == '2000000-999999999' ? 'selected' : '' ?>>Trên 2.000.000đ</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <div class="d-flex gap-2 w-100">
+                        <button type="submit" class="btn btn-primary flex-fill">
+                            <i class="bi bi-search"></i> Tìm
+                        </button>
+                        <a href="<?= BASE_URL ?>?action=admin-products" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 

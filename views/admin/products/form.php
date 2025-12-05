@@ -140,7 +140,7 @@ $productId = $isEditing ? (int)$product['id'] : null;
 <!-- Form thông tin sản phẩm -->
 <div class="form-card">
     <h3 style="margin-bottom: 1.5rem; font-size: 1.25rem; font-weight: 700;">Thông tin cơ bản</h3>
-    <form method="POST" action="<?= BASE_URL ?>?action=<?= $isEditing ? 'admin-product-update' : 'admin-product-store' ?>">
+    <form method="POST" action="<?= BASE_URL ?>?action=<?= $isEditing ? 'admin-product-update' : 'admin-product-store' ?>" enctype="multipart/form-data">
         <?php if ($isEditing): ?>
             <input type="hidden" name="product_id" value="<?= $productId ?>">
         <?php endif; ?>
@@ -171,7 +171,7 @@ $productId = $isEditing ? (int)$product['id'] : null;
                       placeholder="Mô tả chi tiết sản phẩm"><?= htmlspecialchars($product['description'] ?? '') ?></textarea>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
             <div>
                 <label class="form-label" for="price">Giá bán (VNĐ) <span style="color: #ef4444;">*</span></label>
                 <input type="number" id="price" name="price" min="0" step="1000" class="form-control" required
@@ -182,12 +182,54 @@ $productId = $isEditing ? (int)$product['id'] : null;
                 <input type="number" id="stock" name="stock" min="0" class="form-control" required
                        value="<?= htmlspecialchars($product['stock'] ?? 0) ?>" placeholder="0">
             </div>
-            <div>
-                <label class="form-label" for="image_url">Ảnh đại diện (URL)</label>
-                <input type="text" id="image_url" name="image_url" class="form-control"
-                       value="<?= htmlspecialchars($product['image'] ?? '') ?>" placeholder="https://...">
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+            <label class="form-label" for="image">Ảnh đại diện sản phẩm</label>
+            <div class="image-upload-wrapper">
+                <?php if ($isEditing && !empty($product['image'])): ?>
+                    <div class="current-image-preview">
+                        <img src="<?= htmlspecialchars($product['image']) ?>" alt="Current image" style="max-width: 200px; max-height: 200px; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #e2e8f0;">
+                        <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 0.5rem;">Ảnh hiện tại</div>
+                    </div>
+                <?php endif; ?>
+                <input type="file" id="image" name="image" class="form-control" accept="image/*" 
+                       onchange="previewImage(this)" style="padding: 0.5rem;">
+                <div id="imagePreview" style="margin-top: 1rem;"></div>
+                <small style="color: #64748b; display: block; margin-top: 0.5rem;">
+                    <i class="bi bi-info-circle"></i> Chọn file ảnh từ máy tính (JPG, PNG, GIF). Kích thước tối đa: 5MB
+                </small>
             </div>
         </div>
+
+        <script>
+        function previewImage(input) {
+            const preview = document.getElementById('imagePreview');
+            preview.innerHTML = '';
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.style.maxWidth = '200px';
+                    img.style.maxHeight = '200px';
+                    img.style.borderRadius = '8px';
+                    img.style.border = '1px solid #e2e8f0';
+                    preview.appendChild(img);
+                    
+                    const label = document.createElement('div');
+                    label.textContent = 'Ảnh mới (chưa lưu)';
+                    label.style.fontSize = '0.85rem';
+                    label.style.color = '#3b82f6';
+                    label.style.marginTop = '0.5rem';
+                    label.style.fontWeight = '600';
+                    preview.appendChild(label);
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        </script>
 
         <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
             <a href="<?= BASE_URL ?>?action=admin-products" class="btn-cancel">Hủy</a>

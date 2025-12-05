@@ -20,11 +20,22 @@ class OrderController
         $userId = (int)($user['user_id'] ?? $user['id'] ?? 0);
         $userEmail = $user['email'] ?? null;
         
+        // Lấy status filter từ URL
+        $statusFilter = $_GET['status'] ?? null;
+        
         // Debug: Log để kiểm tra
         error_log("OrderController::history - User ID: $userId, Email: " . ($userEmail ?? 'N/A'));
         error_log("OrderController::history - User data: " . json_encode(array_keys($user)));
+        error_log("OrderController::history - Status filter: " . ($statusFilter ?? 'all'));
         
         $orders = $this->orderModel->getHistory($userId, $userEmail);
+        
+        // Lọc theo status nếu có
+        if ($statusFilter) {
+            $orders = array_filter($orders, function($order) use ($statusFilter) {
+                return ($order['status'] ?? '') === $statusFilter;
+            });
+        }
         
         error_log("OrderController::history - Found " . count($orders) . " orders");
 

@@ -18,9 +18,24 @@ class AdminProductController
         $this->requireAdmin();
 
         $keyword = trim($_GET['keyword'] ?? '');
-        $categoryId = isset($_GET['category_id']) ? (int)$_GET['category_id'] : null;
+        $categoryId = isset($_GET['category']) ? (int)$_GET['category'] : null;
+        $priceRange = trim($_GET['price_range'] ?? '');
 
+        // Lấy tất cả sản phẩm trước
         $products = $this->productModel->getAdminProducts($keyword ?: null, $categoryId ?: null);
+        
+        // Lọc theo giá nếu có
+        if ($priceRange && strpos($priceRange, '-') !== false) {
+            list($minPrice, $maxPrice) = explode('-', $priceRange);
+            $minPrice = (float)$minPrice;
+            $maxPrice = (float)$maxPrice;
+            
+            $products = array_filter($products, function($product) use ($minPrice, $maxPrice) {
+                $price = (float)($product['price'] ?? 0);
+                return $price >= $minPrice && $price <= $maxPrice;
+            });
+        }
+        
         $categories = $this->categoryModel->getAllCategories();
 
         $title = 'Quản lý sản phẩm';
@@ -311,21 +326,83 @@ class AdminProductController
         $price = $this->toFloat($_POST['price'] ?? 0);
         $stock = (int)($_POST['stock'] ?? 0);
         $categoryId = isset($_POST['category_id']) ? (int)$_POST['category_id'] : null;
-        $imageUrl = trim($_POST['image_url'] ?? '') ?: null;
+        
+        // Xử lý upload ảnh
+        $imageUrl = null;
+        if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+            $imageUrl = $this->handleImageUpload($_FILES['image']);
+            if (!$imageUrl) {
+                set_flash('danger', 'Không thể upload ảnh. Vui lòng thử lại.');
+                return null;
+            }
+        }
 
         if ($name === '' || $price < 0) {
             set_flash('danger', 'Vui lòng nhập ít nhất tên và giá hợp lệ.');
             return null;
         }
 
-        return [
+        $payload = [
             'name' => $name,
             'description' => $description,
             'price' => $price,
             'stock' => max(0, $stock),
             'category_id' => $categoryId,
-            'image_url' => $imageUrl,
         ];
+        
+        // Chỉ thêm image_url nếu có upload mới
+        if ($imageUrl) {
+            $payload['image_url'] = $imageUrl;
+        }
+        
+        return $payload;
+    }
+    
+    private function handleImageUpload(array $file): ?string
+    {
+        // Kiểm tra file có hợp lệ không
+        if (!isset($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
+            return null;
+        }
+        
+        // Kiểm tra kích thước file (max 5MB)
+        $maxSize = 5 * 1024 * 1024; // 5MB
+        if ($file['size'] > $maxSize) {
+            set_flash('danger', 'Kích thước ảnh không được vượt quá 5MB.');
+            return null;
+        }
+        
+        // Kiểm tra loại file
+        $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mimeType = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+        
+        if (!in_array($mimeType, $allowedTypes)) {
+            set_flash('danger', 'Chỉ chấp nhận file ảnh (JPG, PNG, GIF, WEBP).');
+            return null;
+        }
+        
+        // Tạo tên file unique
+        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $fileName = 'product_' . time() . '_' . uniqid() . '.' . $extension;
+        
+        // Đường dẫn lưu file
+        $uploadDir = 'assets/uploads/products/';
+        
+        // Tạo thư mục nếu chưa tồn tại
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        
+        $uploadPath = $uploadDir . $fileName;
+        
+        // Di chuyển file
+        if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
+            return BASE_URL . $uploadPath;
+        }
+        
+        return null;
     }
 
     private function collectAttributeValues(array $rawValues): array

@@ -33,7 +33,7 @@ $footerLogo = getBase64Image(PATH_ROOT . 'assets/images/logo.png');
             <h1 class="hero-title">PHONG CÁCH<br>ĐƯƠNG ĐẠI</h1>
             <p class="hero-description">Khám phá sự kết hợp hoàn hảo giữa thời trang cao cấp và sự thoải mái tuyệt đối. Video Campaign chính thức.</p>
             <div class="hero-cta">
-                <a href="#" class="btn-hero">Xem Ngay</a>
+                <a href="<?= BASE_URL ?>?action=products" class="btn-hero">Xem Ngay</a>
             </div>
         </div>
 
@@ -66,8 +66,8 @@ $footerLogo = getBase64Image(PATH_ROOT . 'assets/images/logo.png');
             <h1 class="hero-title">THANH LỊCH<br>& TỰ DO</h1>
             <p class="hero-description">Thiết kế tối giản, chất liệu cao cấp mang lại trải nghiệm khác biệt.</p>
             <div class="hero-cta">
-                <a href="#" class="btn-hero">Mua Sắm</a>
-                <a href="#" class="btn-hero-secondary">Chi Tiết</a>
+                <a href="<?= BASE_URL ?>?action=products" class="btn-hero">Mua Sắm</a>
+                <a href="<?= BASE_URL ?>?action=products" class="btn-hero-secondary">Chi Tiết</a>
             </div>
         </div>
     </div>
@@ -81,7 +81,7 @@ $footerLogo = getBase64Image(PATH_ROOT . 'assets/images/logo.png');
             <h1 class="hero-title">ĐẲNG CẤP<br>RIÊNG BIỆT</h1>
             <p class="hero-description">Bộ sưu tập giới hạn dành cho những người dẫn đầu xu hướng.</p>
             <div class="hero-cta">
-                <a href="#" class="btn-hero">Khám Phá</a>
+                <a href="<?= BASE_URL ?>?action=collections" class="btn-hero">Khám Phá</a>
             </div>
         </div>
     </div>

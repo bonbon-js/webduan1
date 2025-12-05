@@ -37,27 +37,47 @@
             <a href="<?= BASE_URL ?>" class="btn btn-outline-dark">Xem cửa hàng</a>
         </div>
 
-        <div class="admin-card mb-4">
-            <!-- Form lọc đơn hàng theo từ khóa/trạng thái -->
-            <form class="row g-3 align-items-end" method="GET">
-                <input type="hidden" name="action" value="admin-orders">
-                <div class="col-md-6">
-                    <label class="form-label small text-uppercase">Từ khóa</label>
-                    <input type="text" class="form-control" name="keyword" value="<?= htmlspecialchars($keyword ?? '') ?>" placeholder="Mã đơn, tên khách, số điện thoại...">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label small text-uppercase">Trạng thái</label>
-                    <select class="form-select" name="status">
-                        <option value="">Tất cả</option>
-                        <?php foreach ($statusMap as $key => $label): ?>
-                            <option value="<?= $key ?>" <?= ($status ?? '') === $key ? 'selected' : '' ?>><?= $label ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button class="btn btn-dark w-100">Lọc</button>
-                </div>
-            </form>
+        <!-- Form tìm kiếm và lọc -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="GET" action="<?= BASE_URL ?>" id="searchForm">
+                    <input type="hidden" name="action" value="admin-orders">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small text-uppercase fw-bold">Tìm kiếm</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" 
+                                       name="keyword" 
+                                       class="form-control" 
+                                       placeholder="Mã đơn, tên khách, số điện thoại..." 
+                                       value="<?= htmlspecialchars($keyword ?? '') ?>">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small text-uppercase fw-bold">Trạng thái</label>
+                            <select name="status" class="form-select">
+                                <option value="">Tất cả trạng thái</option>
+                                <?php foreach ($statusMap as $key => $label): ?>
+                                    <option value="<?= $key ?>" <?= ($status ?? '') === $key ? 'selected' : '' ?>>
+                                        <?= $label ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <div class="d-flex gap-2 w-100">
+                                <button type="submit" class="btn btn-primary flex-fill">
+                                    <i class="bi bi-search"></i> Tìm
+                                </button>
+                                <a href="<?= BASE_URL ?>?action=admin-orders" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
 
         <div class="admin-card">

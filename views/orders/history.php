@@ -9,6 +9,44 @@
             <a href="<?= BASE_URL ?>" class="btn btn-outline-dark">Tiếp tục mua sắm</a>
         </div>
 
+        <!-- Tabs trạng thái đơn hàng -->
+        <div class="order-status-tabs mb-4">
+            <div class="status-tabs-wrapper">
+                <a href="<?= BASE_URL ?>?action=order-history" 
+                   class="status-tab <?= !isset($_GET['status']) ? 'active' : '' ?>">
+                    Tất cả
+                </a>
+                <a href="<?= BASE_URL ?>?action=order-history&status=<?= OrderModel::STATUS_CONFIRMED ?>" 
+                   class="status-tab <?= ($_GET['status'] ?? '') === OrderModel::STATUS_CONFIRMED ? 'active' : '' ?>">
+                    Xác nhận đơn hàng
+                </a>
+                <a href="<?= BASE_URL ?>?action=order-history&status=<?= OrderModel::STATUS_PREPARING ?>" 
+                   class="status-tab <?= ($_GET['status'] ?? '') === OrderModel::STATUS_PREPARING ? 'active' : '' ?>">
+                    Đang chuẩn bị đơn hàng
+                </a>
+                <a href="<?= BASE_URL ?>?action=order-history&status=<?= OrderModel::STATUS_SHIPPED ?>" 
+                   class="status-tab <?= ($_GET['status'] ?? '') === OrderModel::STATUS_SHIPPED ? 'active' : '' ?>">
+                    Đã giao cho đơn vị vận chuyển
+                </a>
+                <a href="<?= BASE_URL ?>?action=order-history&status=<?= OrderModel::STATUS_OUT_OF_STOCK ?>" 
+                   class="status-tab <?= ($_GET['status'] ?? '') === OrderModel::STATUS_OUT_OF_STOCK ? 'active' : '' ?>">
+                    Hết hàng
+                </a>
+                <a href="<?= BASE_URL ?>?action=order-history&status=<?= OrderModel::STATUS_ON_THE_WAY ?>" 
+                   class="status-tab <?= ($_GET['status'] ?? '') === OrderModel::STATUS_ON_THE_WAY ? 'active' : '' ?>">
+                    Đang trên đường giao
+                </a>
+                <a href="<?= BASE_URL ?>?action=order-history&status=<?= OrderModel::STATUS_DELIVERED ?>" 
+                   class="status-tab <?= ($_GET['status'] ?? '') === OrderModel::STATUS_DELIVERED ? 'active' : '' ?>">
+                    Đã giao hàng thành công
+                </a>
+                <a href="<?= BASE_URL ?>?action=order-history&status=<?= OrderModel::STATUS_CANCELLED ?>" 
+                   class="status-tab <?= ($_GET['status'] ?? '') === OrderModel::STATUS_CANCELLED ? 'active' : '' ?>">
+                    Đã hủy
+                </a>
+            </div>
+        </div>
+
         <?php if (empty($orders)): ?>
             <!-- Trường hợp chưa có đơn nào -->
             <div class="text-center py-5 bg-light rounded-3">
@@ -46,13 +84,16 @@
                             <h5 class="mb-0 text-primary"><?= number_format($order['total_amount'], 0, ',', '.') ?> đ</h5>
                         </div>
                         <div class="col-md-3 order-actions text-md-end">
+                            <a href="<?= BASE_URL ?>?action=order-detail&id=<?= $order['id'] ?>" class="btn btn-dark mb-2 d-block">
+                                Xem chi tiết
+                            </a>
                             <?php if ($order['status'] === OrderModel::STATUS_DELIVERED): ?>
-                                <a href="<?= BASE_URL ?>?action=order-detail&id=<?= $order['id'] ?>&review=true" class="btn btn-warning mb-2 d-block">
+                                <a href="<?= BASE_URL ?>?action=order-detail&id=<?= $order['id'] ?>&review=true" class="btn btn-outline-dark mb-2 d-block">
                                     <i class="bi bi-star-fill"></i> Đánh giá ngay
                                 </a>
                             <?php endif; ?>
-                            <a href="<?= BASE_URL ?>?action=order-detail&id=<?= $order['id'] ?>" class="btn btn-dark">
-                                Xem chi tiết
+                            <a href="<?= BASE_URL ?>?action=order-detail&id=<?= $order['id'] ?>" class="btn btn-outline-dark d-block">
+                                <i class="bi bi-telephone-fill"></i> Liên hệ người bán
                             </a>
                         </div>
                     </div>
