@@ -213,11 +213,9 @@ error_log("Order detail page - currentOrderId: $currentOrderId, order['id']: " .
                                                 <?php if (!empty($item['image_url'])): ?>
                                                     <img src="<?= htmlspecialchars($item['image_url']) ?>" 
                                                          alt="<?= htmlspecialchars($item['product_name']) ?>" 
-                                                         class="me-3" 
-                                                         style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px;">
+                                                         class="me-3 thumb-80">
                                                 <?php else: ?>
-                                                    <div class="me-3 bg-light d-flex align-items-center justify-content-center" 
-                                                         style="width: 80px; height: 80px; border-radius: 4px;">
+                                                    <div class="me-3 placeholder-80-box">
                                                         <i class="bi bi-image text-muted"></i>
                                                     </div>
                                                 <?php endif; ?>
@@ -275,7 +273,7 @@ error_log("Order detail page - currentOrderId: $currentOrderId, order['id']: " .
                                                                         <div class="d-flex flex-wrap gap-2">
                                                                             <?php foreach ($reviewImages as $img): ?>
                                                                                 <a href="<?= htmlspecialchars($img) ?>" target="_blank" class="review-image-thumbnail">
-                                                                                    <img src="<?= htmlspecialchars($img) ?>" alt="Review image" class="img-thumbnail" style="width: 80px; height: 80px; object-fit: cover;">
+                                                                                    <img src="<?= htmlspecialchars($img) ?>" alt="Review image" class="img-thumbnail thumb-80">
                                                                                 </a>
                                                                             <?php endforeach; ?>
                                                                         </div>

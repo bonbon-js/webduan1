@@ -1181,8 +1181,8 @@ function displaySearchResults(results, keyword = '') {
 function highlightKeyword(text, keyword) {
     if (!keyword || !text) return text;
     
-    const regex = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-    return text.replace(regex, '<mark style="background: #fff3cd; padding: 2px 4px; border-radius: 3px;">$1</mark>');
+    const regex = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')})`, 'gi');
+    return text.replace(regex, '<mark class="address-highlight">$1</mark>');
 }
 
 function selectSearchResult(result) {
@@ -1477,7 +1477,7 @@ function searchAndSelectAddress(provinceName, districtName, wardName, callback) 
                         </div>
                         
                         <!-- Form nhập địa chỉ (ẩn nếu có địa chỉ mặc định) -->
-                        <div id="addressForm" style="<?= $displayAddress ? 'display: none;' : '' ?>">
+                        <div id="addressForm" class="<?= $displayAddress ? 'd-none' : '' ?>">
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">Họ tên</label>
@@ -1700,7 +1700,7 @@ function searchAndSelectAddress(provinceName, districtName, wardName, callback) 
                                         <?php endif; ?>
                                     </div>
                                     <?php if ($addr['is_default']): ?>
-                                    <span class="badge-default" style="margin-top: 8px; display: inline-block;">Mặc định</span>
+                                    <span class="badge-default badge-inline">Mặc định</span>
                                     <?php endif; ?>
                                 </div>
                                 <a href="#" class="address-update-link" onclick="event.stopPropagation(); openAddressFormModal(<?= $addr['address_id'] ?>); return false;">
@@ -1799,7 +1799,7 @@ function searchAndSelectAddress(provinceName, districtName, wardName, callback) 
                         <input type="hidden" id="formWardCode" name="ward_code" value="">
                         
                         <!-- Hiển thị địa chỉ đã chọn -->
-                        <div class="selected-address-display mt-3" id="selectedAddressDisplay" style="display: none;">
+                        <div class="selected-address-display mt-3 d-none" id="selectedAddressDisplay">
                             <div class="selected-address-text" id="selectedAddressText"></div>
                             <button type="button" class="btn-clear-address" onclick="clearSelectedAddress()">
                                 <i class="bi bi-x"></i>
@@ -1824,7 +1824,7 @@ function searchAndSelectAddress(provinceName, districtName, wardName, callback) 
                     
                     <div class="form-check-default">
                         <input type="checkbox" id="setAsDefault" name="is_default" value="1">
-                        <label for="setAsDefault" style="margin: 0; cursor: pointer;">Đặt làm địa chỉ mặc định</label>
+                        <label for="setAsDefault" class="set-default-label">Đặt làm địa chỉ mặc định</label>
                     </div>
                 </form>
             </div>

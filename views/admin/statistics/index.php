@@ -2,36 +2,6 @@
 require_once PATH_MODEL . 'OrderModel.php';
 ?>
 
-<style>
-    .pagination-btn:hover {
-        background: #f8fafc;
-    }
-    
-    .pagination-btn.active {
-        background: #3b82f6;
-        color: white;
-        border-color: #3b82f6;
-    }
-    
-    @media (max-width: 1200px) {
-        .stats-cards {
-            grid-template-columns: repeat(2, 1fr);
-        }
-        .charts-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-    
-    @media (max-width: 768px) {
-        .statistics-page {
-            padding: 1rem;
-        }
-        .stats-cards {
-            grid-template-columns: 1fr;
-        }
-    }
-</style>
-
 <div class="statistics-page">
     <div class="page-header">
         <h1 class="page-title">Thống kê</h1>
@@ -83,7 +53,7 @@ require_once PATH_MODEL . 'OrderModel.php';
             <div class="stat-card-header">
                 <div>
                     <div class="stat-label">Sản phẩm bán chạy</div>
-                    <div class="stat-value" style="font-size: 1.25rem;"><?= htmlspecialchars($stats['best_selling']) ?></div>
+                    <div class="stat-value fs-125"><?= htmlspecialchars($stats['best_selling']) ?></div>
                     <div class="stat-change up">
                         <i class="bi bi-arrow-up"></i>
                         <span>+0.2%</span>

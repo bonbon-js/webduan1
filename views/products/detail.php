@@ -93,8 +93,8 @@
                                 <div class="rating-bar-item mb-2">
                                     <div class="d-flex align-items-center">
                                         <span class="me-2 small"><?= $star ?> sao</span>
-                                        <div class="progress flex-grow-1" style="height: 8px;">
-                                            <div class="progress-bar bg-warning" role="progressbar" style="width: <?= $percentage ?>%"></div>
+                                        <div class="progress flex-grow-1 progress-thin">
+                                            <div class="progress-bar bg-warning rating-progress-bar" role="progressbar" data-progress="<?= $percentage ?>"></div>
                                         </div>
                                         <span class="ms-2 small text-muted"><?= $count ?></span>
                                     </div>
@@ -140,7 +140,7 @@
                                 <div class="d-flex flex-wrap gap-2">
                                     <?php foreach ($reviewImages as $img): ?>
                                         <a href="<?= htmlspecialchars($img) ?>" target="_blank" class="review-image-link">
-                                            <img src="<?= htmlspecialchars($img) ?>" alt="Review image" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover; cursor: pointer;">
+                                            <img src="<?= htmlspecialchars($img) ?>" alt="Review image" class="img-thumbnail review-thumb">
                                         </a>
                                     <?php endforeach; ?>
                                 </div>
@@ -177,9 +177,9 @@
                                     </a>
                                 </div>
                             </div>
-                            <p class="text-uppercase small text-muted mb-1" style="padding: 0 20px;"><?= $similar['category'] ?></p>
-                            <h3 class="h6" style="padding: 0 20px;"><?= $similar['name'] ?></h3>
-                            <p class="fw-semibold" style="padding: 0 20px 20px;"><?= number_format($similar['price'], 0, ',', '.') ?> đ</p>
+                            <p class="text-uppercase small text-muted mb-1 similar-card-pad"><?= $similar['category'] ?></p>
+                            <h3 class="h6 similar-card-pad"><?= $similar['name'] ?></h3>
+                            <p class="fw-semibold similar-card-pad-bottom"><?= number_format($similar['price'], 0, ',', '.') ?> đ</p>
                         </article>
                     </div>
                 <?php endforeach; ?>
@@ -205,6 +205,12 @@
     // Load attributes on page load
     document.addEventListener('DOMContentLoaded', function() {
         const productId = document.getElementById('productId').value;
+    document.querySelectorAll('.rating-progress-bar').forEach(bar => {
+        const width = bar.dataset.progress;
+        if (width !== undefined) {
+            bar.style.width = `${width}%`;
+        }
+    });
         if (productId) {
             loadProductAttributes(productId);
         }

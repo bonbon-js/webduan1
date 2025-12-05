@@ -466,7 +466,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="row g-0">
                 <div class="col-md-6">
                     <div class="h-100 bg-light d-flex align-items-center justify-content-center p-4">
-                        <img id="qaProductImage" src="" alt="Product" class="img-fluid" style="max-height: 400px; object-fit: contain;">
+                        <img id="qaProductImage" src="" alt="Product" class="img-fluid modal-product-image">
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -502,20 +502,20 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <label class="form-label small text-uppercase fw-bold text-muted mb-2" id="qaColorLabel">Màu sắc</label>
                                 <div class="d-flex gap-2">
                                     <input type="radio" class="btn-check" name="qaColor" id="colorBlack" value="Black" checked>
-                                    <label class="btn rounded-circle p-0 border border-2 border-white shadow-sm" for="colorBlack" style="width: 30px; height: 30px; background-color: #000; cursor: pointer;"></label>
+                                    <label class="btn rounded-circle p-0 border border-2 border-white shadow-sm color-option swatch-black" for="colorBlack"></label>
                                     
                                     <input type="radio" class="btn-check" name="qaColor" id="colorWhite" value="White">
-                                    <label class="btn rounded-circle p-0 border border-1 border-secondary shadow-sm" for="colorWhite" style="width: 30px; height: 30px; background-color: #fff; cursor: pointer;"></label>
+                                    <label class="btn rounded-circle p-0 border border-1 border-secondary shadow-sm color-option swatch-white" for="colorWhite"></label>
                                     
                                     <input type="radio" class="btn-check" name="qaColor" id="colorBeige" value="Beige">
-                                    <label class="btn rounded-circle p-0 border border-2 border-white shadow-sm" for="colorBeige" style="width: 30px; height: 30px; background-color: #f5f5dc; cursor: pointer;"></label>
+                                    <label class="btn rounded-circle p-0 border border-2 border-white shadow-sm color-option swatch-beige" for="colorBeige"></label>
                                 </div>
                             </div>
                             
                             <!-- Quantity -->
                             <div class="mb-4">
                                 <label for="qaQuantity" class="form-label small text-uppercase fw-bold text-muted mb-2">Số lượng</label>
-                                <div class="input-group" style="width: 120px;">
+                                <div class="input-group input-group-compact">
                                     <button class="btn btn-outline-secondary rounded-0" type="button" onclick="changeQaQty(-1)" aria-label="Giảm số lượng">-</button>
                                     <input type="number" class="form-control text-center border-secondary border-start-0 border-end-0" id="qaQuantity" name="quantity" value="1" min="1" max="999" aria-label="Số lượng sản phẩm" onchange="validateQaQuantity(this)">
                                     <button class="btn btn-outline-secondary rounded-0" type="button" onclick="changeQaQty(1)" aria-label="Tăng số lượng">+</button>

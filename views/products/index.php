@@ -141,7 +141,7 @@
             <div class="row g-0">
                 <div class="col-md-6">
                     <div class="h-100 bg-light d-flex align-items-center justify-content-center p-4">
-                        <img id="qaProductImage" src="" alt="Product" class="img-fluid" style="max-height: 400px; object-fit: contain;">
+                        <img id="qaProductImage" src="" alt="Product" class="img-fluid modal-product-image">
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -173,7 +173,7 @@
                             <!-- Quantity -->
                             <div class="mb-4">
                                 <label class="form-label small text-uppercase fw-bold text-muted mb-2">Số lượng</label>
-                                <div class="input-group" style="width: 120px;">
+                                <div class="input-group input-group-compact">
                                     <button class="btn btn-outline-secondary rounded-0" type="button" onclick="changeQaQty(-1)" aria-label="Giảm số lượng">-</button>
                                     <input type="number" class="form-control text-center border-secondary border-start-0 border-end-0" id="qaQuantity" value="1" min="1" max="999" aria-label="Số lượng sản phẩm" onchange="validateQaQuantity(this)">
                                     <button class="btn btn-outline-secondary rounded-0" type="button" onclick="changeQaQty(1)" aria-label="Tăng số lượng">+</button>

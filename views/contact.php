@@ -127,7 +127,7 @@
                             src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3724.096466609128!2d105.84115931540247!3d21.02816378599847!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3135ab9bd9861ca1%3A0xe7887f7b6ca21b87!2zSMOgIE5vaQ!5e0!3m2!1svi!2s!4v1234567890" 
                             width="100%" 
                             height="400" 
-                            style="border:0;" 
+                                    class="map-frame" 
                             allowfullscreen="" 
                             loading="lazy" 
                             referrerpolicy="no-referrer-when-downgrade">

@@ -6,7 +6,7 @@
 
     <?php if (empty($posts)): ?>
         <div class="text-center py-5">
-            <i class="bi bi-newspaper" style="font-size: 4rem; color: #999;"></i>
+            <i class="bi bi-newspaper empty-icon-lg"></i>
             <h3 class="mt-3">Chưa có tin tức nào</h3>
             <p class="text-muted">Vui lòng quay lại sau.</p>
         </div>
