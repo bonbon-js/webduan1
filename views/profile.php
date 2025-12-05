@@ -95,12 +95,11 @@
                             type="email" 
                             id="email" 
                             name="email" 
-                            class="form-input" 
+                            class="form-input input-disabled-static" 
                             value="<?= htmlspecialchars($user['email'] ?? '') ?>" 
                             disabled
-                            style="background: #f8fafc; cursor: not-allowed;"
                         >
-                        <small style="color: #64748b; font-size: 0.875rem; margin-top: 0.25rem;">Email không thể thay đổi</small>
+                        <small class="text-muted small mt-1 d-block">Email không thể thay đổi</small>
                     </div>
                 </div>
 
@@ -116,13 +115,13 @@
                     >
                 </div>
 
-                <div class="form-group full-width" style="margin-top: 1rem;">
+                <div class="form-group full-width mt-3">
                     <button type="submit" class="btn-submit">Cập nhật thông tin</button>
                 </div>
             </form>
             
-            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0;">
-                <a href="<?= BASE_URL ?>" class="btn btn-outline-secondary" style="text-decoration: none;">
+            <div class="mt-4 pt-4 border-top">
+                <a href="<?= BASE_URL ?>" class="btn btn-outline-secondary text-decoration-none">
                     <i class="bi bi-arrow-left me-2"></i>
                     Quay lại trang chủ
                 </a>

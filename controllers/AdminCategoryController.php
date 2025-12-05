@@ -119,7 +119,7 @@ class AdminCategoryController
             $this->categoryModel->deleteCategory($id);
             set_flash('success', 'Đã xóa danh mục.');
         } catch (Throwable $exception) {
-            set_flash('danger', 'Không thể xóa danh mục: ' . $exception->getMessage());
+            set_flash('danger', 'Danh mục đang có sản phẩm, không thể xóa.');
         }
 
         header('Location: ' . BASE_URL . '?action=admin-categories');

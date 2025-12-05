@@ -23,7 +23,7 @@
 
                 <label for="birthday">Ngày sinh</label>
                 <input type="date" id="birthday" name="birthday" max="<?= date('Y-m-d', strtotime('-18 years')) ?>" required>
-                <small id="age-error" style="color: #dc3545; display: none; font-size: 0.8rem; margin-top: -15px; margin-bottom: 10px;">Bạn phải trên 18 tuổi để đăng ký tài khoản.</small>
+                <small id="age-error" class="age-error">Bạn phải trên 18 tuổi để đăng ký tài khoản.</small>
 
                 <label for="phone">Số điện thoại</label>
                 <input type="tel" id="phone" name="phone" placeholder="0123456789" pattern="[0-9]{10,11}" required>

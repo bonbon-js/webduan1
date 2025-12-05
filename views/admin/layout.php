@@ -44,7 +44,7 @@
                     $logoData = base64_encode(file_get_contents($logoPath));
                     $logoSrc = 'data:image/png;base64,' . $logoData;
                 ?>
-                    <img class="logo-image" src="<?= $logoSrc ?>" alt="BonBonwear" style="max-width: 120px; height: auto;">
+                    <img class="logo-image admin-logo" src="<?= $logoSrc ?>" alt="BonBonwear">
                 <?php else: ?>
                     <span class="logo-text">BONBONWEAR</span>
                 <?php endif; ?>
@@ -92,7 +92,7 @@
                     <i class="bi bi-bar-chart"></i>
                     <span>Thống kê</span>
                 </a>
-                <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e2e8f0;">
+            <div class="mt-4 pt-4 border-top">
                     <a href="<?= BASE_URL ?>" class="nav-item">
                         <i class="bi bi-box-arrow-up-right"></i>
                         <span>Xem website</span>

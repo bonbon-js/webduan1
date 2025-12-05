@@ -176,7 +176,7 @@
                 <!-- Newsletter Column -->
                 <div>
                     <h4 class="footer-heading">BẢN TIN</h4>
-                    <p style="color: #999; margin-bottom: 20px;">Đăng ký để nhận thông tin về bộ sưu tập mới và ưu đãi độc quyền.</p>
+                    <p class="footer-note-muted">Đăng ký để nhận thông tin về bộ sưu tập mới và ưu đãi độc quyền.</p>
                     <form class="newsletter-form">
                         <label for="newsletterEmail" class="visually-hidden">Email đăng ký nhận tin</label>
                         <input type="email" class="newsletter-input" id="newsletterEmail" name="email" placeholder="Email của bạn" aria-label="Email đăng ký nhận tin">

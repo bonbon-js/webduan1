@@ -92,7 +92,7 @@ $deletedCoupons = $couponModel->getDeleted();
                             <td>
                                 <form method="POST" 
                                       action="<?= BASE_URL ?>?action=admin-coupon-restore" 
-                                      style="display: inline;"
+                                      class="d-inline"
                                       onsubmit="return confirm('Bạn có chắc muốn khôi phục mã giảm giá này?')">
                                     <input type="hidden" name="coupon_id" value="<?= $coupon['coupon_id'] ?>">
                                     <button type="submit" class="btn btn-sm btn-success" title="Khôi phục">
@@ -101,7 +101,7 @@ $deletedCoupons = $couponModel->getDeleted();
                                 </form>
                                 <form method="POST" 
                                       action="<?= BASE_URL ?>?action=admin-coupon-force-delete" 
-                                      style="display: inline;"
+                                      class="d-inline"
                                       onsubmit="return confirm('Bạn có chắc muốn xóa VĨNH VIỄN mã giảm giá này? Hành động này không thể hoàn tác!')">
                                     <input type="hidden" name="coupon_id" value="<?= $coupon['coupon_id'] ?>">
                                     <button type="submit" class="btn btn-sm btn-danger" title="Xóa vĩnh viễn">

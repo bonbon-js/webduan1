@@ -12,7 +12,7 @@
         <?php if (empty($orders)): ?>
             <!-- Trường hợp chưa có đơn nào -->
             <div class="text-center py-5 bg-light rounded-3">
-                <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc; margin-bottom: 1rem;"></i>
+                <i class="bi bi-inbox empty-icon-lg"></i>
                 <p class="mb-3 fs-5">Bạn chưa có đơn hàng nào.</p>
                 <a href="<?= BASE_URL ?>" class="btn btn-dark">
                     <i class="bi bi-bag me-2"></i>Khám phá sản phẩm
@@ -70,15 +70,13 @@
                                             <?php if (!empty($item['image_url'])): ?>
                                                 <img src="<?= htmlspecialchars($item['image_url']) ?>" 
                                                      alt="<?= htmlspecialchars($item['product_name']) ?>" 
-                                                     class="me-2" 
-                                                     style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">
+                                                     class="me-2 thumb-60">
                                             <?php else: ?>
-                                                <div class="me-2 bg-white d-flex align-items-center justify-content-center" 
-                                                     style="width: 60px; height: 60px; border-radius: 4px;">
-                                                    <i class="bi bi-image text-muted"></i>
+                                                <div class="me-2 placeholder-60-box bg-white text-muted">
+                                                    <i class="bi bi-image"></i>
                                                 </div>
                                             <?php endif; ?>
-                                            <div class="flex-grow-1" style="min-width: 0;">
+                                            <div class="flex-grow-1 flex-min-0">
                                                 <div class="fw-semibold small text-truncate" title="<?= htmlspecialchars($item['product_name']) ?>">
                                                     <?= htmlspecialchars($item['product_name']) ?>
                                                 </div>

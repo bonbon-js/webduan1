@@ -64,7 +64,7 @@
     <div class="card-body">
         <?php if (empty($reviews)): ?>
             <div class="text-center py-5">
-                <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+                <i class="bi bi-inbox empty-icon-lg"></i>
                 <p class="text-muted mt-3">Chưa có đánh giá nào.</p>
             </div>
         <?php else: ?>
@@ -126,7 +126,7 @@
                                 </td>
                                 <td>
                                     <?php if (!empty($review['comment'])): ?>
-                                        <div class="comment-preview" style="max-width: 200px;">
+                                        <div class="comment-preview">
                                             <?= nl2br(htmlspecialchars(mb_substr($review['comment'], 0, 100))) ?>
                                             <?= mb_strlen($review['comment']) > 100 ? '...' : '' ?>
                                         </div>
@@ -141,8 +141,7 @@
                                                 <a href="<?= htmlspecialchars($img) ?>" target="_blank" class="review-image-thumbnail">
                                                     <img src="<?= htmlspecialchars($img) ?>" 
                                                          alt="Review image" 
-                                                         class="img-thumbnail" 
-                                                         style="width: 50px; height: 50px; object-fit: cover; cursor: pointer;">
+                                                         class="img-thumbnail review-thumb-sm">
                                                 </a>
                                             <?php endforeach; ?>
                                             <?php if (count($reviewImages) > 3): ?>
@@ -155,7 +154,7 @@
                                 </td>
                                 <td>
                                     <?php if (!empty($review['reply'])): ?>
-                                        <div class="reply-preview border-start border-3 border-primary ps-2" style="max-width: 250px;">
+                                        <div class="reply-preview border-start border-3 border-primary ps-2">
                                             <small class="text-muted d-block mb-1">
                                                 <i class="bi bi-reply-fill"></i> <strong>Phản hồi từ cửa hàng:</strong>
                                             </small>
@@ -164,9 +163,8 @@
                                                 <?= mb_strlen($review['reply']) > 150 ? '...' : '' ?>
                                             </div>
                                             <button type="button" 
-                                                    class="btn btn-sm btn-link p-0 mt-1" 
-                                                    onclick="openReplyModal(<?= $review['review_id'] ?>, '<?= htmlspecialchars(addslashes($review['reply'] ?? '')) ?>')"
-                                                    style="font-size: 0.75rem;">
+                                                    class="btn btn-sm btn-link p-0 mt-1"
+                                                    onclick="openReplyModal(<?= $review['review_id'] ?>, '<?= htmlspecialchars(addslashes($review['reply'] ?? '')) ?>')">
                                                 <i class="bi bi-pencil"></i> Sửa phản hồi
                                             </button>
                                         </div>
@@ -175,8 +173,7 @@
                                         <br>
                                         <button type="button" 
                                                 class="btn btn-sm btn-outline-primary mt-1" 
-                                                onclick="openReplyModal(<?= $review['review_id'] ?>, '')"
-                                                style="font-size: 0.75rem;">
+                                                onclick="openReplyModal(<?= $review['review_id'] ?>, '')">
                                             <i class="bi bi-reply"></i> Phản hồi ngay
                                         </button>
                                     <?php endif; ?>

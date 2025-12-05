@@ -189,7 +189,7 @@
                             </button>
                             <form method="POST" 
                                   action="<?= BASE_URL ?>?action=admin-coupon-delete" 
-                                  style="display: inline;"
+                                  class="d-inline"
                                   onsubmit="return confirm('Bạn có chắc muốn xóa mã giảm giá này?')">
                                 <input type="hidden" name="coupon_id" value="<?= $coupon['coupon_id'] ?>">
                                 <button type="submit" class="btn btn-sm btn-danger">
@@ -224,7 +224,7 @@
                                    id="couponCode" 
                                    required 
                                    placeholder="WELCOME10"
-                                   style="text-transform: uppercase;">
+                                   class="text-uppercase">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Tên mã giảm giá <span class="text-danger">*</span></label>

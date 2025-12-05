@@ -56,7 +56,7 @@
                         <?= number_format(abs($stats['product_change'] ?? 0), 1) ?>%
                     </span>
                 </div>
-                <div class="overview-card-value" style="font-size: 1.25rem;"><?= htmlspecialchars($stats['best_selling_product'] ?? 'Chưa có') ?></div>
+                <div class="overview-card-value fs-125"><?= htmlspecialchars($stats['best_selling_product'] ?? 'Chưa có') ?></div>
             </div>
         </div>
 
@@ -67,7 +67,7 @@
                     <h3 class="chart-card-title">Doanh thu theo tháng</h3>
                     <div>
                         <div class="chart-card-value"><?= number_format($stats['monthly_revenue'] ?? 0, 0, ',', '.') ?>₫</div>
-                        <span class="overview-card-change positive" style="font-size: 0.75rem;">
+                        <span class="overview-card-change positive small">
                             <i class="bi bi-arrow-up"></i> 1.5%
                         </span>
                     </div>
@@ -82,7 +82,7 @@
                     <h3 class="chart-card-title">Sản phẩm</h3>
                     <div>
                         <div class="chart-card-value"><?= count($stats['product_stats'] ?? []) ?> Sản Phẩm</div>
-                        <span class="overview-card-change positive" style="font-size: 0.75rem;">
+                        <span class="overview-card-change positive small">
                             <i class="bi bi-arrow-up"></i> 1.5%
                         </span>
                     </div>
@@ -115,7 +115,7 @@
                     <tbody>
                         <?php if (empty($stats['recent_orders'])): ?>
                             <tr>
-                                <td colspan="6" style="text-align: center; padding: 40px; color: #64748b;">
+                                <td colspan="6" class="text-center py-4 text-muted">
                                     Chưa có đơn hàng nào
                                 </td>
                             </tr>

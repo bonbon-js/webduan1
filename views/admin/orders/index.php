@@ -1,32 +1,3 @@
-<!-- Trang quản trị: xem và cập nhật trạng thái đơn -->
-<style>
-/* Loại bỏ padding để rộng đầy đủ sang bên phải */
-.admin-content {
-    padding: 0 !important;
-    margin-right: 0 !important;
-    width: calc(100% - 260px) !important;
-}
-.admin-orders-page {
-    padding: 2rem !important;
-    padding-right: 0 !important;
-    width: 100% !important;
-    margin: 0 !important;
-    margin-right: 0 !important;
-    box-sizing: border-box;
-}
-.admin-orders-page .container {
-    max-width: 100% !important;
-    width: 100% !important;
-    padding-left: 2rem !important;
-    padding-right: 0 !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    box-sizing: border-box;
-}
-.admin-card {
-    margin-right: 0 !important;
-}
-</style>
 <section class="admin-orders-page">
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-4">
