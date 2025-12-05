@@ -1,9 +1,7 @@
-<div class="reviews-header">
-    <h2>
-        <div class="icon-wrapper">
-            <i class="bi bi-star"></i>
-        </div>
-        Quản lý đánh giá
+<div class="admin-page-header">
+    <h2 class="d-flex align-items-center gap-2 mb-0">
+        <i class="bi bi-star"></i>
+        <span>Quản lý đánh giá</span>
     </h2>
 </div>
 

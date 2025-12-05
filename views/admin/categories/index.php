@@ -1,9 +1,11 @@
-<div class="categories-header">
+<div class="admin-page-header">
     <h1>Quản lý danh mục</h1>
-    <a href="<?= BASE_URL ?>?action=admin-category-create" class="btn-add-category">
-        <i class="bi bi-plus-lg"></i>
-        Thêm danh mục mới
-    </a>
+    <div class="admin-page-actions">
+        <a href="<?= BASE_URL ?>?action=admin-category-create" class="btn btn-light-soft">
+            <i class="bi bi-plus-lg"></i>
+            Thêm danh mục mới
+        </a>
+    </div>
 </div>
 
 <div class="admin-table">

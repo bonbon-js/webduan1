@@ -1,10 +1,27 @@
-<div class="coupons-header">
-    <h2>
-        <div class="icon-wrapper">
+<div class="admin-page-header">
+    <div class="title-wrap">
+        <p class="text-uppercase mb-1 small">Bảng điều khiển</p>
+        <h2 class="d-flex align-items-center gap-2 mb-0">
             <i class="bi bi-ticket-perforated"></i>
-        </div>
-        Quản lý mã giảm giá
-    </h2>
+            <span>Quản lý mã giảm giá</span>
+        </h2>
+    </div>
+    <div class="admin-page-actions">
+        <a href="<?= BASE_URL ?>?action=admin-coupons-trash" class="btn btn-light-soft">
+            <i class="bi bi-trash"></i> Thùng rác
+            <?php
+            require_once PATH_MODEL . 'CouponModel.php';
+            $couponModel = new CouponModel();
+            $deletedCount = count($couponModel->getDeleted());
+            if ($deletedCount > 0):
+            ?>
+                <span class="badge bg-danger ms-1"><?= $deletedCount ?></span>
+            <?php endif; ?>
+        </a>
+        <button type="button" class="btn btn-light-soft" data-bs-toggle="modal" data-bs-target="#couponModal" onclick="openCouponModal()">
+            <i class="bi bi-plus-circle"></i> Thêm mã giảm giá
+        </button>
+    </div>
 </div>
 
 <!-- Form tìm kiếm và lọc -->

@@ -3,9 +3,11 @@ $isEditing = isset($category);
 $categoryId = $isEditing ? (int)$category['category_id'] : null;
 ?>
 
-<div class="form-header">
+<div class="admin-page-header">
     <h2><?= $isEditing ? 'Chỉnh sửa danh mục' : 'Thêm danh mục mới' ?></h2>
-    <a href="<?= BASE_URL ?>?action=admin-categories" class="btn-cancel">Quay lại</a>
+    <div class="admin-page-actions">
+        <a href="<?= BASE_URL ?>?action=admin-categories" class="btn btn-light-soft">Quay lại</a>
+    </div>
 </div>
 
 <div class="form-card">

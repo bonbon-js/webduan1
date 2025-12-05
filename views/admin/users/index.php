@@ -1,26 +1,17 @@
-<div class="users-header">
-    <h2>
-        <div class="icon-wrapper">
+<div class="admin-page-header">
+    <div class="title-wrap">
+        <p class="text-uppercase mb-1 small">Bảng điều khiển</p>
+        <h2 class="d-flex align-items-center gap-2 mb-0">
             <i class="bi bi-people"></i>
-        </div>
-        <span>Quản lý người dùng</span>
-    </h2>
-</div>
-
-<form class="mb-3" method="GET" action="<?= BASE_URL ?>">
-    <input type="hidden" name="action" value="admin-users">
-    <div class="input-group">
-        <span class="input-group-text"><i class="bi bi-search"></i></span>
-        <input
-            type="text"
-            name="q"
-            class="form-control"
-            placeholder="Tìm theo tên, email hoặc số điện thoại"
-            value="<?= htmlspecialchars($keyword ?? '') ?>"
-        >
-        <button class="btn btn-dark" type="submit">Tìm kiếm</button>
+            <span>Quản lý người dùng</span>
+        </h2>
     </div>
-</form>
+    <div class="admin-page-actions">
+        <a href="<?= BASE_URL ?>?action=admin-users" class="btn btn-light-soft">
+            <i class="bi bi-arrow-clockwise"></i> Làm mới
+        </a>
+    </div>
+</div>
 
 <?php
 $totalUsers = count($users ?? []);
@@ -70,6 +61,34 @@ foreach ($users ?? [] as $user) {
         <div class="stat-label">Đã xác thực</div>
     </div>
 </div>
+
+<form class="admin-filter-bar mt-2" method="GET" action="<?= BASE_URL ?>">
+    <input type="hidden" name="action" value="admin-users">
+    <div>
+        <label class="form-label">Từ ngày</label>
+        <input type="date" name="from_date" class="form-control" value="<?= htmlspecialchars($fromDate ?? '') ?>">
+    </div>
+    <div>
+        <label class="form-label">Đến ngày</label>
+        <input type="date" name="to_date" class="form-control" value="<?= htmlspecialchars($toDate ?? '') ?>">
+    </div>
+    <div>
+        <label class="form-label">Trạng thái</label>
+        <select name="lock_status" class="form-select">
+            <option value="">Tất cả</option>
+            <option value="active" <?= ($lockStatus ?? '') === 'active' ? 'selected' : '' ?>>Hoạt động</option>
+            <option value="locked" <?= ($lockStatus ?? '') === 'locked' ? 'selected' : '' ?>>Đã khóa</option>
+        </select>
+    </div>
+    <div class="admin-filter-actions">
+        <button class="btn btn-primary w-100" type="submit">
+            <i class="bi bi-funnel"></i> Lọc
+        </button>
+        <a href="<?= BASE_URL ?>?action=admin-users" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-clockwise"></i>
+        </a>
+    </div>
+</form>
 
 <div class="admin-table">
     <table class="table mb-0">

@@ -1,11 +1,11 @@
-<div class="products-header">
+<div class="admin-page-header">
     <h1>Quản lý sản phẩm</h1>
-    <div class="d-flex align-items-center gap-3">
-        <a href="<?= BASE_URL ?>?action=admin-products-trash" class="btn-back">
+    <div class="admin-page-actions">
+        <a href="<?= BASE_URL ?>?action=admin-products-trash" class="btn btn-light-soft">
             <i class="bi bi-trash"></i>
             Thùng rác
         </a>
-        <a href="<?= BASE_URL ?>?action=admin-product-create" class="btn-add-product">
+        <a href="<?= BASE_URL ?>?action=admin-product-create" class="btn btn-light-soft">
             <i class="bi bi-plus-lg"></i>
             Thêm sản phẩm mới
         </a>

@@ -13,8 +13,18 @@ class AdminUserController
     {
         $this->requireAdmin();
 
-        $keyword = trim($_GET['q'] ?? '');
-        $users = $this->userModel->getAll($keyword !== '' ? $keyword : null);
+        $fromDate = $_GET['from_date'] ?? null;
+        $toDate = $_GET['to_date'] ?? null;
+        $lockStatus = $_GET['lock_status'] ?? null;
+
+        $users = $this->userModel->getAll(
+            null,
+            null,
+            null,
+            $fromDate ?: null,
+            $toDate ?: null,
+            $lockStatus ?: null
+        );
 
         $title = 'Quản lý người dùng';
         $view  = 'admin/users/index';

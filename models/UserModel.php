@@ -40,7 +40,14 @@ class UserModel extends BaseModel
         return (int)$this->pdo->lastInsertId();
     }
 
-    public function getAll(?string $keyword = null, ?string $role = null, ?string $status = null): array
+    public function getAll(
+        ?string $keyword = null,
+        ?string $role = null,
+        ?string $status = null,
+        ?string $fromDate = null,
+        ?string $toDate = null,
+        ?string $lockStatus = null
+    ): array
     {
         // Kiểm tra xem cột is_locked có tồn tại không
         try {
@@ -70,6 +77,22 @@ class UserModel extends BaseModel
         if ($role) {
             $sql .= " AND role = :role";
             $params['role'] = $role;
+        }
+
+        if ($fromDate) {
+            $sql .= " AND created_at >= :from_date";
+            $params['from_date'] = $fromDate . ' 00:00:00';
+        }
+
+        if ($toDate) {
+            $sql .= " AND created_at <= :to_date";
+            $params['to_date'] = $toDate . ' 23:59:59';
+        }
+
+        if ($lockStatus === 'locked') {
+            $sql .= " AND COALESCE(is_locked, 0) = 1";
+        } elseif ($lockStatus === 'active') {
+            $sql .= " AND COALESCE(is_locked, 0) = 0";
         }
 
         if ($status === 'pending') {

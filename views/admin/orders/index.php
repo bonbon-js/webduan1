@@ -1,11 +1,13 @@
 <section class="admin-orders-page">
     <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <p class="text-uppercase text-muted mb-1 small">Bảng điều khiển</p>
+        <div class="admin-page-header mb-4">
+            <div class="title-wrap">
+                <p class="text-uppercase mb-1 small">Bảng điều khiển</p>
                 <h2 class="fw-bold mb-0">Quản lý đơn hàng</h2>
             </div>
-            <a href="<?= BASE_URL ?>" class="btn btn-outline-dark">Xem cửa hàng</a>
+            <div class="admin-page-actions">
+                <a href="<?= BASE_URL ?>" class="btn btn-light-soft">Xem cửa hàng</a>
+            </div>
         </div>
 
         <div class="admin-card mb-4">
