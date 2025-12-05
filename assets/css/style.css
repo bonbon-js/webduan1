@@ -8267,3 +8267,85 @@ input[type="number"] {
     }
 }
 
+/* ============================================
+   MODAL FIX - Prevent Overflow
+   ============================================ */
+
+/* Quick Add Modal - Fix overflow issue */
+#quickAddModal .modal-dialog {
+    max-height: 90vh;
+    margin: 1.75rem auto;
+}
+
+#quickAddModal .modal-content {
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+#quickAddModal .modal-content .row {
+    flex: 1;
+    overflow: hidden;
+}
+
+#quickAddModal .modal-content .col-md-6 {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Make the right side (form) scrollable */
+#quickAddModal .modal-content .col-md-6:last-child {
+    overflow-y: auto;
+    max-height: 90vh;
+}
+
+/* Adjust padding for better fit */
+#quickAddModal .modal-content .col-md-6:last-child > div {
+    padding: 2rem 2.5rem !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #quickAddModal .modal-dialog {
+        max-height: 95vh;
+        margin: 0.5rem;
+    }
+    
+    #quickAddModal .modal-content .col-md-6:last-child {
+        max-height: 60vh;
+    }
+    
+    #quickAddModal .modal-content .col-md-6:last-child > div {
+        padding: 1.5rem !important;
+    }
+    
+    /* Reduce image height on mobile */
+    #quickAddModal #qaProductImage {
+        max-height: 250px !important;
+    }
+}
+
+/* Ensure smooth scrolling */
+#quickAddModal .modal-content .col-md-6:last-child {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+#quickAddModal .modal-content .col-md-6:last-child::-webkit-scrollbar {
+    width: 6px;
+}
+
+#quickAddModal .modal-content .col-md-6:last-child::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+#quickAddModal .modal-content .col-md-6:last-child::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+#quickAddModal .modal-content .col-md-6:last-child::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
