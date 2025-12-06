@@ -1,5 +1,7 @@
 <?php
 
+require_once PATH_MODEL . 'UserModel.php';
+
 // Controller dành cho admin xử lý danh sách/cập nhật trạng thái đơn
 class AdminOrderController
 {
@@ -84,6 +86,17 @@ class AdminOrderController
                 if ($order && isset($order['user_id'])) {
                     // Có thể gửi email thông báo ở đây nếu cần
                     error_log("AdminOrderController::updateStatus - Order #$orderId đã được giao thành công. User ID: " . $order['user_id']);
+
+                    // Thăng hạng VIP nếu đơn đạt điều kiện (>= 2.000.000đ, giao thành công)
+                    $totalAmount = (float)($order['total_amount'] ?? 0);
+                    if ($totalAmount >= 2000000) {
+                        $userModel = new UserModel();
+                        $currentRank = $userModel->getRank((int)$order['user_id']) ?? 'customer';
+                        if ($currentRank !== 'VIP') {
+                            $userModel->updateRank((int)$order['user_id'], 'VIP');
+                            error_log("AdminOrderController::updateStatus - User #" . $order['user_id'] . " promoted to VIP.");
+                        }
+                    }
                 }
                 set_flash('success', 'Cập nhật trạng thái thành công. Khách hàng có thể đánh giá sản phẩm khi xem chi tiết đơn hàng.');
             } else {

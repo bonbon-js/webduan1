@@ -503,6 +503,21 @@ body {
     align-items: flex-end;
 }
 
+/* Coupon modal wider */
+.coupon-modal .modal-dialog {
+    max-width: 960px !important;
+    width: 80vw !important;
+}
+
+.coupon-modal .modal-body {
+    max-height: calc(90vh - 140px);
+    overflow-y: auto;
+}
+
+.coupon-modal .modal-content {
+    width: 100%;
+}
+
 .admin-content {
     color: #1e293b;
     background: #f8fafc;

@@ -55,56 +55,139 @@ class CouponModel extends BaseModel
         return in_array($columnName, $this->getExistingColumns());
     }
 
+    private function hasUsageTable(): bool
+    {
+        static $cache = null;
+        if ($cache !== null) {
+            return $cache;
+        }
+        try {
+            $stmt = $this->pdo->query("SHOW TABLES LIKE 'coupon_usage'");
+            $cache = $stmt->rowCount() > 0;
+        } catch (PDOException $e) {
+            $cache = false;
+        }
+        return $cache;
+    }
+
+    private function getUserUsageCount(int $couponId, int $userId): int
+    {
+        if (!$this->hasUsageTable() || !$userId) {
+            return 0;
+        }
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) AS cnt FROM coupon_usage WHERE coupon_id = :cid AND user_id = :uid");
+        $stmt->execute(['cid' => $couponId, 'uid' => $userId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int)($row['cnt'] ?? 0);
+    }
+
+    public function logUsage(int $couponId, ?int $userId, ?int $orderId, float $discountAmount): void
+    {
+        if (!$this->hasUsageTable()) {
+            return;
+        }
+        $stmt = $this->pdo->prepare("INSERT INTO coupon_usage (coupon_id, user_id, order_id, discount_amount) VALUES (:cid, :uid, :oid, :amt)");
+        $stmt->execute([
+            'cid' => $couponId,
+            'uid' => $userId,
+            'oid' => $orderId,
+            'amt' => $discountAmount
+        ]);
+    }
+
     /**
-     * Tìm mã giảm giá theo code và validate
-     * @param string $code
-     * @param float $orderAmount Tổng tiền đơn hàng
-     * @return array|null Trả về coupon nếu hợp lệ, null nếu không hợp lệ
+     * Validate mã giảm giá chi tiết, trả về thông điệp lỗi
      */
+    public function validateCouponDetailed(
+        string $code,
+        float $orderAmount,
+        ?int $userId = null,
+        array $productIds = [],
+        array $categoryIds = [],
+        bool $isNewCustomer = false,
+        bool $hasOtherCoupon = false,
+        bool $hasSaleItem = false,
+        bool $isVipToday = false
+    ): array
+    {
+        $coupon = $this->getByCode($code, false);
+
+        if (!$coupon) {
+            return ['ok' => false, 'message' => 'Mã giảm giá không tồn tại hoặc đã bị xóa.', 'coupon' => null, 'discount' => null];
+        }
+
+        $status = $this->calculateStatus($coupon);
+        if ($status === 'inactive') {
+            return ['ok' => false, 'message' => 'Mã đã ngừng hoạt động.', 'coupon' => null, 'discount' => null];
+        }
+        if ($status === 'expired') {
+            return ['ok' => false, 'message' => 'Mã đã hết hạn.', 'coupon' => null, 'discount' => null];
+        }
+        if ($status === 'out_of_stock') {
+            return ['ok' => false, 'message' => 'Mã đã hết lượt sử dụng.', 'coupon' => null, 'discount' => null];
+        }
+        if ($status === 'pending') {
+            return ['ok' => false, 'message' => 'Mã chưa đến thời gian áp dụng.', 'coupon' => null, 'discount' => null];
+        }
+
+        if ($coupon['min_order_amount'] > 0 && $orderAmount < (float)$coupon['min_order_amount']) {
+            return ['ok' => false, 'message' => 'Giá trị đơn hàng chưa đạt mức tối thiểu.', 'coupon' => null, 'discount' => null];
+        }
+
+        // Không kèm mã khác
+        if (!empty($coupon['exclude_other_coupons']) && $hasOtherCoupon) {
+            return ['ok' => false, 'message' => 'Mã này không được dùng cùng mã khác.', 'coupon' => null, 'discount' => null];
+        }
+
+        // Yêu cầu đăng nhập
+        if (!empty($coupon['require_login']) && !$userId) {
+            return ['ok' => false, 'message' => 'Mã này yêu cầu bạn đăng nhập.', 'coupon' => null, 'discount' => null];
+        }
+
+        // Giới hạn mỗi khách hàng
+        if (!empty($coupon['per_user_limit'])) {
+            if (!$userId) {
+                return ['ok' => false, 'message' => 'Vui lòng đăng nhập để áp dụng mã (giới hạn theo khách).', 'coupon' => null, 'discount' => null];
+            }
+            $usedByUser = $this->getUserUsageCount((int)$coupon['coupon_id'], $userId);
+            if ($usedByUser >= (int)$coupon['per_user_limit']) {
+                return ['ok' => false, 'message' => 'Bạn đã dùng hết số lượt cho mã này.', 'coupon' => null, 'discount' => null];
+            }
+        }
+
+        // Khách mới
+        if (!empty($coupon['new_customer_only']) && !$isNewCustomer) {
+            return ['ok' => false, 'message' => 'Mã chỉ áp dụng cho khách hàng mới.', 'coupon' => null, 'discount' => null];
+        }
+
+        // Không áp dụng cho sản phẩm đang giảm giá (nếu có cờ)
+        if (!empty($coupon['exclude_sale_items']) && $hasSaleItem) {
+            return ['ok' => false, 'message' => 'Không áp dụng cho sản phẩm đang giảm giá.', 'coupon' => null, 'discount' => null];
+        }
+
+        // Nhóm khách hàng VIP: yêu cầu VIP và chỉ dùng 1 lần/người
+        if (!empty($coupon['customer_group']) && $coupon['customer_group'] === 'vip_today') {
+            if (!$userId) {
+                return ['ok' => false, 'message' => 'Mã VIP yêu cầu đăng nhập.', 'coupon' => null, 'discount' => null];
+            }
+            if (!$isVipToday) {
+                return ['ok' => false, 'message' => 'Mã chỉ áp dụng cho khách VIP (đơn >= 2.000.000đ đã giao thành công).', 'coupon' => null, 'discount' => null];
+            }
+            $usedByUserVip = $this->getUserUsageCount((int)$coupon['coupon_id'], $userId);
+            if ($usedByUserVip >= 1) {
+                return ['ok' => false, 'message' => 'Mã VIP chỉ dùng 1 lần cho mỗi khách hàng.', 'coupon' => null, 'discount' => null];
+            }
+        }
+
+        $discount = $this->calculateDiscount($coupon, $orderAmount);
+
+        return ['ok' => true, 'message' => null, 'coupon' => $coupon, 'discount' => $discount];
+    }
+
     public function validateCoupon(string $code, float $orderAmount): ?array
     {
-        $sql = "SELECT * FROM {$this->table} 
-                WHERE code = :code 
-                  AND status = 'active'";
-        
-        if ($this->hasDeletedAtColumn()) {
-            $sql .= " AND deleted_at IS NULL";
-        }
-        
-        $sql .= " LIMIT 1";
-        
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(['code' => strtoupper(trim($code))]);
-        $coupon = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if (!$coupon) {
-            return null;
-        }
-        
-        // Sử dụng timezone Việt Nam
-        date_default_timezone_set('Asia/Ho_Chi_Minh');
-        $now = date('Y-m-d H:i:s');
-        
-        // Kiểm tra thời gian áp dụng - chỉ kiểm tra hết hạn, không kiểm tra chưa bắt đầu
-        // Mã chưa đến thời gian bắt đầu vẫn có thể hiển thị nhưng sẽ không áp dụng được
-        if ($now > $coupon['end_date']) {
-            return null; // Đã hết hạn
-        }
-        
-        // Nếu chưa đến thời gian bắt đầu, vẫn trả về coupon nhưng sẽ có thông báo khi áp dụng
-        // (Logic này sẽ được xử lý ở frontend hoặc khi validate)
-        
-        // Kiểm tra số lần sử dụng
-        if ($coupon['usage_limit'] !== null && $coupon['used_count'] >= $coupon['usage_limit']) {
-            return null;
-        }
-        
-        // Kiểm tra đơn hàng tối thiểu (chỉ kiểm tra nếu có yêu cầu)
-        if ($coupon['min_order_amount'] > 0 && $orderAmount < (float)$coupon['min_order_amount']) {
-            return null;
-        }
-        
-        return $coupon;
+        $result = $this->validateCouponDetailed($code, $orderAmount);
+        return $result['ok'] ? $result['coupon'] : null;
     }
 
     /**
@@ -200,7 +283,14 @@ class CouponModel extends BaseModel
      * @param string|null $discountTypeFilter 'percentage', 'fixed'
      * @return array
      */
-    public function getAll(?string $keyword = null, ?string $statusFilter = null, ?string $discountTypeFilter = null, bool $includeDeleted = false): array
+    public function getAll(
+        ?string $keyword = null,
+        ?string $statusFilter = null,
+        ?string $discountTypeFilter = null,
+        ?string $createdFrom = null,
+        ?string $createdTo = null,
+        bool $includeDeleted = false
+    ): array
     {
         // Kiểm tra xem cột deleted_at có tồn tại không
         $stmt = $this->pdo->query("SHOW COLUMNS FROM {$this->table} LIKE 'deleted_at'");
@@ -222,6 +312,18 @@ class CouponModel extends BaseModel
         if ($discountTypeFilter) {
             $sql .= " AND discount_type = :discount_type";
             $params['discount_type'] = $discountTypeFilter;
+        }
+
+        // Lọc theo ngày tạo nếu có cột created_at
+        if ($this->hasColumn('created_at')) {
+            if ($createdFrom) {
+                $sql .= " AND created_at >= :created_from";
+                $params['created_from'] = $createdFrom . ' 00:00:00';
+            }
+            if ($createdTo) {
+                $sql .= " AND created_at <= :created_to";
+                $params['created_to'] = $createdTo . ' 23:59:59';
+            }
         }
         
         // Xây dựng ORDER BY clause dựa trên các cột có sẵn
@@ -408,10 +510,16 @@ class CouponModel extends BaseModel
         
         $sql = "INSERT INTO {$this->table} 
                 (code, name, description, discount_type, discount_value, min_order_amount, 
-                 max_discount_amount, start_date, end_date, usage_limit, status) 
+                 max_discount_amount, start_date, end_date, usage_limit, per_user_limit,
+                 apply_scope, apply_product_ids, apply_category_ids,
+                 require_login, new_customer_only, exclude_sale_items, exclude_other_coupons,
+                 customer_group, return_on_refund, status) 
                 VALUES 
                 (:code, :name, :description, :discount_type, :discount_value, :min_order_amount, 
-                 :max_discount_amount, :start_date, :end_date, :usage_limit, :status)";
+                 :max_discount_amount, :start_date, :end_date, :usage_limit, :per_user_limit,
+                 :apply_scope, :apply_product_ids, :apply_category_ids,
+                 :require_login, :new_customer_only, :exclude_sale_items, :exclude_other_coupons,
+                 :customer_group, :return_on_refund, :status)";
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
@@ -425,6 +533,16 @@ class CouponModel extends BaseModel
             'start_date' => $data['start_date'],
             'end_date' => $data['end_date'],
             'usage_limit' => $data['usage_limit'] ?? null,
+            'per_user_limit' => $data['per_user_limit'] ?? null,
+            'apply_scope' => $data['apply_scope'] ?? 'all',
+            'apply_product_ids' => $data['apply_product_ids'] ?? null,
+            'apply_category_ids' => $data['apply_category_ids'] ?? null,
+            'require_login' => $data['require_login'] ?? 0,
+            'new_customer_only' => $data['new_customer_only'] ?? 0,
+            'exclude_sale_items' => $data['exclude_sale_items'] ?? 0,
+            'exclude_other_coupons' => $data['exclude_other_coupons'] ?? 0,
+            'customer_group' => $data['customer_group'] ?? null,
+            'return_on_refund' => $data['return_on_refund'] ?? 0,
             'status' => $data['status'] ?? 'active',
         ]);
         
@@ -454,6 +572,16 @@ class CouponModel extends BaseModel
                 start_date = :start_date,
                 end_date = :end_date,
                 usage_limit = :usage_limit,
+                per_user_limit = :per_user_limit,
+                apply_scope = :apply_scope,
+                apply_product_ids = :apply_product_ids,
+                apply_category_ids = :apply_category_ids,
+                require_login = :require_login,
+                new_customer_only = :new_customer_only,
+                exclude_sale_items = :exclude_sale_items,
+                exclude_other_coupons = :exclude_other_coupons,
+                customer_group = :customer_group,
+                return_on_refund = :return_on_refund,
                 status = :status
                 WHERE coupon_id = :coupon_id";
         
@@ -470,7 +598,29 @@ class CouponModel extends BaseModel
             'start_date' => $data['start_date'],
             'end_date' => $data['end_date'],
             'usage_limit' => $data['usage_limit'] ?? null,
+            'per_user_limit' => $data['per_user_limit'] ?? null,
+            'apply_scope' => $data['apply_scope'] ?? 'all',
+            'apply_product_ids' => $data['apply_product_ids'] ?? null,
+            'apply_category_ids' => $data['apply_category_ids'] ?? null,
+            'require_login' => $data['require_login'] ?? 0,
+            'new_customer_only' => $data['new_customer_only'] ?? 0,
+            'exclude_sale_items' => $data['exclude_sale_items'] ?? 0,
+            'exclude_other_coupons' => $data['exclude_other_coupons'] ?? 0,
+            'customer_group' => $data['customer_group'] ?? null,
+            'return_on_refund' => $data['return_on_refund'] ?? 0,
             'status' => $data['status'] ?? 'active',
+        ]);
+    }
+
+    /**
+     * Cập nhật trạng thái nhanh
+     */
+    public function updateStatusOnly(int $couponId, string $status): void
+    {
+        $stmt = $this->pdo->prepare("UPDATE {$this->table} SET status = :status WHERE coupon_id = :id");
+        $stmt->execute([
+            'status' => $status,
+            'id' => $couponId,
         ]);
     }
 

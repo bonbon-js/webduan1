@@ -148,8 +148,28 @@ class CheckoutController
         }
 
         $userId = $_SESSION['user']['id'] ?? null;
+        $isNewCustomer = false;
+        $isVipCustomer = false;
+        if ($userId) {
+            // Khách mới: chưa có đơn giao thành công
+            if (method_exists($this->orderModel, 'countDeliveredOrders')) {
+                $isNewCustomer = $this->orderModel->countDeliveredOrders((int)$userId) === 0;
+            }
+
+            // Xét VIP: có đơn giao thành công với tổng tiền >= 2.000.000đ
+            $userRank = $this->userModel->getRank((int)$userId) ?? 'customer';
+            $hasVipOrder = method_exists($this->orderModel, 'hasDeliveredOrderOverAmount')
+                ? $this->orderModel->hasDeliveredOrderOverAmount((int)$userId, 2000000)
+                : false;
+            if ($hasVipOrder && $userRank !== 'VIP') {
+                $this->userModel->updateRank((int)$userId, 'VIP');
+                $userRank = 'VIP';
+            }
+            $isVipCustomer = ($userRank === 'VIP');
+        }
         $total = 0;
         $items = [];
+        $hasFlashSaleItem = false;
 
         // Chuyển dữ liệu giỏ hàng thành payload để lưu vào DB
         foreach ($cart as $item) {
@@ -172,6 +192,11 @@ class CheckoutController
                 'unit_price'    => (float)($item['price'] ?? 0),
                 'image_url'     => $item['image'] ?? null,
             ];
+
+            // Phát hiện sản phẩm Flash Sale (nếu giỏ hàng có đánh dấu)
+            if (!empty($item['is_flash_sale']) || (!empty($item['flash_sale']))) {
+                $hasFlashSaleItem = true;
+            }
         }
         
         // Validate items
@@ -193,18 +218,43 @@ class CheckoutController
         $couponCode = null;
         $couponName = null;
         
+        // Chuẩn bị danh sách sản phẩm và danh mục cho coupon validation
+        require_once PATH_MODEL . 'ProductModel.php';
+        $productModel = new ProductModel();
+        $productIds = [];
+        $categoryIds = [];
+        foreach ($items as $it) {
+            if (!empty($it['product_id'])) {
+                $pid = (int)$it['product_id'];
+                $productIds[] = $pid;
+                $product = $productModel->getProductById($pid);
+                if ($product && isset($product['category_id'])) {
+                    $categoryIds[] = (int)$product['category_id'];
+                }
+            }
+        }
+
         // Kiểm tra mã giảm giá từ session trước
         if (isset($_SESSION['applied_coupon'])) {
             $appliedCoupon = $_SESSION['applied_coupon'];
-            $coupon = $couponModel->validateCoupon($appliedCoupon['code'], $total);
-            if ($coupon && (int)$coupon['coupon_id'] === (int)$appliedCoupon['id']) {
-                $discount = $couponModel->calculateDiscount($coupon, $total);
-                $discountAmount = $discount['discount_amount'];
-                $finalTotal = $discount['final_amount'];
-                $couponId = (int)$coupon['coupon_id'];
+            $check = $couponModel->validateCouponDetailed(
+                $appliedCoupon['code'],
+                $total,
+                $userId ? (int)$userId : null,
+                [],
+                [],
+                $isNewCustomer,
+                false,
+                $hasFlashSaleItem,
+                $isVipCustomer
+            );
+            if ($check['ok'] && $check['coupon'] && (int)$check['coupon']['coupon_id'] === (int)$appliedCoupon['id']) {
+                $discountAmount = $check['discount']['discount_amount'];
+                $finalTotal = $check['discount']['final_amount'];
+                $couponId = (int)$check['coupon']['coupon_id'];
                 // Lưu snapshot thông tin mã giảm giá
-                $couponCode = $coupon['code'];
-                $couponName = $coupon['name'];
+                $couponCode = $check['coupon']['code'];
+                $couponName = $check['coupon']['name'];
             } else {
                 // Mã không còn hợp lệ, xóa khỏi session
                 unset($_SESSION['applied_coupon']);
@@ -213,15 +263,24 @@ class CheckoutController
         
         // Nếu không có từ session, kiểm tra từ POST
         if (!$couponId && !empty($_POST['coupon_id']) && !empty($_POST['applied_coupon_code'])) {
-            $coupon = $couponModel->validateCoupon($_POST['applied_coupon_code'], $total);
-            if ($coupon && (int)$coupon['coupon_id'] === (int)$_POST['coupon_id']) {
-                $discount = $couponModel->calculateDiscount($coupon, $total);
-                $discountAmount = $discount['discount_amount'];
-                $finalTotal = $discount['final_amount'];
-                $couponId = (int)$coupon['coupon_id'];
+            $check = $couponModel->validateCouponDetailed(
+                $_POST['applied_coupon_code'],
+                $total,
+                $userId ? (int)$userId : null,
+                [],
+                [],
+                $isNewCustomer,
+                false,
+                $hasFlashSaleItem,
+                $isVipCustomer
+            );
+            if ($check['ok'] && $check['coupon'] && (int)$check['coupon']['coupon_id'] === (int)$_POST['coupon_id']) {
+                $discountAmount = $check['discount']['discount_amount'];
+                $finalTotal = $check['discount']['final_amount'];
+                $couponId = (int)$check['coupon']['coupon_id'];
                 // Lưu snapshot thông tin mã giảm giá
-                $couponCode = $coupon['code'];
-                $couponName = $coupon['name'];
+                $couponCode = $check['coupon']['code'];
+                $couponName = $check['coupon']['name'];
             }
         }
         
@@ -312,6 +371,7 @@ class CheckoutController
                     require_once PATH_MODEL . 'CouponModel.php';
                     $couponModel = new CouponModel();
                     $couponModel->incrementUsage($couponId, 1);
+                    $couponModel->logUsage($couponId, $userId ? (int)$userId : null, $orderId, $discountAmount);
                     unset($_SESSION['applied_coupon']);
                 }
                 
@@ -397,6 +457,7 @@ class CheckoutController
                 require_once PATH_MODEL . 'CouponModel.php';
                 $couponModel = new CouponModel();
                 $couponModel->incrementUsage($couponId, 1);
+                $couponModel->logUsage($couponId, $userId ? (int)$userId : null, $orderId, $discountAmount);
                 // Xóa mã giảm giá khỏi session sau khi sử dụng
                 unset($_SESSION['applied_coupon']);
             }

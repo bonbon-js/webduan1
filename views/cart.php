@@ -33,7 +33,7 @@
                             <?php foreach ($cart as $cartKey => $item): 
                                 $itemTotal = $item['price'] * $item['quantity'];
                             ?>
-                                <tr data-cart-key="<?= htmlspecialchars($cartKey) ?>" data-item-price="<?= $item['price'] ?>" data-item-quantity="<?= $item['quantity'] ?>" data-item-total="<?= $itemTotal ?>">
+                                <tr data-cart-key="<?= htmlspecialchars($cartKey) ?>" data-product-id="<?= (int)$item['id'] ?>" data-item-price="<?= $item['price'] ?>" data-item-quantity="<?= $item['quantity'] ?>" data-item-total="<?= $itemTotal ?>">
                                     <td>
                                         <input type="checkbox" class="cart-item-checkbox" id="cartItem_<?= htmlspecialchars($cartKey) ?>" name="cart_items[]" value="<?= htmlspecialchars($cartKey) ?>" checked onchange="handleCheckboxChange(this)">
                                         <label for="cartItem_<?= htmlspecialchars($cartKey) ?>" class="visually-hidden">Chọn sản phẩm <?= htmlspecialchars($item['name']) ?></label>
@@ -694,6 +694,7 @@ function applyCoupon() {
     
     const checkboxes = document.querySelectorAll('.cart-item-checkbox:checked');
     let subtotal = 0;
+    const productIds = [];
     
     checkboxes.forEach(checkbox => {
         const cartKey = checkbox.value;
@@ -712,6 +713,11 @@ function applyCoupon() {
             }
             
             subtotal += itemTotal;
+
+            const pid = parseInt(row.dataset.productId || '0', 10);
+            if (!isNaN(pid) && pid > 0) {
+                productIds.push(pid);
+            }
         }
     });
     
@@ -735,7 +741,8 @@ function applyCoupon() {
         },
         body: JSON.stringify({
             coupon_code: code,
-            order_amount: orderAmount
+            order_amount: orderAmount,
+            product_ids: productIds
         })
     })
     .then(response => response.json())

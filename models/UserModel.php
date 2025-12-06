@@ -49,22 +49,8 @@ class UserModel extends BaseModel
         ?string $lockStatus = null
     ): array
     {
-        // Kiểm tra xem cột is_locked có tồn tại không
-        try {
-            $checkColumn = $this->pdo->query("SHOW COLUMNS FROM {$this->table} LIKE 'is_locked'");
-            $columnExists = $checkColumn->rowCount() > 0;
-        } catch (PDOException $e) {
-            $columnExists = false;
-        }
-
-        // Nếu cột chưa tồn tại, thêm nó
-        if (!$columnExists) {
-            try {
-                $this->pdo->exec("ALTER TABLE {$this->table} ADD COLUMN is_locked TINYINT(1) DEFAULT 0");
-            } catch (PDOException $e) {
-                // Bỏ qua nếu có lỗi (có thể đã được thêm bởi process khác)
-            }
-        }
+        $this->ensureIsLockedColumn();
+        $this->ensureRankColumn();
 
         $sql = "SELECT * FROM {$this->table} WHERE 1=1";
         $params = [];
@@ -155,6 +141,61 @@ class UserModel extends BaseModel
             'password' => $passwordHash,
             'id'       => $userId,
         ]);
+    }
+
+    public function getRank(int $userId): ?string
+    {
+        $this->ensureRankColumn();
+        $stmt = $this->pdo->prepare("SELECT rank FROM {$this->table} WHERE user_id = :id LIMIT 1");
+        $stmt->execute(['id' => $userId]);
+        $rank = $stmt->fetchColumn();
+        return $rank !== false ? $rank : null;
+    }
+
+    public function updateRank(int $userId, string $rank): void
+    {
+        $this->ensureRankColumn();
+        $stmt = $this->pdo->prepare("UPDATE {$this->table} SET rank = :rank WHERE user_id = :id");
+        $stmt->execute([
+            'rank' => $rank,
+            'id'   => $userId,
+        ]);
+    }
+
+    private function ensureIsLockedColumn(): void
+    {
+        try {
+            $checkColumn = $this->pdo->query("SHOW COLUMNS FROM {$this->table} LIKE 'is_locked'");
+            $columnExists = $checkColumn->rowCount() > 0;
+        } catch (PDOException $e) {
+            $columnExists = false;
+        }
+
+        if (!$columnExists) {
+            try {
+                $this->pdo->exec("ALTER TABLE {$this->table} ADD COLUMN is_locked TINYINT(1) DEFAULT 0");
+            } catch (PDOException $e) {
+                // Cột có thể đã được thêm bởi tiến trình khác
+            }
+        }
+    }
+
+    private function ensureRankColumn(): void
+    {
+        try {
+            $checkColumn = $this->pdo->query("SHOW COLUMNS FROM {$this->table} LIKE 'rank'");
+            $columnExists = $checkColumn->rowCount() > 0;
+        } catch (PDOException $e) {
+            $columnExists = false;
+        }
+
+        if (!$columnExists) {
+            try {
+                $this->pdo->exec("ALTER TABLE {$this->table} ADD COLUMN rank VARCHAR(20) NOT NULL DEFAULT 'customer'");
+            } catch (PDOException $e) {
+                // Nếu đồng thời quá trình khác thêm cột, bỏ qua lỗi
+            }
+        }
     }
 
     public function delete(int $userId): void

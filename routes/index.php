@@ -77,6 +77,7 @@ match ($action) {
     'admin-coupon-create' => (new AdminCouponController)->create(),
     'admin-coupon-update' => (new AdminCouponController)->update(),
     'admin-coupon-delete' => (new AdminCouponController)->delete(),
+    'admin-coupon-edit'   => (new AdminCouponController)->edit(),
     'admin-coupons-trash' => (new AdminCouponController)->trash(),
     'admin-coupon-restore' => (new AdminCouponController)->restore(),
     'admin-coupon-force-delete' => (new AdminCouponController)->forceDelete(),

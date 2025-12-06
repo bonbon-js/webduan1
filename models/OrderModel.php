@@ -302,6 +302,52 @@ class OrderModel extends BaseModel
         }
     }
 
+    // Đếm số đơn trong ngày (theo created_at) của user
+    public function countOrdersToday(int $userId): int
+    {
+        if (!$userId) {
+            return 0;
+        }
+        $sql = "SELECT COUNT(*) AS cnt FROM orders_new WHERE user_id = :uid AND DATE(created_at) = CURDATE()";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['uid' => $userId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int)($row['cnt'] ?? 0);
+    }
+
+    // Đếm số đơn đã giao thành công của user
+    public function countDeliveredOrders(int $userId): int
+    {
+        if (!$userId) {
+            return 0;
+        }
+        $sql = "SELECT COUNT(*) AS cnt FROM orders_new WHERE user_id = :uid AND status = :status";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'uid' => $userId,
+            'status' => self::STATUS_DELIVERED
+        ]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int)($row['cnt'] ?? 0);
+    }
+
+    // Kiểm tra user đã có đơn giao thành công với tổng tiền >= ngưỡng chưa
+    public function hasDeliveredOrderOverAmount(int $userId, float $amountThreshold): bool
+    {
+        if (!$userId) {
+            return false;
+        }
+        $sql = "SELECT COUNT(*) AS cnt FROM orders_new WHERE user_id = :uid AND status = :status AND total_amount >= :amt LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'uid' => $userId,
+            'status' => self::STATUS_DELIVERED,
+            'amt' => $amountThreshold
+        ]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return ((int)($row['cnt'] ?? 0)) > 0;
+    }
+
     // Lấy thông tin đơn hàng + danh sách sản phẩm (dùng cho chi tiết)
     public function findWithItems(int $orderId): ?array
     {

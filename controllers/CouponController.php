@@ -1,6 +1,8 @@
 <?php
 
 require_once PATH_MODEL . 'CouponModel.php';
+require_once PATH_MODEL . 'OrderModel.php';
+require_once PATH_MODEL . 'UserModel.php';
 
 class CouponController
 {
@@ -22,6 +24,7 @@ class CouponController
         $data = json_decode(file_get_contents('php://input'), true);
         $code = $data['coupon_code'] ?? '';
         $orderAmount = (float)($data['order_amount'] ?? 0);
+        $productIds = is_array($data['product_ids'] ?? null) ? array_map('intval', $data['product_ids']) : [];
         
         if (empty($code)) {
             echo json_encode([
@@ -40,29 +43,52 @@ class CouponController
             exit;
         }
         
-        $coupon = $this->couponModel->validateCoupon($code, $orderAmount);
-        
-        if (!$coupon) {
+        // Xác định khách mới nếu có đăng nhập
+        $userId = $_SESSION['user']['id'] ?? null;
+        $isNewCustomer = false;
+        $isVipCustomer = false;
+        if ($userId) {
+            $orderModel = new OrderModel();
+            $userModel = new UserModel();
+
+            if (method_exists($orderModel, 'countDeliveredOrders')) {
+                $isNewCustomer = $orderModel->countDeliveredOrders((int)$userId) === 0;
+            }
+
+            $userRank = $userModel->getRank((int)$userId) ?? 'customer';
+            $hasVipOrder = method_exists($orderModel, 'hasDeliveredOrderOverAmount')
+                ? $orderModel->hasDeliveredOrderOverAmount((int)$userId, 2000000)
+                : false;
+
+            if ($hasVipOrder && $userRank !== 'VIP') {
+                $userModel->updateRank((int)$userId, 'VIP');
+                $userRank = 'VIP';
+            }
+
+            $isVipCustomer = ($userRank === 'VIP');
+        }
+
+        $result = $this->couponModel->validateCouponDetailed(
+            $code,
+            $orderAmount,
+            $userId ? (int)$userId : null,
+            [],
+            [],
+            $isNewCustomer,
+            false,
+            false,
+            $isVipCustomer
+        );
+        if (!$result['ok']) {
             echo json_encode([
                 'success' => false,
-                'message' => 'Mã giảm giá không hợp lệ hoặc đã hết hạn. Vui lòng kiểm tra lại điều kiện áp dụng.'
+                'message' => $result['message']
             ]);
             exit;
         }
-        
-        // Kiểm tra xem mã đã đến thời gian bắt đầu chưa
-        // Sử dụng timezone Việt Nam
-        date_default_timezone_set('Asia/Ho_Chi_Minh');
-        $now = date('Y-m-d H:i:s');
-        if ($now < $coupon['start_date']) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Mã giảm giá chưa đến thời gian áp dụng. Thời gian bắt đầu: ' . date('d/m/Y H:i', strtotime($coupon['start_date']))
-            ]);
-            exit;
-        }
-        
-        $discount = $this->couponModel->calculateDiscount($coupon, $orderAmount);
+
+        $coupon = $result['coupon'];
+        $discount = $result['discount'];
         
         // Lưu mã giảm giá vào session
         $_SESSION['applied_coupon'] = [
