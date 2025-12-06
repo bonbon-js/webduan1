@@ -81,7 +81,7 @@ $footerLogo = getBase64Image(PATH_ROOT . 'assets/images/logo.png');
             <h1 class="hero-title">ĐẲNG CẤP<br>RIÊNG BIỆT</h1>
             <p class="hero-description">Bộ sưu tập giới hạn dành cho những người dẫn đầu xu hướng.</p>
             <div class="hero-cta">
-                <a href="<?= BASE_URL ?>?action=collections" class="btn-hero">Khám Phá</a>
+                <a href="<?= BASE_URL ?>?action=collection" class="btn-hero">Khám Phá</a>
             </div>
         </div>
     </div>
@@ -470,7 +470,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="p-4 p-lg-5">
+                    <div class="p-4 p-lg-5" style="text-align: left !important;">
                         <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
                         
                         <h3 id="qaProductName" class="h4 fw-bold mb-2">Product Name</h3>
@@ -481,8 +481,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             
                             <!-- Size Selector -->
                             <div class="mb-4">
-                                <label class="form-label small text-uppercase fw-bold text-muted mb-2" id="qaSizeLabel">Kích thước</label>
-                                <div class="d-flex gap-2">
+                                <label class="form-label small text-uppercase fw-bold text-muted mb-2 d-block" id="qaSizeLabel">Kích thước</label>
+                                <div class="d-flex gap-2" style="justify-content: flex-start !important;">
                                     <input type="radio" class="btn-check" name="qaSize" id="sizeS" value="S" checked>
                                     <label class="btn btn-outline-dark rounded-0 px-3" for="sizeS">S</label>
                                     
@@ -499,8 +499,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             
                             <!-- Color Selector -->
                             <div class="mb-4">
-                                <label class="form-label small text-uppercase fw-bold text-muted mb-2" id="qaColorLabel">Màu sắc</label>
-                                <div class="d-flex gap-2">
+                                <label class="form-label small text-uppercase fw-bold text-muted mb-2 d-block" id="qaColorLabel">Màu sắc</label>
+                                <div class="d-flex gap-2" style="justify-content: flex-start !important;">
                                     <input type="radio" class="btn-check" name="qaColor" id="colorBlack" value="Black" checked>
                                     <label class="btn rounded-circle p-0 border border-2 border-white shadow-sm color-option swatch-black" for="colorBlack"></label>
                                     
@@ -514,7 +514,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             
                             <!-- Quantity -->
                             <div class="mb-4">
-                                <label for="qaQuantity" class="form-label small text-uppercase fw-bold text-muted mb-2">Số lượng</label>
+                                <label for="qaQuantity" class="form-label small text-uppercase fw-bold text-muted mb-2 d-block">Số lượng</label>
                                 <div class="input-group input-group-compact">
                                     <button class="btn btn-outline-secondary rounded-0" type="button" onclick="changeQaQty(-1)" aria-label="Giảm số lượng">-</button>
                                     <input type="number" class="form-control text-center border-secondary border-start-0 border-end-0" id="qaQuantity" name="quantity" value="1" min="1" max="999" aria-label="Số lượng sản phẩm" onchange="validateQaQuantity(this)">
