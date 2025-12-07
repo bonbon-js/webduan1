@@ -1193,6 +1193,93 @@ class ProductModel extends BaseModel
         ];
     }
 
+    // Lấy sản phẩm sắp hết hàng
+    public function getLowStockProducts(int $threshold = 10, int $limit = 10): array
+    {
+        try {
+            $sql = "SELECT 
+                        p.product_id,
+                        p.product_name,
+                        p.stock,
+                        c.category_name";
+            
+            $sql = $this->addImageField($sql, 'pi');
+            
+            $sql .= " FROM {$this->table} p
+                    LEFT JOIN categories c ON p.category_id = c.category_id";
+            
+            $sql = $this->addImageJoin($sql);
+            
+            $sql .= " WHERE p.stock <= :threshold
+                    AND p.stock > 0
+                    ORDER BY p.stock ASC
+                    LIMIT :limit";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':threshold', $threshold, PDO::PARAM_INT);
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+
+    // Lấy số lượng sản phẩm đã bán theo danh mục
+    public function getSoldByCategory(string $fromDate, string $toDate): array
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT 
+                    c.category_name,
+                    SUM(oi.quantity) AS qty,
+                    COALESCE(SUM(oi.quantity * oi.unit_price), 0) AS revenue
+                FROM order_items oi
+                JOIN orders_new o ON o.id = oi.order_id
+                JOIN products p ON p.product_id = oi.product_id
+                JOIN categories c ON c.category_id = p.category_id
+                WHERE o.status = 'delivered'
+                AND DATE(o.created_at) BETWEEN :from_date AND :to_date
+                GROUP BY c.category_id, c.category_name
+                ORDER BY qty DESC
+            ");
+            $stmt->execute([':from_date' => $fromDate, ':to_date' => $toDate]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+
+    // Lấy lợi nhuận ước tính theo sản phẩm (giả sử cost = 60% price)
+    public function getProductProfitEstimate(string $fromDate, string $toDate, int $limit = 10): array
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT 
+                    p.product_id,
+                    p.product_name,
+                    SUM(oi.quantity) AS qty_sold,
+                    COALESCE(SUM(oi.quantity * oi.unit_price), 0) AS revenue,
+                    COALESCE(SUM(oi.quantity * oi.unit_price * 0.4), 0) AS estimated_profit
+                FROM order_items oi
+                JOIN orders_new o ON o.id = oi.order_id
+                JOIN products p ON p.product_id = oi.product_id
+                WHERE o.status = 'delivered'
+                AND DATE(o.created_at) BETWEEN :from_date AND :to_date
+                GROUP BY p.product_id, p.product_name
+                ORDER BY estimated_profit DESC
+                LIMIT :limit
+            ");
+            $stmt->bindValue(':from_date', $fromDate, PDO::PARAM_STR);
+            $stmt->bindValue(':to_date', $toDate, PDO::PARAM_STR);
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+
     /**
      * Get stock for a specific variant by size and color
      * @param int $productId

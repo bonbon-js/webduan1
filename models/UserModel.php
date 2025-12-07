@@ -307,5 +307,65 @@ class UserModel extends BaseModel
             'id'         => $userId,
         ]);
     }
+
+    // Lấy số khách hàng mới theo khoảng thời gian
+    public function getNewCustomersCount(string $fromDate, string $toDate): int
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT COUNT(*) AS cnt
+                FROM {$this->table}
+                WHERE role = 'customer'
+                AND DATE(created_at) BETWEEN :from_date AND :to_date
+            ");
+            $stmt->execute([':from_date' => $fromDate, ':to_date' => $toDate]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return (int)($result['cnt'] ?? 0);
+        } catch (Exception $e) {
+            return 0;
+        }
+    }
+
+    // Phân loại khách hàng (mới / VIP / thân thiết)
+    public function getCustomerSegmentation(): array
+    {
+        try {
+            $this->ensureRankColumn();
+            
+            $stmt = $this->pdo->prepare("
+                SELECT 
+                    COALESCE(rank, 'customer') AS segment,
+                    COUNT(*) AS count
+                FROM {$this->table}
+                WHERE role = 'customer'
+                GROUP BY COALESCE(rank, 'customer')
+            ");
+            $stmt->execute();
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            $segmentation = [
+                'customer' => 0,
+                'vip' => 0,
+                'loyal' => 0
+            ];
+            
+            foreach ($results as $row) {
+                $segment = $row['segment'];
+                $count = (int)$row['count'];
+                
+                if (isset($segmentation[$segment])) {
+                    $segmentation[$segment] = $count;
+                }
+            }
+            
+            return $segmentation;
+        } catch (Exception $e) {
+            return [
+                'customer' => 0,
+                'vip' => 0,
+                'loyal' => 0
+            ];
+        }
+    }
 }
 

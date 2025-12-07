@@ -21,9 +21,15 @@ class AdminStatisticsController
     {
         $this->requireAdmin();
 
+        require_once PATH_MODEL . 'CouponModel.php';
+        $couponModel = new CouponModel();
+
         $fromDate = $_GET['from_date'] ?? null;
         $toDate   = $_GET['to_date'] ?? null;
         $preset   = $_GET['preset'] ?? 'today';
+        $statusFilter = $_GET['status_filter'] ?? null;
+        $paymentFilter = $_GET['payment_filter'] ?? null;
+        $categoryFilter = $_GET['category_filter'] ?? null;
 
         // Preset time ranges
         $now = new DateTime('now', new DateTimeZone('Asia/Ho_Chi_Minh'));
@@ -58,29 +64,49 @@ class AdminStatisticsController
                 $toDate = $toDate ?: $now->format('Y-m-d');
         }
 
-        // Lấy thống kê tổng quan
-        $stats = [
-            'total_orders' => $this->orderModel->getTotalCount(),
-            'total_revenue' => $this->orderModel->getTotalRevenue(),
-            'total_users' => $this->userModel->getTotalCount(),
-            'best_selling' => 'Chưa có', // Sẽ tính sau
-        ];
-
         // Mặc định khung thời gian: hôm nay
         if (!$fromDate || !$toDate) {
             $fromDate = date('Y-m-d');
             $toDate   = date('Y-m-d');
         }
 
-        // Thống kê theo range
+        // === KPI CHÍNH ===
         $rangeStats = $this->orderModel->getStatsByRange($fromDate, $toDate);
+        $statusCounts = $this->orderModel->getStatusCounts($fromDate, $toDate);
+        $newUsersCount = $this->userModel->getNewCustomersCount($fromDate, $toDate);
+        $productsSold = $this->orderModel->getTotalProductsSold($fromDate, $toDate);
+        $topProducts = $this->productModel->getTopSelling($fromDate, $toDate, 5);
+        $topCustomers = $this->orderModel->getTopCustomers($fromDate, $toDate, 5);
+        $revenueByPayment = $this->orderModel->getRevenueByPaymentMethod($fromDate, $toDate);
+        $returnedCount = $this->orderModel->getReturnedOrdersCount($fromDate, $toDate);
+
+        // Tính lợi nhuận ròng (giả sử 40% là lợi nhuận)
+        $netProfit = $rangeStats['revenue'] * 0.4;
+
+        // === BIỂU ĐỒ ===
         $dailyRevenue = $this->orderModel->getDailyRevenue($fromDate, $toDate);
         $dailyOrders = $this->orderModel->getDailyOrders($fromDate, $toDate);
         $paymentBreakdown = $this->orderModel->getPaymentBreakdown($fromDate, $toDate);
-        $statusCounts = $this->orderModel->getStatusCounts($fromDate, $toDate);
-        $topCustomers = $this->orderModel->getTopCustomers($fromDate, $toDate, 5);
+        $returnCancelChart = $this->orderModel->getReturnCancelChart($fromDate, $toDate);
+
+        // === THỐNG KÊ ĐƠN HÀNG ===
         $orderMetrics = $this->orderModel->getOrderMetrics($fromDate, $toDate);
-        $topProducts = $this->productModel->getTopSelling($fromDate, $toDate, 5);
+        
+        // === THỐNG KÊ KHÁCH HÀNG ===
+        $totalCustomers = $this->userModel->getCustomerCount();
+        $returningRate = $this->orderModel->getReturningCustomerRate($fromDate, $toDate);
+        $customerSegmentation = $this->userModel->getCustomerSegmentation();
+
+        // === THỐNG KÊ SẢN PHẨM ===
+        $totalStock = $this->productModel->countAllProducts();
+        $lowStockProducts = $this->productModel->getLowStockProducts(10, 10);
+        $slowSellingProducts = $this->productModel->getSlowSelling($fromDate, $toDate, 5);
+        $soldByCategory = $this->productModel->getSoldByCategory($fromDate, $toDate);
+        $productProfitEstimate = $this->productModel->getProductProfitEstimate($fromDate, $toDate, 10);
+
+        // === THỐNG KÊ MÃ GIẢM GIÁ ===
+        $couponStats = $couponModel->getCouponStats($fromDate, $toDate);
+        $topUsedCoupons = $couponModel->getTopUsedCoupons($fromDate, $toDate, 5);
 
         // Lấy doanh thu theo tháng (12 tháng gần nhất)
         $monthlyRevenue = $this->orderModel->getMonthlyRevenue(12);
@@ -88,25 +114,14 @@ class AdminStatisticsController
         // Lấy số lượng sản phẩm theo tháng
         $monthlyProducts = $this->productModel->getMonthlyProducts(12);
 
-        // Lấy tổng sản phẩm
-        $stats['total_products'] = $this->productModel->countAllProducts();
-
         // Lấy đơn hàng gần nhất
         $orders = $this->orderModel->getAll();
 
-        $title = 'Thống kê';
+        $title = 'Thống kê & Dashboard';
         $view = 'admin/statistics/index';
         $filterFrom = $fromDate;
         $filterTo = $toDate;
-        $rangeStatsOrders = $rangeStats['orders'];
-        $rangeStatsRevenue = $rangeStats['revenue'];
-        $chartDailyRevenue = $dailyRevenue;
-        $chartDailyOrders = $dailyOrders;
-        $chartPayment = $paymentBreakdown;
-        $chartStatusCounts = $statusCounts;
-        $kpiOrderMetrics = $orderMetrics;
-        $listTopProducts = $topProducts;
-        $listTopCustomers = $topCustomers;
+        $filterPreset = $preset;
 
         require_once PATH_VIEW . 'admin/layout.php';
     }

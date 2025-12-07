@@ -708,5 +708,105 @@ class CouponModel extends BaseModel
         
         return $coupons;
     }
+
+    // Thống kê mã giảm giá
+    public function getCouponStats(string $fromDate, string $toDate): array
+    {
+        try {
+            // Lấy số lượt sử dụng và tổng tiền giảm
+            if ($this->hasUsageTable()) {
+                $stmt = $this->pdo->prepare("
+                    SELECT 
+                        COUNT(*) AS usage_count,
+                        COALESCE(SUM(discount_amount), 0) AS total_discount
+                    FROM coupon_usage cu
+                    JOIN orders_new o ON o.id = cu.order_id
+                    WHERE DATE(o.created_at) BETWEEN :from_date AND :to_date
+                ");
+                $stmt->execute([':from_date' => $fromDate, ':to_date' => $toDate]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            } else {
+                // Fallback: lấy từ orders_new
+                $stmt = $this->pdo->prepare("
+                    SELECT 
+                        COUNT(*) AS usage_count,
+                        COALESCE(SUM(discount_amount), 0) AS total_discount
+                    FROM orders_new
+                    WHERE coupon_id IS NOT NULL
+                    AND DATE(created_at) BETWEEN :from_date AND :to_date
+                ");
+                $stmt->execute([':from_date' => $fromDate, ':to_date' => $toDate]);
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            }
+
+            // Đếm số mã đã hết hạn
+            $stmt = $this->pdo->prepare("
+                SELECT COUNT(*) AS expired_count
+                FROM {$this->table}
+                WHERE end_date < NOW()
+                AND status = 'active'
+            ");
+            $stmt->execute();
+            $expired = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            return [
+                'usage_count' => (int)($result['usage_count'] ?? 0),
+                'total_discount' => (float)($result['total_discount'] ?? 0),
+                'expired_count' => (int)($expired['expired_count'] ?? 0)
+            ];
+        } catch (Exception $e) {
+            return [
+                'usage_count' => 0,
+                'total_discount' => 0,
+                'expired_count' => 0
+            ];
+        }
+    }
+
+    // Lấy top mã giảm giá được sử dụng nhiều nhất
+    public function getTopUsedCoupons(string $fromDate, string $toDate, int $limit = 5): array
+    {
+        try {
+            if ($this->hasUsageTable()) {
+                $stmt = $this->pdo->prepare("
+                    SELECT 
+                        c.code,
+                        c.name,
+                        COUNT(*) AS usage_count,
+                        COALESCE(SUM(cu.discount_amount), 0) AS total_discount
+                    FROM coupon_usage cu
+                    JOIN {$this->table} c ON c.coupon_id = cu.coupon_id
+                    JOIN orders_new o ON o.id = cu.order_id
+                    WHERE DATE(o.created_at) BETWEEN :from_date AND :to_date
+                    GROUP BY c.coupon_id, c.code, c.name
+                    ORDER BY usage_count DESC
+                    LIMIT :limit
+                ");
+            } else {
+                // Fallback: lấy từ orders_new
+                $stmt = $this->pdo->prepare("
+                    SELECT 
+                        coupon_code AS code,
+                        coupon_name AS name,
+                        COUNT(*) AS usage_count,
+                        COALESCE(SUM(discount_amount), 0) AS total_discount
+                    FROM orders_new
+                    WHERE coupon_id IS NOT NULL
+                    AND DATE(created_at) BETWEEN :from_date AND :to_date
+                    GROUP BY coupon_code, coupon_name
+                    ORDER BY usage_count DESC
+                    LIMIT :limit
+                ");
+            }
+            
+            $stmt->bindValue(':from_date', $fromDate, PDO::PARAM_STR);
+            $stmt->bindValue(':to_date', $toDate, PDO::PARAM_STR);
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            return [];
+        }
+    }
 }
 

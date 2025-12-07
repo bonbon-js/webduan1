@@ -916,5 +916,147 @@ class OrderModel extends BaseModel
             'data' => $revenue
         ];
     }
+
+    // Lấy số người dùng mới theo khoảng thời gian
+    public function getNewUsersCount(string $fromDate, string $toDate): int
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT COUNT(*) AS cnt 
+                FROM users 
+                WHERE DATE(created_at) BETWEEN :from_date AND :to_date
+            ");
+            $stmt->execute([':from_date' => $fromDate, ':to_date' => $toDate]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return (int)($result['cnt'] ?? 0);
+        } catch (Exception $e) {
+            return 0;
+        }
+    }
+
+    // Lấy tổng số sản phẩm đã bán
+    public function getTotalProductsSold(string $fromDate, string $toDate): int
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT COALESCE(SUM(oi.quantity), 0) AS total
+                FROM order_items oi
+                JOIN orders_new o ON o.id = oi.order_id
+                WHERE o.status = 'delivered'
+                AND DATE(o.created_at) BETWEEN :from_date AND :to_date
+            ");
+            $stmt->execute([':from_date' => $fromDate, ':to_date' => $toDate]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return (int)($result['total'] ?? 0);
+        } catch (Exception $e) {
+            return 0;
+        }
+    }
+
+    // Lấy doanh thu theo phương thức thanh toán chi tiết
+    public function getRevenueByPaymentMethod(string $fromDate, string $toDate): array
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT 
+                    payment_method,
+                    COUNT(*) AS order_count,
+                    COALESCE(SUM(total_amount), 0) AS revenue
+                FROM orders_new
+                WHERE status = 'delivered'
+                AND DATE(created_at) BETWEEN :from_date AND :to_date
+                GROUP BY payment_method
+            ");
+            $stmt->execute([':from_date' => $fromDate, ':to_date' => $toDate]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+
+    // Lấy số đơn hoàn tiền
+    public function getReturnedOrdersCount(string $fromDate, string $toDate): int
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT COUNT(*) AS cnt
+                FROM orders_new
+                WHERE status = :status
+                AND DATE(created_at) BETWEEN :from_date AND :to_date
+            ");
+            $stmt->execute([
+                ':status' => self::STATUS_RETURNED,
+                ':from_date' => $fromDate,
+                ':to_date' => $toDate
+            ]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return (int)($result['cnt'] ?? 0);
+        } catch (Exception $e) {
+            return 0;
+        }
+    }
+
+    // Lấy biểu đồ hoàn tiền và đơn hủy theo ngày
+    public function getReturnCancelChart(string $fromDate, string $toDate): array
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT 
+                    DATE(created_at) AS d,
+                    SUM(CASE WHEN status = :returned THEN 1 ELSE 0 END) AS returned,
+                    SUM(CASE WHEN status = :cancelled THEN 1 ELSE 0 END) AS cancelled
+                FROM orders_new
+                WHERE DATE(created_at) BETWEEN :from_date AND :to_date
+                GROUP BY DATE(created_at)
+                ORDER BY d
+            ");
+            $stmt->execute([
+                ':returned' => self::STATUS_RETURNED,
+                ':cancelled' => self::STATUS_CANCELLED,
+                ':from_date' => $fromDate,
+                ':to_date' => $toDate
+            ]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            return [];
+        }
+    }
+
+    // Lấy tỷ lệ khách hàng quay lại
+    public function getReturningCustomerRate(string $fromDate, string $toDate): float
+    {
+        try {
+            // Đếm số khách hàng có từ 2 đơn trở lên
+            $stmt = $this->pdo->prepare("
+                SELECT COUNT(DISTINCT user_id) AS returning
+                FROM (
+                    SELECT user_id, COUNT(*) AS order_count
+                    FROM orders_new
+                    WHERE status = 'delivered'
+                    AND user_id IS NOT NULL
+                    AND DATE(created_at) BETWEEN :from_date AND :to_date
+                    GROUP BY user_id
+                    HAVING order_count >= 2
+                ) AS t
+            ");
+            $stmt->execute([':from_date' => $fromDate, ':to_date' => $toDate]);
+            $returning = (int)($stmt->fetch(PDO::FETCH_ASSOC)['returning'] ?? 0);
+
+            // Đếm tổng số khách hàng
+            $stmt = $this->pdo->prepare("
+                SELECT COUNT(DISTINCT user_id) AS total
+                FROM orders_new
+                WHERE status = 'delivered'
+                AND user_id IS NOT NULL
+                AND DATE(created_at) BETWEEN :from_date AND :to_date
+            ");
+            $stmt->execute([':from_date' => $fromDate, ':to_date' => $toDate]);
+            $total = (int)($stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0);
+
+            return $total > 0 ? ($returning / $total) * 100 : 0;
+        } catch (Exception $e) {
+            return 0;
+        }
+    }
 }
 
