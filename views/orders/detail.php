@@ -133,6 +133,22 @@ error_log("Order detail page - currentOrderId: $currentOrderId, order['id']: " .
                     <h5 class="fw-bold mb-3">
                         <i class="bi bi-info-circle me-2"></i>Trạng thái đơn hàng
                     </h5>
+                    <?php if (!empty($returnData)): ?>
+                        <div class="alert alert-warning py-2 mb-3">
+                            <div class="d-flex flex-column gap-1">
+                                <div><strong>Trả hàng:</strong> <?= htmlspecialchars(ReturnRequestModel::statusLabel($returnData['status'])) ?></div>
+                                <?php if (!empty($returnData['reason'])): ?>
+                                    <div class="small text-muted">Lý do: <?= htmlspecialchars($returnData['reason']) ?></div>
+                                <?php endif; ?>
+                                <?php if (!empty($returnData['shipping_code'])): ?>
+                                    <div class="small">Mã vận chuyển: <?= htmlspecialchars($returnData['shipping_code']) ?></div>
+                                <?php endif; ?>
+                                <?php if (!empty($returnData['reject_reason'])): ?>
+                                    <div class="small text-danger">Bị từ chối: <?= nl2br(htmlspecialchars($returnData['reject_reason'])) ?></div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                     <div class="mb-3">
                         <div class="d-flex flex-wrap align-items-center gap-2">
                             <span class="badge bg-<?= OrderModel::statusBadge($order['status']) ?> px-3 py-2 fs-6">
@@ -226,6 +242,64 @@ error_log("Order detail page - currentOrderId: $currentOrderId, order['id']: " .
                             </div>
                             <button type="submit" class="btn btn-outline-danger w-100">Gửi yêu cầu hủy</button>
                         </form>
+                    </div>
+                <?php endif; ?>
+
+                <?php
+                    $canReturn = in_array($order['status'], [OrderModel::STATUS_DELIVERED, OrderModel::STATUS_COMPLETED], true);
+                    $deliveredAt = $order['updated_at'] ?? $order['created_at'] ?? null;
+                    $within3Days = $deliveredAt ? (time() - strtotime($deliveredAt) <= 3 * 24 * 3600) : false;
+                    $returnAllowed = $canReturn && $within3Days && empty($returnData);
+                ?>
+                <?php if ($returnAllowed): ?>
+                    <div class="order-summary-card mt-4">
+                        <h5 class="fw-bold mb-3">Yêu cầu trả hàng</h5>
+                        <form id="returnRequestForm" enctype="multipart/form-data">
+                            <input type="hidden" name="order_id" value="<?= $currentOrderId ?>">
+                            <div class="mb-3">
+                                <label class="form-label small text-uppercase">Lý do trả hàng</label>
+                                <select class="form-select" name="reason" required>
+                                    <option value="">-- Chọn lý do --</option>
+                                    <option value="Sản phẩm bị lỗi">Sản phẩm bị lỗi</option>
+                                    <option value="Sản phẩm giao sai">Sản phẩm giao sai</option>
+                                    <option value="Thiếu phụ kiện">Thiếu phụ kiện</option>
+                                    <option value="Hàng giả/nhái">Hàng giả/nhái</option>
+                                    <option value="Không giống mô tả">Không giống mô tả</option>
+                                    <option value="Khác">Khác</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small text-uppercase">Ghi chú (tùy chọn)</label>
+                                <textarea class="form-control" name="note" rows="3" placeholder="Mô tả thêm (không bắt buộc)"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small text-uppercase">Ảnh/Video minh chứng <span class="text-danger">*</span></label>
+                                <input type="file" name="evidences[]" class="form-control" accept="image/*,video/*" multiple required>
+                                <small class="text-muted">Tối đa 5 file, mỗi file ≤ 10MB. Hỗ trợ ảnh/video.</small>
+                            </div>
+                            <button type="submit" class="btn btn-outline-dark w-100">Gửi yêu cầu trả hàng</button>
+                        </form>
+                    </div>
+                <?php elseif (!empty($returnData) && !in_array($returnData['status'], ['refunded', 'rejected', 'cancelled'], true)): ?>
+                    <div class="order-summary-card mt-4">
+                        <h5 class="fw-bold mb-3">Trạng thái trả hàng</h5>
+                        <p class="mb-2">Trạng thái: <strong><?= htmlspecialchars(ReturnRequestModel::statusLabel($returnData['status'])) ?></strong></p>
+                        <?php if (!empty($returnData['reject_reason'])): ?>
+                            <p class="text-danger small mb-2">Lý do từ chối: <?= nl2br(htmlspecialchars($returnData['reject_reason'])) ?></p>
+                        <?php endif; ?>
+                        <?php if (!empty($returnData['shipping_code'])): ?>
+                            <p class="small mb-2">Mã vận chuyển: <?= htmlspecialchars($returnData['shipping_code']) ?></p>
+                        <?php endif; ?>
+                        <?php if ($returnData['status'] === 'approved'): ?>
+                            <form id="returnShippingForm">
+                                <input type="hidden" name="order_id" value="<?= $currentOrderId ?>">
+                                <div class="mb-3">
+                                    <label class="form-label small">Nhập mã vận chuyển hoàn</label>
+                                    <input type="text" name="shipping_code" class="form-control" placeholder="Mã vận chuyển" required>
+                                </div>
+                                <button type="submit" class="btn btn-outline-primary w-100">Gửi mã vận chuyển</button>
+                            </form>
+                        <?php endif; ?>
                     </div>
                 <?php endif; ?>
             </div>
@@ -359,9 +433,20 @@ error_log("Order detail page - currentOrderId: $currentOrderId, order['id']: " .
                                                                     <form class="review-edit-form" data-review-id="<?= $existingReview['review_id'] ?>">
                                                                         <input type="hidden" name="review_id" value="<?= $existingReview['review_id'] ?>">
                                                                         <div class="mb-2">
+                                                                            <label class="form-label small">Cập nhật số sao</label>
+                                                                            <div class="rating-input">
+                                                                                <?php for ($i = 5; $i >= 1; $i--): ?>
+                                                                                    <input type="radio" name="rating" id="edit_rating_<?= $orderItemId ?>_<?= $i ?>" value="<?= $i ?>" <?= ($existingReview['rating'] ?? 0) == $i ? 'checked' : '' ?>>
+                                                                                    <label for="edit_rating_<?= $orderItemId ?>_<?= $i ?>" class="star-label">
+                                                                                        <i class="bi bi-star-fill"></i>
+                                                                                    </label>
+                                                                                <?php endfor; ?>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="mb-2">
                                                                             <label class="form-label small">Cập nhật bình luận</label>
-                                                                            <textarea name="comment" class="form-control" rows="3" required><?= htmlspecialchars($existingReview['comment'] ?? '') ?></textarea>
-                                                                            <small class="text-muted">Không thể xóa, chỉ sửa nội dung.</small>
+                                                                            <textarea name="comment" class="form-control" rows="3"><?= htmlspecialchars($existingReview['comment'] ?? '') ?></textarea>
+                                                                            <small class="text-muted">Có thể sửa số sao hoặc nội dung; để trống nếu chỉ đổi số sao.</small>
                                                                         </div>
                                                                         <button type="submit" class="btn btn-dark btn-sm">Lưu chỉnh sửa</button>
                                                                     </form>
@@ -775,20 +860,26 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Xử lý submit form chỉnh sửa bình luận
+    // Xử lý submit form chỉnh sửa bình luận/số sao
     const editForms = document.querySelectorAll('.review-edit-form');
     editForms.forEach(form => {
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
             const reviewId = parseInt(this.dataset.reviewId || this.querySelector('input[name="review_id"]')?.value || 0);
             const comment = this.querySelector('textarea[name="comment"]')?.value.trim() || '';
+            const ratingInput = this.querySelector('input[name="rating"]:checked');
+            const rating = ratingInput ? parseInt(ratingInput.value, 10) : null;
 
             if (!reviewId) {
                 showErrorToast('Không tìm thấy review_id');
                 return;
             }
-            if (!comment) {
-                showErrorToast('Vui lòng nhập nội dung bình luận');
+            if (!comment && !rating) {
+                showErrorToast('Vui lòng nhập bình luận hoặc chọn số sao');
+                return;
+            }
+            if (rating && (rating < 1 || rating > 5)) {
+                showErrorToast('Số sao phải từ 1 đến 5');
                 return;
             }
 
@@ -801,11 +892,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 const resp = await fetch('<?= BASE_URL ?>?action=review-update', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ review_id: reviewId, comment })
+                    body: JSON.stringify({ review_id: reviewId, comment, rating })
                 });
                 const data = await resp.json();
                 if (data.success) {
-                    showSuccessToast('Đã lưu chỉnh sửa bình luận');
+                    showSuccessToast('Đã lưu chỉnh sửa đánh giá');
                     setTimeout(() => location.reload(), 1000);
                 } else {
                     showErrorToast(data.message || 'Có lỗi khi lưu chỉnh sửa');
@@ -820,6 +911,102 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+});
+</script>
+<script>
+// Return request (simple)
+document.addEventListener('DOMContentLoaded', function() {
+    const fallbackError = (msg) => alert(msg || 'Có lỗi xảy ra');
+    const fallbackSuccess = (msg) => alert(msg || 'Thành công');
+    const toastError = typeof showErrorToast === 'function' ? showErrorToast : fallbackError;
+    const toastSuccess = typeof showSuccessToast === 'function' ? showSuccessToast : fallbackSuccess;
+
+    const returnForm = document.getElementById('returnRequestForm');
+    if (returnForm) {
+        returnForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const orderId = parseInt(this.querySelector('input[name="order_id"]')?.value || 0);
+            const reason = this.querySelector('select[name="reason"]')?.value || '';
+            const note = this.querySelector('textarea[name="note"]')?.value || '';
+            const filesInput = this.querySelector('input[name="evidences[]"]');
+            const files = filesInput?.files || [];
+            if (!orderId || !reason) {
+                toastError('Vui lòng chọn lý do');
+                return;
+            }
+            if (!files || files.length === 0) {
+                toastError('Vui lòng tải lên ít nhất 1 file minh chứng');
+                return;
+            }
+            const btn = this.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.textContent = 'Đang gửi...';
+            try {
+                const formData = new FormData();
+                formData.append('order_id', orderId);
+                formData.append('reason', reason);
+                formData.append('note', note);
+                for (let i = 0; i < files.length; i++) {
+                    formData.append('evidences[]', files[i]);
+                }
+                const resp = await fetch('<?= BASE_URL ?>?action=return-request', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    toastSuccess('Đã gửi yêu cầu trả hàng');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    toastError(data.message || 'Không thể gửi yêu cầu');
+                    btn.disabled = false;
+                    btn.textContent = 'Gửi yêu cầu trả hàng';
+                }
+            } catch (err) {
+                console.error(err);
+                toastError('Có lỗi xảy ra');
+                btn.disabled = false;
+                btn.textContent = 'Gửi yêu cầu trả hàng';
+            }
+        });
+    }
+
+    const shippingForm = document.getElementById('returnShippingForm');
+    if (shippingForm) {
+        shippingForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const orderId = parseInt(this.querySelector('input[name="order_id"]')?.value || 0);
+            const code = this.querySelector('input[name="shipping_code"]')?.value.trim() || '';
+            if (!orderId || !code) {
+                toastError('Vui lòng nhập mã vận chuyển');
+                return;
+            }
+            const btn = this.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.textContent = 'Đang gửi...';
+            try {
+                const resp = await fetch('<?= BASE_URL ?>?action=return-upload-shipping', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ order_id: orderId, shipping_code: code })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    toastSuccess('Đã cập nhật mã vận chuyển');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    toastError(data.message || 'Không thể cập nhật');
+                    btn.disabled = false;
+                    btn.textContent = 'Gửi mã vận chuyển';
+                }
+            } catch (err) {
+                console.error(err);
+                toastError('Có lỗi xảy ra');
+                btn.disabled = false;
+                btn.textContent = 'Gửi mã vận chuyển';
+            }
+        });
+    }
 });
 </script>
 <?php endif; ?>

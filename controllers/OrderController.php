@@ -4,11 +4,13 @@
 class OrderController
 {
     private OrderModel $orderModel;
+    private ReturnRequestModel $returnModel;
 
     public function __construct()
     {
         // Khởi tạo model để tái sử dụng ở mọi action
         $this->orderModel = new OrderModel();
+        $this->returnModel = new ReturnRequestModel();
     }
 
     // Trang liệt kê lịch sử các đơn của tài khoản đang đăng nhập
@@ -77,6 +79,9 @@ class OrderController
             header('Location: ' . BASE_URL . '?action=order-history');
             exit;
         }
+
+        // Lấy thông tin yêu cầu trả hàng (nếu có)
+        $returnRequest = $this->returnModel->findByOrder($orderId);
 
         // Auto-cancel nếu UNPAID quá 24h
         if (($order['status'] ?? '') === OrderModel::STATUS_UNPAID) {
@@ -154,6 +159,7 @@ class OrderController
         $view = 'orders/detail';
         $title = 'Chi tiết đơn hàng';
         $statusMap = OrderModel::statuses();
+        $returnData = $returnRequest;
 
         require_once PATH_VIEW . 'main.php';
     }

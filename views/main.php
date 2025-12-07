@@ -70,6 +70,39 @@
                 <a class="text-dark search-icon-toggle" href="#" id="searchIconToggle" title="Tìm kiếm"><i class="bi bi-search"></i></a>
                 
                 <?php if (isset($_SESSION['user'])): ?>
+                    <div class="notification-wrapper" id="notificationWrapper">
+                        <button type="button" class="notif-bell" id="notificationBell" aria-label="Thông báo">
+                            <i class="bi bi-bell"></i>
+                            <span class="notif-badge d-none" id="notificationBadge">0</span>
+                        </button>
+                        <div class="notification-dropdown" id="notificationDropdown" aria-label="Danh sách thông báo">
+                            <div class="notification-header d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>Thông báo</strong>
+                                    <span class="notif-unread text-muted small" id="notificationUnread"></span>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-link btn-sm p-0 text-danger" id="clearAllNotifBtn">Xóa tất cả</button>
+                                </div>
+                            </div>
+                            <div class="notification-actions-bar">
+                                <div class="form-check mb-0">
+                                    <input class="form-check-input" type="checkbox" id="notifSelectAll">
+                                    <label class="form-check-label small" for="notifSelectAll">Chọn tất cả</label>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="deleteSelectedNotifBtn">Xóa đã chọn</button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="deleteReadNotifBtn">Xóa đã đọc</button>
+                                </div>
+                            </div>
+                            <div class="notification-list" id="notificationList">
+                                <div class="text-center text-muted small py-3">Đang tải...</div>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <?php if (isset($_SESSION['user'])): ?>
                     <div class="dropdown">
                         <a class="text-dark dropdown-toggle text-decoration-none" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Tài khoản">
                             <i class="bi bi-person-circle"></i>
@@ -322,6 +355,285 @@
             if (e.key === 'Escape' && headerSearchWrapper.classList.contains('show')) {
                 closeHeaderSearch();
             }
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const bell = document.getElementById('notificationBell');
+            const dropdown = document.getElementById('notificationDropdown');
+            const listEl = document.getElementById('notificationList');
+            if (!bell || !dropdown || !listEl) return;
+
+            const badgeEl = document.getElementById('notificationBadge');
+            const unreadEl = document.getElementById('notificationUnread');
+            const selectAllEl = document.getElementById('notifSelectAll');
+            const deleteSelectedBtn = document.getElementById('deleteSelectedNotifBtn');
+            const deleteReadBtn = document.getElementById('deleteReadNotifBtn');
+            const clearAllBtn = document.getElementById('clearAllNotifBtn');
+            const markAllBtn = document.getElementById('markAllNotifBtn');
+            const baseUrl = '<?= BASE_URL ?>';
+            let notifications = [];
+            let dropdownOpen = false;
+
+            const icons = {
+                order_status: 'bi bi-box-seam',
+                product: 'bi bi-stars',
+                coupon: 'bi bi-ticket-perforated',
+                review_reply: 'bi bi-chat-dots',
+                default: 'bi bi-bell'
+            };
+
+            function escapeHtml(value) {
+                if (value === null || value === undefined) return '';
+                return value.toString()
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function formatTime(timeString) {
+                const date = new Date(timeString);
+                if (isNaN(date.getTime())) return '';
+                const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+                if (seconds < 60) return 'Vừa xong';
+                const minutes = Math.floor(seconds / 60);
+                if (minutes < 60) return `${minutes} phút trước`;
+                const hours = Math.floor(minutes / 60);
+                if (hours < 24) return `${hours} giờ trước`;
+                const days = Math.floor(hours / 24);
+                if (days < 7) return `${days} ngày trước`;
+                return date.toLocaleDateString('vi-VN');
+            }
+
+            function updateBadge(unread) {
+                if (!badgeEl) return;
+                const safeUnread = Number(unread) || 0;
+                badgeEl.textContent = safeUnread > 9 ? '9+' : safeUnread;
+                badgeEl.classList.toggle('d-none', safeUnread === 0);
+                if (unreadEl) {
+                    unreadEl.textContent = safeUnread > 0 ? `${safeUnread} chưa đọc` : '';
+                }
+            }
+
+            function renderCouponDetail(meta) {
+                const discountValue = meta.discount_value ?? '';
+                const discountType = meta.discount_type === 'percentage' ? '%' : 'đ';
+                const minOrder = meta.min_order_amount ? Number(meta.min_order_amount).toLocaleString('vi-VN') + ' đ' : 'Không yêu cầu';
+                const endDate = meta.end_date ? new Date(meta.end_date).toLocaleDateString('vi-VN') : 'Không giới hạn';
+                const maxDiscount = meta.max_discount_amount ? Number(meta.max_discount_amount).toLocaleString('vi-VN') + ' đ' : 'Không giới hạn';
+
+                return `
+                    <div class="coupon-meta-row">
+                        <span class="badge bg-dark me-2">${escapeHtml(meta.code || '')}</span>
+                        <span>${escapeHtml(meta.name || 'Ưu đãi mới')}</span>
+                    </div>
+                    <div class="small text-muted mt-1">Giảm ${escapeHtml(discountValue)}${discountType} • ĐH tối thiểu ${minOrder}</div>
+                    <div class="small text-muted">Giảm tối đa ${maxDiscount}</div>
+                    <div class="small text-muted">Hạn dùng: ${endDate}</div>
+                `;
+            }
+
+            function renderList() {
+                if (!notifications.length) {
+                    listEl.innerHTML = '<div class="text-center text-muted small py-3">Chưa có thông báo</div>';
+                    updateBadge(0);
+                    return;
+                }
+
+                const html = notifications.map((item) => {
+                    const icon = icons[item.type] || icons.default;
+                    const readClass = item.is_read ? 'read' : 'unread';
+
+                    return `
+                        <div class="notification-item ${readClass}" data-id="${item.id}" data-type="${item.type}">
+                            <div class="notification-main">
+                                <div class="notif-icon"><i class="${icon}"></i></div>
+                                <div class="notif-body">
+                                    <div class="notif-title">${escapeHtml(item.title || 'Thông báo')}</div>
+                                    ${item.content ? `<div class="notif-content">${escapeHtml(item.content)}</div>` : ''}
+                                    <div class="notif-meta">${formatTime(item.created_at)}</div>
+                                </div>
+                                <div class="notif-actions">
+                                    <input type="checkbox" class="form-check-input notif-check" value="${item.id}">
+                                    <button type="button" class="btn btn-link p-0 text-danger notif-delete-one" aria-label="Xóa thông báo"><i class="bi bi-x-lg"></i></button>
+                                </div>
+                            </div>
+                            <div class="notification-extra d-none" data-id="${item.id}"></div>
+                        </div>
+                    `;
+                }).join('');
+
+                listEl.innerHTML = html;
+                const unreadCount = notifications.filter(n => !n.is_read).length;
+                updateBadge(unreadCount);
+            }
+
+            async function fetchNotifications() {
+                try {
+                    const res = await fetch(baseUrl + '?action=notifications');
+                    const data = await res.json();
+                    if (data.success) {
+                        notifications = data.items || [];
+                        renderList();
+                        updateBadge(data.unread ?? notifications.filter(n => !n.is_read).length);
+                    }
+                } catch (error) {
+                    console.error('Không thể tải thông báo', error);
+                }
+            }
+
+            async function markRead(ids = [], markAll = false) {
+                if (!markAll && (!ids || ids.length === 0)) return;
+                try {
+                    const res = await fetch(baseUrl + '?action=notification-mark-read', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(markAll ? { all: true } : { ids })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        if (markAll) {
+                            notifications = notifications.map(n => ({ ...n, is_read: 1 }));
+                            renderList();
+                        }
+                        updateBadge(data.unread ?? notifications.filter(n => !n.is_read).length);
+                    }
+                } catch (error) {
+                    console.error('Không thể đánh dấu đã đọc', error);
+                }
+            }
+
+            async function deleteNotifications(options) {
+                try {
+                    const res = await fetch(baseUrl + '?action=notification-delete', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(options)
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        if (options.mode === 'all') {
+                            notifications = [];
+                        } else if (options.mode === 'read') {
+                            notifications = notifications.filter(n => !n.is_read);
+                        } else if (options.ids && options.ids.length) {
+                            const removeIds = new Set(options.ids.map(Number));
+                            notifications = notifications.filter(n => !removeIds.has(Number(n.id)));
+                        }
+                        renderList();
+                    }
+                } catch (error) {
+                    console.error('Không thể xóa thông báo', error);
+                }
+            }
+
+            function getSelectedIds() {
+                return Array.from(listEl.querySelectorAll('.notif-check:checked')).map((input) => parseInt(input.value, 10)).filter(Boolean);
+            }
+
+            function setDropdown(open) {
+                dropdownOpen = open;
+                dropdown.classList.toggle('show', open);
+            }
+
+            bell.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                setDropdown(!dropdownOpen);
+                if (dropdownOpen) {
+                    fetchNotifications();
+                }
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!dropdownOpen) return;
+                if (!dropdown.contains(e.target) && !bell.contains(e.target)) {
+                    setDropdown(false);
+                }
+            });
+
+            listEl.addEventListener('click', function (e) {
+                const itemEl = e.target.closest('.notification-item');
+                if (!itemEl) return;
+                const notifId = parseInt(itemEl.dataset.id, 10);
+                const notif = notifications.find(n => Number(n.id) === notifId);
+                if (!notif) return;
+
+                if (e.target.classList.contains('notif-check')) {
+                    e.stopPropagation();
+                    return;
+                }
+
+                if (e.target.classList.contains('notif-delete-one') || e.target.closest('.notif-delete-one')) {
+                    e.preventDefault();
+                    deleteNotifications({ ids: [notifId] });
+                    return;
+                }
+
+                // Đánh dấu đã đọc ngay tại UI, không render lại để giữ trạng thái mở rộng
+                notifications = notifications.map(n => Number(n.id) === notifId ? { ...n, is_read: 1 } : n);
+                itemEl.classList.remove('unread');
+                itemEl.classList.add('read');
+                updateBadge(notifications.filter(n => !n.is_read).length);
+                markRead([notifId]);
+
+                if (notif.type === 'coupon') {
+                    const extra = itemEl.querySelector('.notification-extra');
+                    if (extra) {
+                        if (!extra.innerHTML.trim()) {
+                            extra.innerHTML = renderCouponDetail(notif.meta || {});
+                        }
+                        extra.classList.toggle('d-none');
+                    }
+                    return;
+                }
+
+                if (notif.action_url) {
+                    window.location.href = notif.action_url;
+                }
+            });
+
+            if (selectAllEl) {
+                selectAllEl.addEventListener('change', function () {
+                    const checked = selectAllEl.checked;
+                    listEl.querySelectorAll('.notif-check').forEach((input) => {
+                        input.checked = checked;
+                    });
+                });
+            }
+
+            if (deleteSelectedBtn) {
+                deleteSelectedBtn.addEventListener('click', function () {
+                    const ids = getSelectedIds();
+                    if (ids.length) {
+                        deleteNotifications({ ids });
+                    }
+                });
+            }
+
+            if (deleteReadBtn) {
+                deleteReadBtn.addEventListener('click', function () {
+                    deleteNotifications({ mode: 'read' });
+                });
+            }
+
+            if (clearAllBtn) {
+                clearAllBtn.addEventListener('click', function () {
+                    deleteNotifications({ mode: 'all' });
+                });
+            }
+
+            if (markAllBtn) {
+                markAllBtn.addEventListener('click', function () {
+                    markRead([], true);
+                });
+            }
+
+            fetchNotifications();
+            setInterval(fetchNotifications, 60000);
         });
     </script>
 

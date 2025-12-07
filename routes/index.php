@@ -16,6 +16,11 @@ match ($action) {
     'search-api'     => (new ProductController)->searchApi(),
     'search-smart'   => (new ProductController)->searchSmart(),
     
+    // Notification routes
+    'notifications'          => (new NotificationController)->index(),
+    'notification-mark-read' => (new NotificationController)->markRead(),
+    'notification-delete'    => (new NotificationController)->delete(),
+    
     // Post routes
     'posts'          => (new PostController)->index(),
     'post-detail'    => (new PostController)->detail(),
@@ -68,6 +73,11 @@ match ($action) {
     'review-upload-image' => (new ReviewController)->uploadImage(),
     'review-get'     => (new ReviewController)->getByProduct(),
     'review-update'  => (new ReviewController)->update(),
+
+    // Return requests (user)
+    'return-request' => (new ReturnController)->create(),
+    'return-upload-shipping' => (new ReturnController)->uploadShipping(),
+    'return-cancel' => (new ReturnController)->cancel(),
 
     // Routes quản trị
     'admin-dashboard'    => (new AdminDashboardController)->index(),
@@ -131,6 +141,11 @@ match ($action) {
     'admin-review-toggle-hidden' => (new AdminReviewController)->toggleHidden(),
     'admin-review-delete' => (new AdminReviewController)->delete(),
     'admin-review-detail' => (new AdminReviewController)->detail(),
+    // Return requests (admin)
+    'admin-return-approve' => (new AdminReturnController)->approve(),
+    'admin-return-reject' => (new AdminReturnController)->reject(),
+    'admin-return-receive' => (new AdminReturnController)->receive(),
+    'admin-return-refund' => (new AdminReturnController)->refund(),
     
     // Auth routes
     'show-login'         => (new AuthController)->showLogin(),

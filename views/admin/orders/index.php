@@ -93,6 +93,7 @@
                                         <?php
                                             $pm = strtolower($order['payment_method'] ?? 'cod');
                                             $status = $order['status'];
+                                            $ret = $returnMap[$order['id']] ?? null;
                                         ?>
                                         <div class="d-flex flex-column gap-2">
                                             <div class="d-flex flex-wrap gap-2 align-items-center">
@@ -111,12 +112,23 @@
                                                 <?php if ($isPaid): ?>
                                                     <span class="badge bg-success px-2 py-1">Đã thanh toán</span>
                                                 <?php endif; ?>
+                                                <?php if ($ret): ?>
+                                                    <span class="badge bg-warning text-dark px-2 py-1">
+                                                        Trả hàng: <?= htmlspecialchars(ReturnRequestModel::statusLabel($ret['status'])) ?>
+                                                    </span>
+                                                <?php endif; ?>
                                             </div>
                                             <?php if ($status === OrderModel::STATUS_CANCEL_REQUEST): ?>
                                                 <form method="POST" action="<?= BASE_URL ?>?action=admin-order-approve-cancel" class="mb-0">
                                                     <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
                                                     <button class="btn btn-sm btn-outline-danger w-100">Xác nhận hủy</button>
                                                 </form>
+                                                <?php if (!empty($order['cancel_reason'])): ?>
+                                                    <div class="mt-2 small text-danger">
+                                                        <i class="bi bi-exclamation-octagon"></i>
+                                                        <?= htmlspecialchars($order['cancel_reason']) ?>
+                                                    </div>
+                                                <?php endif; ?>
                                             <?php elseif ($status === OrderModel::STATUS_PENDING): ?>
                                                 <form method="POST" action="<?= BASE_URL ?>?action=admin-order-confirm" class="mb-0">
                                                     <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
@@ -127,6 +139,11 @@
                                                     <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
                                                     <button class="btn btn-sm btn-outline-primary w-100">Xác nhận đã giao</button>
                                                 </form>
+                                            <?php elseif ($status === OrderModel::STATUS_CANCELLED && !empty($order['cancel_reason'])): ?>
+                                                <div class="mt-2 small text-danger">
+                                                    <i class="bi bi-x-octagon"></i>
+                                                    <?= htmlspecialchars($order['cancel_reason']) ?>
+                                                </div>
                                             <?php endif; ?>
                                         </div>
                                     </td>

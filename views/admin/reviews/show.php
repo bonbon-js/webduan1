@@ -98,15 +98,22 @@
 
 <div class="card">
     <div class="card-body">
-        <h5 class="mb-3">Lịch sử sửa bình luận</h5>
+        <h5 class="mb-3">Lịch sử sửa đánh giá</h5>
         <?php if (empty($history)): ?>
             <p class="text-muted mb-0">Chưa có lịch sử sửa.</p>
         <?php else: ?>
             <div class="timeline">
                 <?php foreach (array_reverse($history) as $h): ?>
                     <div class="timeline-item mb-3">
-                        <div class="fw-semibold"><?= nl2br(htmlspecialchars($h['comment'] ?? '')) ?></div>
-                        <div class="text-muted small"><?= htmlspecialchars($h['edited_at'] ?? '') ?></div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <strong><?= isset($h['rating']) ? (int)$h['rating'] . '/5' : '' ?></strong>
+                            <div class="text-muted small"><?= htmlspecialchars($h['edited_at'] ?? '') ?></div>
+                        </div>
+                        <?php if (!empty($h['comment'])): ?>
+                            <div class="fw-semibold"><?= nl2br(htmlspecialchars($h['comment'])) ?></div>
+                        <?php else: ?>
+                            <div class="text-muted">Không có bình luận</div>
+                        <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
             </div>

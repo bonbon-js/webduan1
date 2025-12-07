@@ -32,6 +32,63 @@
                 <span class="badge bg-<?= OrderModel::statusBadge($order['status']) ?> px-3 py-2">
                     <?= OrderModel::statusLabel($order['status']) ?>
                 </span>
+                <?php if (!empty($returnRequest)): ?>
+                    <div class="mt-3 p-2 bg-light border rounded">
+                        <div class="fw-semibold">Yêu cầu trả hàng: <?= htmlspecialchars(ReturnRequestModel::statusLabel($returnRequest['status'])) ?></div>
+                        <?php if (!empty($returnRequest['reason'])): ?>
+                            <div class="small text-muted">Lý do: <?= htmlspecialchars($returnRequest['reason']) ?></div>
+                        <?php endif; ?>
+                        <?php if (!empty($returnRequest['shipping_code'])): ?>
+                            <div class="small">Mã vận chuyển: <?= htmlspecialchars($returnRequest['shipping_code']) ?></div>
+                        <?php endif; ?>
+                        <?php if (!empty($returnRequest['images'])): ?>
+                            <div class="small mt-2">Minh chứng:</div>
+                            <div class="d-flex flex-wrap gap-2">
+                                <?php foreach ($returnRequest['images'] as $img): ?>
+                                    <a href="<?= htmlspecialchars($img) ?>" target="_blank" class="badge bg-secondary text-decoration-none"><?= basename($img) ?></a>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                        <?php if (!empty($returnRequest['reject_reason'])): ?>
+                            <div class="small text-danger mt-2">Lý do từ chối: <?= nl2br(htmlspecialchars($returnRequest['reject_reason'])) ?></div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <?php if ($returnRequest['status'] === 'requested'): ?>
+                            <form method="POST" action="<?= BASE_URL ?>?action=admin-return-approve">
+                                <input type="hidden" name="return_id" value="<?= $returnRequest['id'] ?>">
+                                <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
+                                <button class="btn btn-sm btn-primary">Duyệt</button>
+                            </form>
+                            <form method="POST" action="<?= BASE_URL ?>?action=admin-return-reject">
+                                <input type="hidden" name="return_id" value="<?= $returnRequest['id'] ?>">
+                                <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
+                                <div class="mb-2">
+                                    <textarea name="reject_reason" class="form-control form-control-sm" rows="2" placeholder="Lý do từ chối" required></textarea>
+                                </div>
+                                <button class="btn btn-sm btn-outline-danger w-100">Từ chối</button>
+                            </form>
+                        <?php elseif ($returnRequest['status'] === 'shipping'): ?>
+                            <form method="POST" action="<?= BASE_URL ?>?action=admin-return-receive">
+                                <input type="hidden" name="return_id" value="<?= $returnRequest['id'] ?>">
+                                <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
+                                <button class="btn btn-sm btn-dark">Xác nhận đã nhận hàng</button>
+                            </form>
+                        <?php elseif ($returnRequest['status'] === 'received'): ?>
+                            <form method="POST" action="<?= BASE_URL ?>?action=admin-return-refund">
+                                <input type="hidden" name="return_id" value="<?= $returnRequest['id'] ?>">
+                                <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
+                                <button class="btn btn-sm btn-success">Đánh dấu hoàn tiền</button>
+                            </form>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+                <?php if (!empty($order['cancel_reason'])): ?>
+                    <div class="alert alert-danger mt-3 mb-1">
+                        <strong>Lý do hủy:</strong>
+                        <div class="mb-0"><?= nl2br(htmlspecialchars($order['cancel_reason'])) ?></div>
+                    </div>
+                <?php endif; ?>
                 <div class="mt-3">
                     <strong>Tổng tiền:</strong> <?= number_format($order['total_amount'] ?? 0, 0, ',', '.') ?> đ
                 </div>

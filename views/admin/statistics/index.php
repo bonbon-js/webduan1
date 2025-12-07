@@ -177,7 +177,7 @@ require_once PATH_MODEL . 'OrderModel.php';
                                 </span>
                             </td>
                             <td>
-                                <a href="<?= BASE_URL ?>?action=admin-orders" class="btn btn-sm btn-outline-primary">Xem</a>
+                                <a href="<?= BASE_URL ?>?action=admin-order-detail&id=<?= $order['id'] ?>" class="btn btn-sm btn-outline-primary">Xem</a>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -185,16 +185,20 @@ require_once PATH_MODEL . 'OrderModel.php';
             </tbody>
         </table>
 
-        <div class="pagination">
+        <div class="pagination d-flex justify-content-between align-items-center">
             <div class="pagination-info">
                 Showing 1-<?= min(6, count($orders)) ?> of <?= count($orders) ?>
             </div>
-            <div class="pagination-buttons">
-                <button class="pagination-btn">Previous</button>
-                <button class="pagination-btn active">1</button>
-                <button class="pagination-btn">2</button>
-                <button class="pagination-btn">3</button>
-                <button class="pagination-btn">Next</button>
+            <div class="pagination-buttons d-flex gap-2 align-items-center">
+                <button class="pagination-btn btn btn-outline-secondary btn-sm" title="Previous">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                <button class="pagination-btn btn btn-outline-secondary btn-sm active">1</button>
+                <button class="pagination-btn btn btn-outline-secondary btn-sm">2</button>
+                <button class="pagination-btn btn btn-outline-secondary btn-sm">3</button>
+                <button class="pagination-btn btn btn-outline-secondary btn-sm" title="Next">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
             </div>
         </div>
     </div>

@@ -382,9 +382,9 @@ class ReviewModel extends BaseModel
     }
 
     /**
-     * Người dùng cập nhật bình luận (không xóa). Lưu lịch sử chỉnh sửa.
+     * Người dùng cập nhật bình luận và/hoặc số sao. Lưu lịch sử thay đổi.
      */
-    public function updateUserComment(int $reviewId, int $userId, string $newComment): bool
+    public function updateUserComment(int $reviewId, int $userId, string $newComment, ?int $newRating = null): bool
     {
         $this->ensureCommentHistoryColumn();
 
@@ -396,24 +396,31 @@ class ReviewModel extends BaseModel
             throw new Exception('Bạn không có quyền sửa đánh giá này');
         }
 
+        // Nếu không gửi rating mới, giữ nguyên rating cũ
+        $currentRating = (int)($review['rating'] ?? 0);
+        $targetRating = $newRating !== null ? (int)$newRating : $currentRating;
+        if ($targetRating < 1 || $targetRating > 5) {
+            throw new Exception('Số sao không hợp lệ (1-5)');
+        }
+
         $history = [];
         if (!empty($review['comment_history'])) {
             $decoded = json_decode($review['comment_history'], true);
             $history = is_array($decoded) ? $decoded : [];
         }
 
-        // Ghi lại lịch sử với nội dung cũ (nếu có)
-        if (isset($review['comment'])) {
-            $history[] = [
-                'comment'   => $review['comment'],
-                'edited_at' => date('Y-m-d H:i:s'),
-                'user_id'   => $userId,
-            ];
-        }
+        // Ghi lại lịch sử với nội dung và rating cũ
+        $history[] = [
+            'comment'   => $review['comment'] ?? null,
+            'rating'    => $currentRating,
+            'edited_at' => date('Y-m-d H:i:s'),
+            'user_id'   => $userId,
+        ];
 
         $stmt = $this->pdo->prepare("
             UPDATE {$this->table}
             SET comment = :comment,
+                rating = :rating,
                 comment_history = :history,
                 updated_at = CURRENT_TIMESTAMP
             WHERE review_id = :review_id
@@ -421,6 +428,7 @@ class ReviewModel extends BaseModel
 
         return $stmt->execute([
             ':comment' => $newComment !== '' ? $newComment : null,
+            ':rating' => $targetRating,
             ':history' => json_encode($history),
             ':review_id' => $reviewId,
         ]);

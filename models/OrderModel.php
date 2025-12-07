@@ -468,6 +468,13 @@ class OrderModel extends BaseModel
             throw new InvalidArgumentException('Trạng thái không hợp lệ.');
         }
 
+        // Lấy đơn hàng hiện tại để tránh tạo thông báo trùng và có dữ liệu user/order_code
+        $order = $this->findWithItems($orderId);
+        $previousStatus = $order['status'] ?? null;
+        if ($previousStatus === $status) {
+            return true;
+        }
+
         // Sử dụng bảng orders_new với PRIMARY KEY là 'id'
         $stmt = $this->pdo->prepare("
             UPDATE orders_new 
@@ -475,10 +482,49 @@ class OrderModel extends BaseModel
             WHERE id = :id
         ");
 
-        return $stmt->execute([
+        $updated = $stmt->execute([
             ':status' => $status,
             ':id'     => $orderId,
         ]);
+
+        // Tự động tạo thông báo thay đổi trạng thái đơn cho khách hàng
+        if ($updated && $order) {
+            try {
+                $statusLabel = self::statusLabel($status);
+                $orderCode = $order['order_code'] ?? ('#' . $orderId);
+                $notificationModel = new NotificationModel();
+
+                // xác định user_id: ưu tiên user_id, fallback email
+                $targetUserId = (int)($order['user_id'] ?? 0);
+                if ($targetUserId <= 0 && !empty($order['email'])) {
+                    $userModel = new UserModel();
+                    $found = $userModel->findByEmail($order['email']);
+                    if ($found) {
+                        $targetUserId = (int)($found['user_id'] ?? $found['id'] ?? 0);
+                    }
+                }
+                if ($targetUserId > 0) {
+                    $notificationModel->create(
+                        $targetUserId,
+                        'order_status',
+                        "Đơn {$orderCode} cập nhật trạng thái",
+                        "Trạng thái mới: {$statusLabel}",
+                        BASE_URL . '?action=order-detail&id=' . $orderId,
+                        [
+                            'order_id' => $orderId,
+                            'order_code' => $order['order_code'] ?? null,
+                            'status' => $status,
+                            'status_label' => $statusLabel,
+                            'payment_method' => $order['payment_method'] ?? null,
+                        ]
+                    );
+                }
+            } catch (Throwable $e) {
+                error_log('OrderModel::updateStatus notification error: ' . $e->getMessage());
+            }
+        }
+
+        return $updated;
     }
 
     // Người dùng hủy đơn (ghi nhận lý do nếu có)

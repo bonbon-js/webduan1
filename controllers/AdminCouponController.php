@@ -1,6 +1,8 @@
 <?php
 
 require_once PATH_MODEL . 'CouponModel.php';
+require_once PATH_MODEL . 'NotificationModel.php';
+require_once PATH_MODEL . 'UserModel.php';
 
 class AdminCouponController
 {
@@ -171,7 +173,8 @@ class AdminCouponController
         unset($data['id'], $data['coupon_id'], $data['couponId']);
         
         try {
-            $this->couponModel->create($data);
+            $couponId = $this->couponModel->create($data);
+            $this->notifyNewCoupon($couponId, $data);
             set_flash('success', 'Tạo mã giảm giá thành công.');
         } catch (Throwable $exception) {
             set_flash('danger', 'Không thể tạo mã giảm giá: ' . $exception->getMessage());
@@ -453,6 +456,48 @@ class AdminCouponController
         
         header('Location: ' . BASE_URL . '?action=admin-coupons-trash');
         exit;
+    }
+
+    private function notifyNewCoupon(int $couponId, array $data): void
+    {
+        try {
+            $coupon = $this->couponModel->getById($couponId, true);
+            if (!$coupon) {
+                return;
+            }
+
+            $userModel = new UserModel();
+            $customers = $userModel->getAll(null, 'customer');
+            $userIds = array_map(function ($user) {
+                return (int)($user['user_id'] ?? $user['id'] ?? 0);
+            }, $customers);
+
+            $notificationModel = new NotificationModel();
+            $title = 'Mã giảm giá mới: ' . ($coupon['code'] ?? '');
+            $content = $coupon['name'] ?? 'Nhận ưu đãi mới cho đơn hàng của bạn.';
+
+            $notificationModel->createBulk(
+                $userIds,
+                'coupon',
+                $title,
+                $content,
+                null,
+                [
+                    'coupon_id' => $couponId,
+                    'code' => $coupon['code'] ?? null,
+                    'name' => $coupon['name'] ?? null,
+                    'discount_type' => $coupon['discount_type'] ?? null,
+                    'discount_value' => $coupon['discount_value'] ?? null,
+                    'min_order_amount' => $coupon['min_order_amount'] ?? null,
+                    'max_discount_amount' => $coupon['max_discount_amount'] ?? null,
+                    'start_date' => $coupon['start_date'] ?? null,
+                    'end_date' => $coupon['end_date'] ?? null,
+                    'status' => $coupon['status'] ?? null,
+                ]
+            );
+        } catch (Throwable $e) {
+            error_log('AdminCouponController::notifyNewCoupon - ' . $e->getMessage());
+        }
     }
 
     private function requireAdmin(): void

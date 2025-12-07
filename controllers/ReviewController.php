@@ -92,14 +92,19 @@ class ReviewController
         $data = json_decode(file_get_contents('php://input'), true);
         $reviewId = (int)($data['review_id'] ?? 0);
         $comment  = trim($data['comment'] ?? '');
+        $rating   = isset($data['rating']) ? (int)$data['rating'] : null;
 
         if ($reviewId <= 0) {
             echo json_encode(['success' => false, 'message' => 'Thiếu review_id']);
             exit;
         }
 
-        if ($comment === '') {
-            echo json_encode(['success' => false, 'message' => 'Nội dung bình luận không được để trống']);
+        if ($comment === '' && $rating === null) {
+            echo json_encode(['success' => false, 'message' => 'Vui lòng nhập bình luận hoặc cập nhật số sao']);
+            exit;
+        }
+        if ($rating !== null && ($rating < 1 || $rating > 5)) {
+            echo json_encode(['success' => false, 'message' => 'Số sao phải từ 1 đến 5']);
             exit;
         }
 
@@ -114,8 +119,8 @@ class ReviewController
                 exit;
             }
 
-            $this->reviewModel->updateUserComment($reviewId, $userId, $comment);
-            echo json_encode(['success' => true, 'message' => 'Cập nhật bình luận thành công']);
+            $this->reviewModel->updateUserComment($reviewId, $userId, $comment, $rating);
+            echo json_encode(['success' => true, 'message' => 'Cập nhật đánh giá thành công']);
         } catch (Exception $e) {
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);
         }

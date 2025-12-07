@@ -1,6 +1,7 @@
 <?php
 
 require_once PATH_MODEL . 'UserModel.php';
+require_once PATH_MODEL . 'ReturnRequestModel.php';
 
 // Controller dành cho admin xử lý danh sách/cập nhật trạng thái đơn
 class AdminOrderController
@@ -112,6 +113,18 @@ class AdminOrderController
             !empty($keyword) ? $keyword : null,
             !empty($status) ? $status : null
         );
+
+        // Lấy map trả hàng cho các đơn
+        $returnMap = [];
+        try {
+            $returnModel = new ReturnRequestModel();
+            $orderIds = array_map(function ($o) {
+                return (int)($o['id'] ?? 0);
+            }, $orders);
+            $returnMap = $returnModel->getLatestByOrderIds($orderIds);
+        } catch (Throwable $e) {
+            // ignore
+        }
         
         // Lấy map trạng thái để hiển thị trong dropdown
         $statusMap = OrderModel::statuses();
@@ -168,7 +181,7 @@ class AdminOrderController
 
             error_log("AdminOrderController::updateStatus - Old status: $oldStatus, New status: $status");
 
-            // Cập nhật trạng thái
+            // Cập nhật trạng thái (sẽ tự notify trong OrderModel)
             $success = $this->orderModel->updateStatus($orderId, $status);
             
             if (!$success) {
@@ -222,6 +235,13 @@ class AdminOrderController
         }
 
         $order = $this->orderModel->findWithItems($id);
+        $returnRequest = null;
+        try {
+            $returnModel = new ReturnRequestModel();
+            $returnRequest = $returnModel->findByOrder($id);
+        } catch (Throwable $e) {
+            // ignore
+        }
         if (!$order) {
             set_flash('danger', 'Không tìm thấy đơn hàng');
             header('Location: ' . BASE_URL . '?action=admin-orders');

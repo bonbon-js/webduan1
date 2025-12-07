@@ -126,6 +126,7 @@ class AdminProductController
         
         try {
             $productId = $this->productModel->createProduct($payload);
+            $this->notifyNewProduct($productId, $payload);
             set_flash('success', 'Đã tạo sản phẩm. Bạn có thể thêm biến thể ngay bây giờ.');
             header('Location: ' . BASE_URL . '?action=admin-product-edit&id=' . $productId);
             exit;
@@ -467,6 +468,37 @@ class AdminProductController
     {
         $value = str_replace(['.', ','], ['', '.'], (string)$value);
         return (float)$value;
+    }
+
+    private function notifyNewProduct(int $productId, array $payload): void
+    {
+        try {
+            $userModel = new UserModel();
+            $customers = $userModel->getAll(null, 'customer');
+            $userIds = array_map(function ($user) {
+                return (int)($user['user_id'] ?? $user['id'] ?? 0);
+            }, $customers);
+
+            $notificationModel = new NotificationModel();
+            $title = 'Sản phẩm mới: ' . ($payload['name'] ?? 'Sản phẩm mới');
+            $content = 'Khám phá ngay sản phẩm vừa ra mắt.';
+
+            $notificationModel->createBulk(
+                $userIds,
+                'product',
+                $title,
+                $content,
+                BASE_URL . '?action=product-detail&id=' . $productId,
+                [
+                    'product_id' => $productId,
+                    'name' => $payload['name'] ?? null,
+                    'price' => $payload['price'] ?? null,
+                    'image_url' => $payload['image_url'] ?? null,
+                ]
+            );
+        } catch (Throwable $e) {
+            error_log('AdminProductController::notifyNewProduct - ' . $e->getMessage());
+        }
     }
 
     private function requireAdmin(): void
