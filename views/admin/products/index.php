@@ -129,6 +129,13 @@
                         </td>
                         <td>
                             <div class="action-buttons">
+                                <a 
+                                    class="btn btn-info btn-sm text-white me-1" 
+                                    title="Xem chi tiết" 
+                                    href="<?= BASE_URL ?>?action=admin-product-detail&id=<?= $product['product_id'] ?>"
+                                >
+                                    <i class="bi bi-eye"></i>
+                                </a>
                                 <a href="<?= BASE_URL ?>?action=admin-product-edit&id=<?= $product['product_id'] ?>" class="btn-edit" title="Chỉnh sửa">
                                     <i class="bi bi-pencil"></i>
                                 </a>

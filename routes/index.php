@@ -1,5 +1,8 @@
 <?php
 
+// Đảm bảo controller mua hàng được load (phục vụ kiểm tra tĩnh & tránh lỗi thiếu method)
+require_once PATH_CONTROLLER . 'OrderController.php';
+
 $action = $_GET['action'] ?? '/';
 
 match ($action) {
@@ -13,6 +16,11 @@ match ($action) {
     'get-variant-stock' => (new ProductController)->getVariantStock(),
     'search-api'     => (new ProductController)->searchApi(),
     'search-smart'   => (new ProductController)->searchSmart(),
+    
+    // Notification routes
+    'notifications'          => (new NotificationController)->index(),
+    'notification-mark-read' => (new NotificationController)->markRead(),
+    'notification-delete'    => (new NotificationController)->delete(),
     
     // Post routes
     'posts'          => (new PostController)->index(),
@@ -57,17 +65,30 @@ match ($action) {
     'order-history'  => (new OrderController)->history(),
     'order-detail'   => (new OrderController)->detail(),
     'order-cancel'   => (new OrderController)->cancel(),
+    'order-confirm'  => (new OrderController)->confirmReceived(),
+    'order-pay'      => (new OrderController)->pay(),
+    'order-rebuy'    => (new OrderController)->rebuy(),
     
     // Routes đánh giá cho user
     'review-submit'  => (new ReviewController)->submit(),
     'review-upload-image' => (new ReviewController)->uploadImage(),
     'review-get'     => (new ReviewController)->getByProduct(),
+    'review-update'  => (new ReviewController)->update(),
+
+    // Return requests (user)
+    'return-request' => (new ReturnController)->create(),
+    'return-upload-shipping' => (new ReturnController)->uploadShipping(),
+    'return-cancel' => (new ReturnController)->cancel(),
 
     // Routes quản trị
     'admin-dashboard'    => (new AdminDashboardController)->index(),
     'admin-statistics'   => (new AdminStatisticsController)->index(),
-    'admin-orders'       => (new AdminOrderController)->index(),
-    'admin-order-update' => (new AdminOrderController)->updateStatus(),
+    'admin-orders'            => (new AdminOrderController)->index(),
+    'admin-order-update'      => (new AdminOrderController)->updateStatus(),
+    'admin-order-detail'      => (new AdminOrderController)->detail(),
+    'admin-order-approve-cancel' => (new AdminOrderController)->approveCancel(),
+    'admin-order-confirm'     => (new AdminOrderController)->confirmOrder(),
+    'admin-order-delivered'   => (new AdminOrderController)->confirmDelivered(),
     // Quản lý tài khoản
     'admin-users'        => (new AdminUserController)->index(),
     'admin-user-role'    => (new AdminUserController)->updateRole(),
@@ -78,6 +99,7 @@ match ($action) {
     'admin-coupon-create' => (new AdminCouponController)->create(),
     'admin-coupon-update' => (new AdminCouponController)->update(),
     'admin-coupon-delete' => (new AdminCouponController)->delete(),
+    'admin-coupon-edit'   => (new AdminCouponController)->edit(),
     'admin-coupons-trash' => (new AdminCouponController)->trash(),
     'admin-coupon-restore' => (new AdminCouponController)->restore(),
     'admin-coupon-force-delete' => (new AdminCouponController)->forceDelete(),
@@ -104,6 +126,7 @@ match ($action) {
     'admin-products-trash' => (new AdminProductController)->trash(),
     'admin-product-create' => (new AdminProductController)->create(),
     'admin-product-edit'   => (new AdminProductController)->edit(),
+    'admin-product-detail' => (new AdminProductController)->detail(),
     'admin-product-store'  => (new AdminProductController)->store(),
     'admin-product-update' => (new AdminProductController)->update(),
     'admin-product-delete' => (new AdminProductController)->delete(),
@@ -118,6 +141,12 @@ match ($action) {
     'admin-review-reply' => (new AdminReviewController)->reply(),
     'admin-review-toggle-hidden' => (new AdminReviewController)->toggleHidden(),
     'admin-review-delete' => (new AdminReviewController)->delete(),
+    'admin-review-detail' => (new AdminReviewController)->detail(),
+    // Return requests (admin)
+    'admin-return-approve' => (new AdminReturnController)->approve(),
+    'admin-return-reject' => (new AdminReturnController)->reject(),
+    'admin-return-receive' => (new AdminReturnController)->receive(),
+    'admin-return-refund' => (new AdminReturnController)->refund(),
     
     // Auth routes
     'show-login'         => (new AuthController)->showLogin(),

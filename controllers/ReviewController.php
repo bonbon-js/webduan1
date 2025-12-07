@@ -75,6 +75,58 @@ class ReviewController
     }
 
     /**
+     * Người dùng cập nhật bình luận (không xóa), lưu lịch sử
+     */
+    public function update(): void
+    {
+        header('Content-Type: application/json');
+
+        if (!isset($_SESSION['user'])) {
+            echo json_encode(['success' => false, 'message' => 'Vui lòng đăng nhập']);
+            exit;
+        }
+
+        $user = $_SESSION['user'] ?? [];
+        $userId = (int)($user['user_id'] ?? $user['id'] ?? 0);
+
+        $data = json_decode(file_get_contents('php://input'), true);
+        $reviewId = (int)($data['review_id'] ?? 0);
+        $comment  = trim($data['comment'] ?? '');
+        $rating   = isset($data['rating']) ? (int)$data['rating'] : null;
+
+        if ($reviewId <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Thiếu review_id']);
+            exit;
+        }
+
+        if ($comment === '' && $rating === null) {
+            echo json_encode(['success' => false, 'message' => 'Vui lòng nhập bình luận hoặc cập nhật số sao']);
+            exit;
+        }
+        if ($rating !== null && ($rating < 1 || $rating > 5)) {
+            echo json_encode(['success' => false, 'message' => 'Số sao phải từ 1 đến 5']);
+            exit;
+        }
+
+        try {
+            $review = $this->reviewModel->getById($reviewId);
+            if (!$review) {
+                echo json_encode(['success' => false, 'message' => 'Không tìm thấy đánh giá']);
+                exit;
+            }
+            if ((int)($review['user_id'] ?? 0) !== $userId) {
+                echo json_encode(['success' => false, 'message' => 'Bạn không có quyền sửa đánh giá này']);
+                exit;
+            }
+
+            $this->reviewModel->updateUserComment($reviewId, $userId, $comment, $rating);
+            echo json_encode(['success' => true, 'message' => 'Cập nhật đánh giá thành công']);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    /**
      * Submit đánh giá cho một sản phẩm trong đơn hàng
      */
     public function submit(): void
@@ -141,9 +193,9 @@ class ReviewController
             exit;
         }
 
-        // Kiểm tra đơn hàng đã được giao chưa
-        if ($order['status'] !== OrderModel::STATUS_DELIVERED) {
-            echo json_encode(['success' => false, 'message' => 'Chỉ có thể đánh giá khi đơn hàng đã được giao']);
+        // Kiểm tra đơn hàng đã được giao hoặc hoàn thành chưa
+        if (!in_array($order['status'], [OrderModel::STATUS_DELIVERED, OrderModel::STATUS_COMPLETED], true)) {
+            echo json_encode(['success' => false, 'message' => 'Chỉ có thể đánh giá khi đơn hàng đã được giao/hoàn thành']);
             exit;
         }
 

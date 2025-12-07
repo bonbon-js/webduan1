@@ -42,6 +42,7 @@ $productId = $isEditing ? (int)$product['id'] : null;
                       placeholder="Mô tả chi tiết sản phẩm"><?= htmlspecialchars($product['description'] ?? '') ?></textarea>
         </div>
 
+        <?php $hasVariants = !empty($variants ?? []); ?>
         <div class="form-grid-2">
             <div>
                 <label class="form-label" for="price">Giá bán (VNĐ) <span class="text-danger">*</span></label>
@@ -49,9 +50,15 @@ $productId = $isEditing ? (int)$product['id'] : null;
                        value="<?= htmlspecialchars($product['price'] ?? '') ?>" placeholder="0">
             </div>
             <div>
-                <label class="form-label" for="stock">Tồn kho <span class="text-danger">*</span></label>
-                <input type="number" id="stock" name="stock" min="0" class="form-control" required
-                       value="<?= htmlspecialchars($product['stock'] ?? 0) ?>" placeholder="0">
+                <?php if ($hasVariants): ?>
+                    <label class="form-label" for="stock">Tồn kho sản phẩm cha</label>
+                    <input type="number" id="stock" name="stock" min="0" class="form-control" value="" readonly>
+                    <small class="text-muted">Sản phẩm có biến thể. Tồn kho được quản lý ở từng biến thể.</small>
+                <?php else: ?>
+                    <label class="form-label" for="stock">Tồn kho <span class="text-danger">*</span></label>
+                    <input type="number" id="stock" name="stock" min="0" class="form-control" required
+                           value="<?= htmlspecialchars($product['stock'] ?? 0) ?>" placeholder="0">
+                <?php endif; ?>
             </div>
         </div>
 
@@ -115,7 +122,7 @@ $productId = $isEditing ? (int)$product['id'] : null;
     <!-- Form thêm biến thể -->
     <div class="form-card">
         <h3 class="mb-4 fs-125 fw-bold">Thêm biến thể mới (Size/Màu sắc)</h3>
-        <form method="POST" action="<?= BASE_URL ?>?action=admin-product-variant-store">
+        <form method="POST" action="<?= BASE_URL ?>?action=admin-product-variant-store" enctype="multipart/form-data">
             <input type="hidden" name="product_id" value="<?= $productId ?>">
             
             <div class="form-grid-3-compact">
@@ -130,6 +137,11 @@ $productId = $isEditing ? (int)$product['id'] : null;
                 <div>
                     <label class="form-label">Tồn kho</label>
                     <input type="number" min="0" name="stock" class="form-control" value="0" required>
+                </div>
+                <div>
+                    <label class="form-label">Ảnh biến thể</label>
+                    <input type="file" name="variant_image" accept="image/*" class="form-control">
+                    <small class="text-muted">Tùy chọn. JPG/PNG/GIF, tối đa 5MB</small>
                 </div>
             </div>
 
@@ -176,8 +188,10 @@ $productId = $isEditing ? (int)$product['id'] : null;
         <?php else: ?>
             <?php foreach ($variants as $variant): 
                 $variantAttrs = [];
+                $variantAttrMap = [];
                 foreach ($variant['attributes'] ?? [] as $attr) {
                     $variantAttrs[] = $attr['value_name'] ?? '';
+                    $variantAttrMap[$attr['attribute_id']] = $attr['value_id'] ?? null;
                 }
                 $variantName = implode(' / ', $variantAttrs);
             ?>
@@ -212,7 +226,68 @@ $productId = $isEditing ? (int)$product['id'] : null;
                             <strong class="text-slate">ID:</strong><br>
                             #<?= htmlspecialchars($variant['variant_id']) ?>
                         </div>
+                        <div>
+                            <strong class="text-slate">Ảnh:</strong><br>
+                            <?php if (!empty($variant['image_url'])): ?>
+                                <img src="<?= htmlspecialchars($variant['image_url']) ?>" alt="Variant image" style="max-width:90px; max-height:90px; border-radius:6px; border:1px solid #e2e8f0;">
+                            <?php else: ?>
+                                <span class="text-muted">Chưa có</span>
+                            <?php endif; ?>
+                        </div>
                     </div>
+
+                    <form class="mt-3 variant-edit-form" method="POST" action="<?= BASE_URL ?>?action=admin-product-variant-update" enctype="multipart/form-data">
+                        <input type="hidden" name="variant_id" value="<?= $variant['variant_id'] ?>">
+                        <input type="hidden" name="product_id" value="<?= $productId ?>">
+                        <div class="form-grid-3-compact">
+                            <div>
+                                <label class="form-label">SKU</label>
+                                <input type="text" name="sku" class="form-control" value="<?= htmlspecialchars($variant['sku'] ?? '') ?>">
+                            </div>
+                            <div>
+                                <label class="form-label">Giá cộng thêm (VNĐ)</label>
+                                <input type="number" step="500" name="additional_price" class="form-control" value="<?= htmlspecialchars($variant['additional_price'] ?? 0) ?>">
+                            </div>
+                            <div>
+                                <label class="form-label">Tồn kho</label>
+                                <input type="number" min="0" name="stock" class="form-control" value="<?= htmlspecialchars($variant['stock'] ?? 0) ?>" required>
+                            </div>
+                            <div>
+                                <label class="form-label">Ảnh biến thể (tùy chọn)</label>
+                                <input type="file" name="variant_image" accept="image/*" class="form-control">
+                                <small class="text-muted">Bỏ trống nếu giữ ảnh cũ</small>
+                            </div>
+                        </div>
+
+                        <?php 
+                        $attributesWithValues = array_filter($attributes, function($attr) {
+                            return !empty($attr['values']);
+                        });
+                        if (!empty($attributesWithValues)): 
+                        ?>
+                        <div class="dynamic-attributes-grid cols-<?= min(count($attributesWithValues), 3) ?> mt-3">
+                            <?php foreach ($attributesWithValues as $attribute): ?>
+                                <div>
+                                    <label class="form-label"><?= htmlspecialchars($attribute['attribute_name']) ?> <span class="text-danger">*</span></label>
+                                    <select class="form-select" name="attribute_values[<?= $attribute['attribute_id'] ?>]" required>
+                                        <option value="">— Chọn —</option>
+                                        <?php foreach ($attribute['values'] as $value): ?>
+                                            <option value="<?= $value['value_id'] ?>" <?= ($variantAttrMap[$attribute['attribute_id']] ?? null) == $value['value_id'] ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($value['value_name']) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php endif; ?>
+
+                        <div class="mt-3 text-end">
+                            <button type="submit" class="btn-submit btn-sm">
+                                <i class="bi bi-save"></i> Lưu biến thể
+                            </button>
+                        </div>
+                    </form>
                 </div>
             <?php endforeach; ?>
         <?php endif; ?>

@@ -288,12 +288,16 @@ class ProductModel extends BaseModel
      */
     public function getVariantsDetailed(int $productId): array
     {
+        // Đảm bảo có cột image_url để tránh lỗi khi select
+        $this->ensureVariantImageColumn();
+
         $sql = "SELECT 
                     pv.variant_id,
                     pv.product_id,
                     pv.sku,
                     pv.additional_price,
                     pv.stock,
+                    pv.image_url,
                     a.attribute_id,
                     a.attribute_name,
                     av.value_id,
@@ -319,6 +323,7 @@ class ProductModel extends BaseModel
                     'sku' => $row['sku'],
                     'additional_price' => (float)($row['additional_price'] ?? 0),
                     'stock' => (int)$row['stock'],
+                    'image_url' => $row['image_url'] ?? null,
                     'attributes' => [],
                 ];
             }
@@ -344,18 +349,20 @@ class ProductModel extends BaseModel
         // Loại bỏ PRIMARY KEY khỏi variantData
         $variantData = $this->removePrimaryKeyFromData($variantData, 'product_variants');
         
+        $this->ensureVariantImageColumn();
         $this->pdo->beginTransaction();
 
         try {
             $stmt = $this->pdo->prepare("
-                INSERT INTO product_variants (product_id, sku, additional_price, stock)
-                VALUES (:product_id, :sku, :additional_price, :stock)
+                INSERT INTO product_variants (product_id, sku, additional_price, stock, image_url)
+                VALUES (:product_id, :sku, :additional_price, :stock, :image_url)
             ");
             $stmt->execute([
                 ':product_id' => $productId,
                 ':sku' => $variantData['sku'] ?? null,
                 ':additional_price' => $variantData['additional_price'] ?? 0,
                 ':stock' => $variantData['stock'] ?? 0,
+                ':image_url' => $variantData['image_url'] ?? null,
             ]);
 
             $variantId = (int)$this->pdo->lastInsertId();
@@ -375,22 +382,30 @@ class ProductModel extends BaseModel
      */
     public function updateVariant(int $variantId, array $variantData, array $valueIds): bool
     {
+        $this->ensureVariantImageColumn();
         $this->pdo->beginTransaction();
 
         try {
-            $stmt = $this->pdo->prepare("
+            $setImage = array_key_exists('image_url', $variantData);
+            $sql = "
                 UPDATE product_variants
                 SET sku = :sku,
                     additional_price = :additional_price,
-                    stock = :stock
-                WHERE variant_id = :variant_id
-            ");
-            $stmt->execute([
-                ':sku' => $variantData['sku'] ?? null,
-                ':additional_price' => $variantData['additional_price'] ?? 0,
-                ':stock' => $variantData['stock'] ?? 0,
-                ':variant_id' => $variantId,
-            ]);
+                    stock = :stock";
+            if ($setImage) {
+                $sql .= ", image_url = :image_url";
+            }
+            $sql .= " WHERE variant_id = :variant_id";
+
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':sku', $variantData['sku'] ?? null);
+            $stmt->bindValue(':additional_price', $variantData['additional_price'] ?? 0);
+            $stmt->bindValue(':stock', $variantData['stock'] ?? 0, PDO::PARAM_INT);
+            if ($setImage) {
+                $stmt->bindValue(':image_url', $variantData['image_url']);
+            }
+            $stmt->bindValue(':variant_id', $variantId, PDO::PARAM_INT);
+            $stmt->execute();
 
             $productId = $this->getProductIdByVariant($variantId);
             if (!$productId) {
@@ -493,6 +508,25 @@ class ProductModel extends BaseModel
         }
     }
 
+    /**
+     * Đảm bảo bảng product_variants có cột image_url (để lưu ảnh biến thể)
+     */
+    private function ensureVariantImageColumn(): void
+    {
+        try {
+            $sql = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+                    WHERE TABLE_NAME = 'product_variants' 
+                      AND TABLE_SCHEMA = DATABASE()
+                      AND COLUMN_NAME = 'image_url'";
+            $exists = (int)$this->pdo->query($sql)->fetchColumn() > 0;
+            if (!$exists) {
+                $this->pdo->exec("ALTER TABLE product_variants ADD COLUMN image_url VARCHAR(255) NULL AFTER stock");
+            }
+        } catch (PDOException $e) {
+            // Nếu không có quyền/không tồn tại bảng, bỏ qua để không chặn luồng chính
+        }
+    }
+
     private function upsertPrimaryImage(int $productId, ?string $imageUrl): void
     {
         // Nếu bảng product_images không tồn tại, bỏ qua
@@ -548,32 +582,46 @@ class ProductModel extends BaseModel
      */
     public function getProductAttributes(int $productId): array
     {
-        // Sizes
-        $sqlSize = "SELECT DISTINCT av.value_name
-                    FROM product_attribute_values pav
-                    JOIN attribute_values av ON pav.value_id = av.value_id
-                    JOIN attributes a ON av.attribute_id = a.attribute_id
-                    WHERE pav.product_id = :pid AND a.attribute_name = 'Size'
-                    ORDER BY av.value_name";
-        $stmt = $this->pdo->prepare($sqlSize);
+        // Lấy tất cả cặp (attribute_name, value_name) của sản phẩm, tránh phụ thuộc tên chuẩn hóa cứng
+        $sql = "SELECT DISTINCT a.attribute_name, av.value_name
+                FROM product_attribute_values pav
+                JOIN attribute_values av ON pav.value_id = av.value_id
+                JOIN attributes a ON av.attribute_id = a.attribute_id
+                WHERE pav.product_id = :pid";
+        $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':pid', $productId, PDO::PARAM_INT);
         $stmt->execute();
-        $sizes = array_map(fn($r) => $r['value_name'], $stmt->fetchAll(PDO::FETCH_ASSOC));
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Colors
-        $sqlColor = "SELECT DISTINCT av.value_name
-                     FROM product_attribute_values pav
-                     JOIN attribute_values av ON pav.value_id = av.value_id
-                     JOIN attributes a ON av.attribute_id = a.attribute_id
-                     WHERE pav.product_id = :pid AND a.attribute_name = 'Color'
-                     ORDER BY av.value_name";
-        $stmt = $this->pdo->prepare($sqlColor);
-        $stmt->bindValue(':pid', $productId, PDO::PARAM_INT);
-        $stmt->execute();
-        $colors = array_map(fn($r) => $r['value_name'], $stmt->fetchAll(PDO::FETCH_ASSOC));
+        $sizes  = [];
+        $colors = [];
+
+        foreach ($rows as $row) {
+            $attrName = mb_strtolower(trim($row['attribute_name'] ?? ''));
+            $value    = $row['value_name'] ?? '';
+
+            // Nhận diện size: chứa "size", "kích", "kich"
+            if (preg_match('/size|kích|kich/i', $attrName)) {
+                $sizes[] = $value;
+                continue;
+            }
+
+            // Nhận diện màu: chứa "color", "màu", "mau"
+            if (preg_match('/color|màu|mau/i', $attrName)) {
+                $colors[] = $value;
+            }
+        }
+
+        // Loại bỏ trùng
+        $sizes  = array_values(array_unique($sizes));
+        $colors = array_values(array_unique($colors));
+
+        // Sắp xếp để UI ổn định
+        sort($sizes, SORT_NATURAL | SORT_FLAG_CASE);
+        sort($colors, SORT_NATURAL | SORT_FLAG_CASE);
 
         return [
-            'sizes' => $sizes,
+            'sizes'  => $sizes,
             'colors' => $colors,
         ];
     }
@@ -584,19 +632,20 @@ class ProductModel extends BaseModel
      */
     public function getVariantByValueNames(int $productId, ?string $sizeName, ?string $colorName): ?array
     {
+        $this->ensureVariantImageColumn();
         $selected = array_values(array_filter([$sizeName, $colorName], fn($v) => $v !== null && $v !== ''));
         if (count($selected) === 0) {
             return null;
         }
 
-        // Tìm variant có đủ tất cả value_name đã chọn
+        // Tìm variant có đủ tất cả value_name đã chọn (không phân biệt hoa/thường của value_name)
         $inPlaceholders = implode(',', array_fill(0, count($selected), '?'));
-        $sql = "SELECT pv.variant_id, pv.sku, pv.additional_price, pv.stock
+        $sql = "SELECT pv.variant_id, pv.sku, pv.additional_price, pv.stock, pv.image_url
                 FROM product_variants pv
                 JOIN product_attribute_values pav ON pv.variant_id = pav.variant_id
                 JOIN attribute_values av ON pav.value_id = av.value_id
                 WHERE pv.product_id = ?
-                  AND av.value_name IN ($inPlaceholders)
+                  AND LOWER(av.value_name) IN ($inPlaceholders)
                 GROUP BY pv.variant_id, pv.sku, pv.additional_price, pv.stock
                 HAVING COUNT(DISTINCT av.value_name) = ?
                 LIMIT 1";
@@ -604,7 +653,7 @@ class ProductModel extends BaseModel
         $bindIndex = 1;
         $stmt->bindValue($bindIndex++, $productId, PDO::PARAM_INT);
         foreach ($selected as $name) {
-            $stmt->bindValue($bindIndex++, $name, PDO::PARAM_STR);
+            $stmt->bindValue($bindIndex++, mb_strtolower($name), PDO::PARAM_STR);
         }
         $stmt->bindValue($bindIndex++, count($selected), PDO::PARAM_INT);
         $stmt->execute();
@@ -840,6 +889,61 @@ class ProductModel extends BaseModel
     }
 
     /**
+     * Top sản phẩm bán chạy trong khoảng ngày (theo số lượng)
+     */
+    public function getTopSelling(string $fromDate, string $toDate, int $limit = 5): array
+    {
+        $sql = "
+            SELECT 
+                oi.product_id,
+                p.product_name,
+                SUM(oi.quantity) AS qty,
+                SUM(oi.quantity * oi.unit_price) AS revenue
+            FROM order_items oi
+            JOIN orders_new o ON o.id = oi.order_id
+            JOIN products p ON p.product_id = oi.product_id
+            WHERE o.status = 'delivered'
+              AND DATE(o.created_at) BETWEEN :from_date AND :to_date
+            GROUP BY oi.product_id, p.product_name
+            ORDER BY qty DESC
+            LIMIT :limit
+        ";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':from_date', $fromDate, PDO::PARAM_STR);
+        $stmt->bindValue(':to_date', $toDate, PDO::PARAM_STR);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Top sản phẩm bán chậm nhất (ít đơn giao thành công)
+     */
+    public function getSlowSelling(string $fromDate, string $toDate, int $limit = 5): array
+    {
+        $sql = "
+            SELECT 
+                oi.product_id,
+                p.product_name,
+                SUM(oi.quantity) AS qty
+            FROM order_items oi
+            JOIN orders_new o ON o.id = oi.order_id
+            JOIN products p ON p.product_id = oi.product_id
+            WHERE o.status = 'delivered'
+              AND DATE(o.created_at) BETWEEN :from_date AND :to_date
+            GROUP BY oi.product_id, p.product_name
+            ORDER BY qty ASC
+            LIMIT :limit
+        ";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':from_date', $fromDate, PDO::PARAM_STR);
+        $stmt->bindValue(':to_date', $toDate, PDO::PARAM_STR);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Lấy hình ảnh của sản phẩm
      * @param int $productId ID sản phẩm
      * @return array Danh sách hình ảnh
@@ -863,11 +967,26 @@ class ProductModel extends BaseModel
      */
     public function getVariantImages(int $variantId): array
     {
-        $sql = "SELECT image_url, is_primary
-                FROM variant_images
-                WHERE variant_id = :variant_id
-                ORDER BY is_primary DESC, variant_image_id ASC";
-        $stmt = $this->pdo->prepare($sql);
+        // Nếu bảng variant_images không tồn tại hoặc không có dữ liệu, sẽ fallback sang cột image_url của product_variants
+        try {
+            $sql = "SELECT image_url, is_primary
+                    FROM variant_images
+                    WHERE variant_id = :variant_id
+                    ORDER BY is_primary DESC, variant_image_id ASC";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':variant_id', $variantId, PDO::PARAM_INT);
+            $stmt->execute();
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            if (!empty($rows)) {
+                return $rows;
+            }
+        } catch (PDOException $e) {
+            // Bảng không tồn tại, bỏ qua
+        }
+
+        // Fallback: lấy ảnh từ cột image_url của product_variants
+        $this->ensureVariantImageColumn();
+        $stmt = $this->pdo->prepare("SELECT image_url, 1 AS is_primary FROM product_variants WHERE variant_id = :variant_id AND image_url IS NOT NULL");
         $stmt->bindValue(':variant_id', $variantId, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -879,32 +998,48 @@ class ProductModel extends BaseModel
      */
     public function getVariantImagesByColor(int $productId, string $colorName): array
     {
-        $sql = "SELECT DISTINCT vi.image_url, vi.is_primary, vi.variant_image_id
+        // Cố gắng lấy ảnh từ variant_images trước
+        try {
+            $sql = "SELECT DISTINCT vi.image_url, vi.is_primary, vi.variant_image_id
+                    FROM product_variants pv
+                    JOIN product_attribute_values pav ON pav.variant_id = pv.variant_id
+                    JOIN attribute_values av ON av.value_id = pav.value_id
+                    JOIN attributes a ON a.attribute_id = av.attribute_id
+                    JOIN variant_images vi ON vi.variant_id = pv.variant_id
+                    WHERE pv.product_id = :pid
+                      AND (LOWER(a.attribute_name) LIKE '%color%' OR LOWER(a.attribute_name) LIKE '%màu%' OR LOWER(a.attribute_name) LIKE '%mau%')
+                      AND LOWER(av.value_name) = LOWER(:color)
+                    ORDER BY vi.is_primary DESC, vi.variant_image_id ASC";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':pid', $productId, PDO::PARAM_INT);
+            $stmt->bindValue(':color', $colorName, PDO::PARAM_STR);
+            $stmt->execute();
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $urls = array_unique(array_column($rows, 'image_url'));
+            if (!empty($urls)) {
+                return $urls;
+            }
+        } catch (PDOException $e) {
+            // ignore
+        }
+
+        // Fallback: lấy ảnh từ cột image_url của product_variants theo Color
+        $this->ensureVariantImageColumn();
+        $sql = "SELECT DISTINCT pv.image_url
                 FROM product_variants pv
                 JOIN product_attribute_values pav ON pav.variant_id = pv.variant_id
                 JOIN attribute_values av ON av.value_id = pav.value_id
                 JOIN attributes a ON a.attribute_id = av.attribute_id
-                JOIN variant_images vi ON vi.variant_id = pv.variant_id
                 WHERE pv.product_id = :pid
-                  AND a.attribute_name = 'Color'
-                  AND av.value_name = :color
-                ORDER BY vi.is_primary DESC, vi.variant_image_id ASC";
+                  AND LOWER(a.attribute_name) = 'color'
+                  AND LOWER(av.value_name) = LOWER(:color)
+                  AND pv.image_url IS NOT NULL";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':pid', $productId, PDO::PARAM_INT);
         $stmt->bindValue(':color', $colorName, PDO::PARAM_STR);
         $stmt->execute();
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        // Trả về danh sách URL duy nhất theo thứ tự ưu tiên
-        $seen = [];
-        $urls = [];
-        foreach ($rows as $row) {
-            $u = $row['image_url'] ?? '';
-            if ($u !== '' && !isset($seen[$u])) {
-                $seen[$u] = true;
-                $urls[] = $u;
-            }
-        }
-        return $urls;
+        return array_unique(array_column($rows, 'image_url'));
     }
 
     /**

@@ -3,34 +3,43 @@
 class OrderModel extends BaseModel
 {
     // Các hằng trạng thái của đơn hàng được dùng xuyên suốt hệ thống
-    public const STATUS_CONFIRMED    = 'confirmed';
-    public const STATUS_PREPARING    = 'preparing';
-    public const STATUS_SHIPPED      = 'shipped';
-    public const STATUS_OUT_OF_STOCK = 'out_of_stock';
-    public const STATUS_ON_THE_WAY   = 'on_the_way';
-    public const STATUS_DELIVERED    = 'delivered';
-    public const STATUS_CANCELLED    = 'cancelled';
+    public const STATUS_UNPAID         = 'unpaid';          // Chờ thanh toán
+    public const STATUS_PAID           = 'paid';            // Đã thanh toán
+    public const STATUS_PAYMENT_FAILED = 'payment_failed';  // Thanh toán thất bại
+    public const STATUS_PENDING        = 'pending';         // Chờ shop xác nhận
+    public const STATUS_TO_SHIP        = 'to_ship';         // Đang giao (chuẩn bị/ giao)
+    public const STATUS_DELIVERED      = 'delivered';       // Đã giao
+    public const STATUS_COMPLETED      = 'completed';       // Hoàn thành (user xác nhận đã nhận)
+    public const STATUS_CANCELLED      = 'cancelled';       // Đã hủy
+    public const STATUS_RETURNED       = 'returned';        // Trả hàng/Hoàn tiền
+    public const STATUS_CANCEL_REQUEST = 'cancel_requested'; // Người dùng yêu cầu hủy
 
     // Map trạng thái -> nội dung tiếng Việt hiển thị ngoài giao diện
     private const STATUS_LABELS = [
-        self::STATUS_CONFIRMED    => 'Xác nhận đơn hàng',
-        self::STATUS_PREPARING    => 'Đang chuẩn bị đơn hàng',
-        self::STATUS_SHIPPED      => 'Đã giao cho đơn vị vận chuyển',
-        self::STATUS_OUT_OF_STOCK => 'Hết hàng',
-        self::STATUS_ON_THE_WAY   => 'Đang trên đường giao',
-        self::STATUS_DELIVERED    => 'Đã giao hàng thành công',
-        self::STATUS_CANCELLED    => 'Đã hủy',
+        self::STATUS_UNPAID         => 'Chờ Thanh Toán',
+        self::STATUS_PAID           => 'Đã Thanh Toán',
+        self::STATUS_PAYMENT_FAILED => 'Thanh toán thất bại',
+        self::STATUS_PENDING        => 'Chờ Xác Nhận',
+        self::STATUS_TO_SHIP        => 'Đang Giao',
+        self::STATUS_DELIVERED      => 'Đã Giao',
+        self::STATUS_COMPLETED      => 'Hoàn Thành',
+        self::STATUS_CANCELLED      => 'Đã Hủy',
+        self::STATUS_RETURNED       => 'Trả Hàng / Hoàn Tiền',
+        self::STATUS_CANCEL_REQUEST => 'Yêu cầu hủy',
     ];
 
     // Map trạng thái -> màu sắc badge Bootstrap (phục vụ view)
     private const STATUS_BADGES = [
-        self::STATUS_CONFIRMED    => 'secondary',
-        self::STATUS_PREPARING    => 'warning',
-        self::STATUS_SHIPPED      => 'info',
-        self::STATUS_OUT_OF_STOCK => 'dark',
-        self::STATUS_ON_THE_WAY   => 'primary',
-        self::STATUS_DELIVERED    => 'success',
-        self::STATUS_CANCELLED    => 'danger',
+        self::STATUS_UNPAID         => 'warning',
+        self::STATUS_PAID           => 'primary',
+        self::STATUS_PAYMENT_FAILED => 'danger',
+        self::STATUS_PENDING        => 'secondary',
+        self::STATUS_TO_SHIP        => 'info',
+        self::STATUS_DELIVERED      => 'primary',
+        self::STATUS_COMPLETED      => 'success',
+        self::STATUS_CANCELLED      => 'danger',
+        self::STATUS_RETURNED       => 'dark',
+        self::STATUS_CANCEL_REQUEST => 'warning',
     ];
 
     public function __construct()
@@ -55,6 +64,60 @@ class OrderModel extends BaseModel
     public static function statusBadge(string $status): string
     {
         return self::STATUS_BADGES[$status] ?? 'secondary';
+    }
+
+    /**
+     * Kiểm tra chuyển trạng thái hợp lệ (không nhảy cóc / lùi trạng thái)
+     */
+    public static function isValidTransition(string $current, string $target, string $paymentMethod = 'cod'): bool
+    {
+        if ($current === $target) {
+            return true;
+        }
+
+        // Map chuyển trạng thái cho đơn online (thanh toán trước)
+        $online = [
+            self::STATUS_UNPAID         => [self::STATUS_PAID, self::STATUS_PAYMENT_FAILED, self::STATUS_CANCELLED],
+            self::STATUS_PAYMENT_FAILED => [self::STATUS_UNPAID, self::STATUS_CANCELLED],
+            self::STATUS_PAID           => [self::STATUS_PENDING],
+            self::STATUS_PENDING        => [self::STATUS_TO_SHIP, self::STATUS_CANCEL_REQUEST],
+            self::STATUS_CANCEL_REQUEST => [self::STATUS_CANCELLED],
+            self::STATUS_TO_SHIP        => [self::STATUS_DELIVERED],
+            self::STATUS_DELIVERED      => [self::STATUS_COMPLETED, self::STATUS_RETURNED],
+            self::STATUS_COMPLETED      => [self::STATUS_RETURNED],
+            self::STATUS_CANCELLED      => [],
+            self::STATUS_RETURNED       => [],
+        ];
+
+        // Map chuyển trạng thái cho đơn COD (bỏ qua unpaid/paid/payment_failed)
+        $cod = [
+            self::STATUS_PENDING        => [self::STATUS_TO_SHIP, self::STATUS_CANCEL_REQUEST],
+            self::STATUS_CANCEL_REQUEST => [self::STATUS_CANCELLED],
+            self::STATUS_TO_SHIP        => [self::STATUS_DELIVERED],
+            self::STATUS_DELIVERED      => [self::STATUS_COMPLETED, self::STATUS_RETURNED],
+            self::STATUS_COMPLETED      => [self::STATUS_RETURNED],
+            self::STATUS_CANCELLED      => [],
+            self::STATUS_RETURNED       => [],
+        ];
+
+        $isCod = strtolower($paymentMethod) === 'cod';
+
+        // Nếu COD, không cho chuyển tới/ra các trạng thái thanh toán online
+        if ($isCod) {
+            if (in_array($target, [self::STATUS_UNPAID, self::STATUS_PAID, self::STATUS_PAYMENT_FAILED], true)) {
+                return false;
+            }
+            $map = $cod;
+        } else {
+            $map = $online;
+        }
+
+        // Nếu current không nằm trong map, coi như không hợp lệ
+        if (!isset($map[$current])) {
+            return false;
+        }
+
+        return in_array($target, $map[$current], true);
     }
 
     // Tạo mới đơn hàng + danh sách sản phẩm con
@@ -129,7 +192,7 @@ class OrderModel extends BaseModel
             
             $insertColumns[] = 'status';
             $insertValues[] = ':status';
-            $orderPayload[':status'] = $orderData['status'] ?? self::STATUS_CONFIRMED;
+            $orderPayload[':status'] = $orderData['status'] ?? self::STATUS_UNPAID;
             
             $insertColumns[] = 'total_amount';
             $insertValues[] = ':total_amount';
@@ -302,6 +365,52 @@ class OrderModel extends BaseModel
         }
     }
 
+    // Đếm số đơn trong ngày (theo created_at) của user
+    public function countOrdersToday(int $userId): int
+    {
+        if (!$userId) {
+            return 0;
+        }
+        $sql = "SELECT COUNT(*) AS cnt FROM orders_new WHERE user_id = :uid AND DATE(created_at) = CURDATE()";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['uid' => $userId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int)($row['cnt'] ?? 0);
+    }
+
+    // Đếm số đơn đã giao thành công của user
+    public function countDeliveredOrders(int $userId): int
+    {
+        if (!$userId) {
+            return 0;
+        }
+        $sql = "SELECT COUNT(*) AS cnt FROM orders_new WHERE user_id = :uid AND status = :status";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'uid' => $userId,
+            'status' => self::STATUS_DELIVERED
+        ]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int)($row['cnt'] ?? 0);
+    }
+
+    // Kiểm tra user đã có đơn giao thành công với tổng tiền >= ngưỡng chưa
+    public function hasDeliveredOrderOverAmount(int $userId, float $amountThreshold): bool
+    {
+        if (!$userId) {
+            return false;
+        }
+        $sql = "SELECT COUNT(*) AS cnt FROM orders_new WHERE user_id = :uid AND status = :status AND total_amount >= :amt LIMIT 1";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'uid' => $userId,
+            'status' => self::STATUS_DELIVERED,
+            'amt' => $amountThreshold
+        ]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return ((int)($row['cnt'] ?? 0)) > 0;
+    }
+
     // Lấy thông tin đơn hàng + danh sách sản phẩm (dùng cho chi tiết)
     public function findWithItems(int $orderId): ?array
     {
@@ -359,6 +468,13 @@ class OrderModel extends BaseModel
             throw new InvalidArgumentException('Trạng thái không hợp lệ.');
         }
 
+        // Lấy đơn hàng hiện tại để tránh tạo thông báo trùng và có dữ liệu user/order_code
+        $order = $this->findWithItems($orderId);
+        $previousStatus = $order['status'] ?? null;
+        if ($previousStatus === $status) {
+            return true;
+        }
+
         // Sử dụng bảng orders_new với PRIMARY KEY là 'id'
         $stmt = $this->pdo->prepare("
             UPDATE orders_new 
@@ -366,10 +482,49 @@ class OrderModel extends BaseModel
             WHERE id = :id
         ");
 
-        return $stmt->execute([
+        $updated = $stmt->execute([
             ':status' => $status,
             ':id'     => $orderId,
         ]);
+
+        // Tự động tạo thông báo thay đổi trạng thái đơn cho khách hàng
+        if ($updated && $order) {
+            try {
+                $statusLabel = self::statusLabel($status);
+                $orderCode = $order['order_code'] ?? ('#' . $orderId);
+                $notificationModel = new NotificationModel();
+
+                // xác định user_id: ưu tiên user_id, fallback email
+                $targetUserId = (int)($order['user_id'] ?? 0);
+                if ($targetUserId <= 0 && !empty($order['email'])) {
+                    $userModel = new UserModel();
+                    $found = $userModel->findByEmail($order['email']);
+                    if ($found) {
+                        $targetUserId = (int)($found['user_id'] ?? $found['id'] ?? 0);
+                    }
+                }
+                if ($targetUserId > 0) {
+                    $notificationModel->create(
+                        $targetUserId,
+                        'order_status',
+                        "Đơn {$orderCode} cập nhật trạng thái",
+                        "Trạng thái mới: {$statusLabel}",
+                        BASE_URL . '?action=order-detail&id=' . $orderId,
+                        [
+                            'order_id' => $orderId,
+                            'order_code' => $order['order_code'] ?? null,
+                            'status' => $status,
+                            'status_label' => $statusLabel,
+                            'payment_method' => $order['payment_method'] ?? null,
+                        ]
+                    );
+                }
+            } catch (Throwable $e) {
+                error_log('OrderModel::updateStatus notification error: ' . $e->getMessage());
+            }
+        }
+
+        return $updated;
     }
 
     // Người dùng hủy đơn (ghi nhận lý do nếu có)
@@ -392,7 +547,18 @@ class OrderModel extends BaseModel
     // Điều kiện cho phép hủy đơn
     public function canCancel(array $order): bool
     {
-        return $order['status'] === self::STATUS_PREPARING;
+        return in_array($order['status'], [self::STATUS_UNPAID, self::STATUS_PENDING], true);
+    }
+
+    // Lưu lý do hủy đơn (nếu cột tồn tại)
+    public function saveCancelReason(int $orderId, ?string $reason): void
+    {
+        try {
+            $stmt = $this->pdo->prepare("UPDATE orders_new SET cancel_reason = :reason WHERE id = :id");
+            $stmt->execute([':reason' => $reason, ':id' => $orderId]);
+        } catch (Throwable $e) {
+            // Bỏ qua nếu bảng không có cột cancel_reason
+        }
     }
 
     // Sinh mã đơn độc nhất dạng BBxxxx
@@ -549,6 +715,172 @@ class OrderModel extends BaseModel
             // Nếu có lỗi (cột không tồn tại), trả về 0
             return 0.0;
         }
+    }
+
+    // Thống kê đơn và doanh thu theo khoảng ngày (chỉ đơn đã giao thành công)
+    public function getStatsByRange(string $fromDate, string $toDate): array
+    {
+        $sql = "
+            SELECT 
+                COUNT(*) AS orders,
+                COALESCE(SUM(total_amount), 0) AS revenue
+            FROM orders_new
+            WHERE status = :status
+              AND DATE(created_at) BETWEEN :from_date AND :to_date
+        ";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            ':status' => self::STATUS_DELIVERED,
+            ':from_date' => $fromDate,
+            ':to_date' => $toDate,
+        ]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return [
+            'orders' => (int)($row['orders'] ?? 0),
+            'revenue' => (float)($row['revenue'] ?? 0),
+        ];
+    }
+
+    /**
+     * Doanh thu theo từng ngày trong khoảng (để vẽ line chart)
+     */
+    public function getDailyRevenue(string $fromDate, string $toDate): array
+    {
+        $sql = "
+            SELECT DATE(created_at) AS d, COALESCE(SUM(total_amount), 0) AS revenue
+            FROM orders_new
+            WHERE status = :status
+              AND DATE(created_at) BETWEEN :from_date AND :to_date
+            GROUP BY DATE(created_at)
+            ORDER BY d
+        ";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            ':status' => self::STATUS_DELIVERED,
+            ':from_date' => $fromDate,
+            ':to_date' => $toDate,
+        ]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Đơn hàng theo từng ngày trong khoảng (để vẽ bar chart)
+     */
+    public function getDailyOrders(string $fromDate, string $toDate): array
+    {
+        $sql = "
+            SELECT DATE(created_at) AS d, COUNT(*) AS orders
+            FROM orders_new
+            WHERE DATE(created_at) BETWEEN :from_date AND :to_date
+            GROUP BY DATE(created_at)
+            ORDER BY d
+        ";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            ':from_date' => $fromDate,
+            ':to_date' => $toDate,
+        ]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Breakdown theo phương thức thanh toán (pie chart)
+     */
+    public function getPaymentBreakdown(string $fromDate, string $toDate): array
+    {
+        $sql = "
+            SELECT payment_method, COUNT(*) AS orders, COALESCE(SUM(total_amount), 0) AS revenue
+            FROM orders_new
+            WHERE status = :status
+              AND DATE(created_at) BETWEEN :from_date AND :to_date
+            GROUP BY payment_method
+        ";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            ':status' => self::STATUS_DELIVERED,
+            ':from_date' => $fromDate,
+            ':to_date' => $toDate,
+        ]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Đếm theo trạng thái (để hiển thị đơn thành công / hủy / đang giao / hoàn tiền)
+     */
+    public function getStatusCounts(string $fromDate, string $toDate): array
+    {
+        $sql = "
+            SELECT status, COUNT(*) AS cnt
+            FROM orders_new
+            WHERE DATE(created_at) BETWEEN :from_date AND :to_date
+            GROUP BY status
+        ";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            ':from_date' => $fromDate,
+            ':to_date' => $toDate,
+        ]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $map = [];
+        foreach ($rows as $r) {
+            $map[$r['status']] = (int)$r['cnt'];
+        }
+        return $map;
+    }
+
+    /**
+     * Top khách hàng chi tiêu nhiều nhất
+     */
+    public function getTopCustomers(string $fromDate, string $toDate, int $limit = 5): array
+    {
+        $sql = "
+            SELECT user_id, email, fullname, COUNT(*) AS orders, COALESCE(SUM(total_amount),0) AS total_spent
+            FROM orders_new
+            WHERE status = :status
+              AND DATE(created_at) BETWEEN :from_date AND :to_date
+            GROUP BY user_id, email, fullname
+            ORDER BY total_spent DESC
+            LIMIT :limit
+        ";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':status', self::STATUS_DELIVERED, PDO::PARAM_STR);
+        $stmt->bindValue(':from_date', $fromDate, PDO::PARAM_STR);
+        $stmt->bindValue(':to_date', $toDate, PDO::PARAM_STR);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * AOV và thời gian xử lý trung bình
+     */
+    public function getOrderMetrics(string $fromDate, string $toDate): array
+    {
+        // delivered_at không tồn tại trong schema hiện tại, nên chỉ tính orders/revenue/AOV
+        $sql = "
+            SELECT 
+                COUNT(*) AS orders,
+                COALESCE(SUM(total_amount), 0) AS revenue
+            FROM orders_new
+            WHERE status = :status
+              AND DATE(created_at) BETWEEN :from_date AND :to_date
+        ";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            ':status' => self::STATUS_DELIVERED,
+            ':from_date' => $fromDate,
+            ':to_date' => $toDate,
+        ]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $orders = (int)($row['orders'] ?? 0);
+        $revenue = (float)($row['revenue'] ?? 0);
+        $aov = $orders > 0 ? $revenue / $orders : 0;
+        return [
+            'orders' => $orders,
+            'revenue' => $revenue,
+            'aov' => $aov,
+            'avg_process_hours' => null, // chưa có cột delivered_at để tính
+        ];
     }
 
     // Lấy doanh thu theo tháng (12 tháng gần nhất)

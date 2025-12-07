@@ -9,6 +9,7 @@ class ReviewModel extends BaseModel
     public function __construct()
     {
         parent::__construct();
+        $this->ensureCommentHistoryColumn();
     }
 
     /**
@@ -17,6 +18,7 @@ class ReviewModel extends BaseModel
     public function create(array $data): int
     {
         try {
+            $this->ensureCommentHistoryColumn();
             // QUAN TRỌNG: Chỉ loại bỏ PRIMARY KEY của bảng reviews (review_id hoặc id)
             // KHÔNG loại bỏ các FOREIGN KEY như order_id, order_item_id, product_id, user_id
             // Vì chúng là dữ liệu cần thiết để insert
@@ -102,6 +104,7 @@ class ReviewModel extends BaseModel
      */
     public function getByProduct(int $productId, bool $includeHidden = false): array
     {
+        $this->ensureCommentHistoryColumn();
         $whereClause = "product_id = :product_id";
         if (!$includeHidden) {
             $whereClause .= " AND is_hidden = 0";
@@ -156,6 +159,7 @@ class ReviewModel extends BaseModel
      */
     public function getByOrder(int $orderId): array
     {
+        $this->ensureCommentHistoryColumn();
         // Bảng order_items có PRIMARY KEY là 'id', không có cột 'order_item_id'
         $stmt = $this->pdo->prepare("
             SELECT 
@@ -181,6 +185,7 @@ class ReviewModel extends BaseModel
      */
     public function getAll(?string $keyword = null, ?int $productId = null, ?int $rating = null, ?string $status = null): array
     {
+        $this->ensureCommentHistoryColumn();
         $conditions = ['1=1'];
         $params = [];
 
@@ -319,6 +324,135 @@ class ReviewModel extends BaseModel
 
         $result = $stmt->fetch();
         return (int)($result['count'] ?? 0) > 0;
+    }
+
+    /**
+     * Lấy chi tiết đánh giá kèm user, product, variant
+     */
+    public function getDetailById(int $reviewId): ?array
+    {
+        $this->ensureCommentHistoryColumn();
+        $stmt = $this->pdo->prepare("
+            SELECT 
+                r.*,
+                u.full_name AS user_name,
+                u.email AS user_email,
+                p.product_name,
+                p.product_id,
+                oi.variant_size,
+                oi.variant_color
+            FROM {$this->table} r
+            INNER JOIN users u ON r.user_id = u.user_id
+            INNER JOIN products p ON r.product_id = p.product_id
+            LEFT JOIN order_items oi ON r.order_item_id = oi.id
+            WHERE r.review_id = :id
+            LIMIT 1
+        ");
+        $stmt->execute([':id' => $reviewId]);
+        $row = $stmt->fetch();
+        if (!$row) return null;
+
+        if (!empty($row['images'])) {
+            $decoded = json_decode($row['images'], true);
+            if (is_array($decoded)) {
+                $row['images'] = $decoded;
+            }
+        }
+        return $row;
+    }
+
+    /**
+     * Lấy review theo ID
+     */
+    public function getById(int $reviewId): ?array
+    {
+        $this->ensureCommentHistoryColumn();
+        $stmt = $this->pdo->prepare("
+            SELECT * FROM {$this->table}
+            WHERE review_id = :review_id
+            LIMIT 1
+        ");
+        $stmt->execute([':review_id' => $reviewId]);
+        $row = $stmt->fetch();
+        if ($row && !empty($row['images'])) {
+            $decoded = json_decode($row['images'], true);
+            $row['images'] = is_array($decoded) ? $decoded : [];
+        }
+        return $row ?: null;
+    }
+
+    /**
+     * Người dùng cập nhật bình luận và/hoặc số sao. Lưu lịch sử thay đổi.
+     */
+    public function updateUserComment(int $reviewId, int $userId, string $newComment, ?int $newRating = null): bool
+    {
+        $this->ensureCommentHistoryColumn();
+
+        $review = $this->getById($reviewId);
+        if (!$review) {
+            throw new Exception('Không tìm thấy đánh giá');
+        }
+        if ((int)($review['user_id'] ?? 0) !== $userId) {
+            throw new Exception('Bạn không có quyền sửa đánh giá này');
+        }
+
+        // Nếu không gửi rating mới, giữ nguyên rating cũ
+        $currentRating = (int)($review['rating'] ?? 0);
+        $targetRating = $newRating !== null ? (int)$newRating : $currentRating;
+        if ($targetRating < 1 || $targetRating > 5) {
+            throw new Exception('Số sao không hợp lệ (1-5)');
+        }
+
+        $history = [];
+        if (!empty($review['comment_history'])) {
+            $decoded = json_decode($review['comment_history'], true);
+            $history = is_array($decoded) ? $decoded : [];
+        }
+
+        // Ghi lại lịch sử với nội dung và rating cũ
+        $history[] = [
+            'comment'   => $review['comment'] ?? null,
+            'rating'    => $currentRating,
+            'edited_at' => date('Y-m-d H:i:s'),
+            'user_id'   => $userId,
+        ];
+
+        $stmt = $this->pdo->prepare("
+            UPDATE {$this->table}
+            SET comment = :comment,
+                rating = :rating,
+                comment_history = :history,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE review_id = :review_id
+        ");
+
+        return $stmt->execute([
+            ':comment' => $newComment !== '' ? $newComment : null,
+            ':rating' => $targetRating,
+            ':history' => json_encode($history),
+            ':review_id' => $reviewId,
+        ]);
+    }
+
+    /**
+     * Đảm bảo có cột comment_history để lưu lịch sử chỉnh sửa
+     */
+    private function ensureCommentHistoryColumn(): void
+    {
+        try {
+            $sql = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_NAME = :table
+                      AND TABLE_SCHEMA = DATABASE()
+                      AND COLUMN_NAME = 'comment_history'";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([':table' => $this->table]);
+            $exists = (int)$stmt->fetchColumn() > 0;
+            if (!$exists) {
+                $this->pdo->exec("ALTER TABLE {$this->table} ADD COLUMN comment_history TEXT NULL AFTER comment");
+            }
+        } catch (PDOException $e) {
+            // nếu không có quyền alter, bỏ qua để không chặn flow
+        }
     }
 }
 

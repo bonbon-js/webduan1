@@ -1,10 +1,12 @@
+<?php /* trimmed duplicate content */ ?>
+<div class="container-fluid px-3">
 <div class="admin-page-header">
     <div class="title-wrap">
         <p class="text-uppercase mb-1 small">Bảng điều khiển</p>
         <h2 class="d-flex align-items-center gap-2 mb-0">
             <i class="bi bi-ticket-perforated"></i>
             <span>Quản lý mã giảm giá</span>
-        </h2>
+    </h2>
     </div>
     <div class="admin-page-actions">
         <a href="<?= BASE_URL ?>?action=admin-coupons-trash" class="btn btn-light-soft">
@@ -18,9 +20,9 @@
                 <span class="badge bg-danger ms-1"><?= $deletedCount ?></span>
             <?php endif; ?>
         </a>
-        <button type="button" class="btn btn-light-soft" data-bs-toggle="modal" data-bs-target="#couponModal" onclick="openCouponModal()">
+        <a href="<?= BASE_URL ?>?action=admin-coupon-create" class="btn btn-light-soft">
             <i class="bi bi-plus-circle"></i> Thêm mã giảm giá
-        </button>
+        </a>
     </div>
 </div>
 
@@ -30,7 +32,7 @@
         <form method="GET" action="<?= BASE_URL ?>" id="searchForm">
             <input type="hidden" name="action" value="admin-coupons">
             <div class="row g-3">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label small text-uppercase fw-bold">Tìm kiếm</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
@@ -42,17 +44,19 @@
                                id="searchKeyword">
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label small text-uppercase fw-bold">Trạng thái</label>
                     <select name="status" class="form-select" id="statusFilter">
+                        <?php $statusValue = $_GET['status'] ?? ''; ?>
                         <option value="">Tất cả</option>
-                        <option value="active" <?= ($_GET['status'] ?? '') === 'active' ? 'selected' : '' ?>>Hoạt động</option>
-                        <option value="expired" <?= ($_GET['status'] ?? '') === 'expired' ? 'selected' : '' ?>>Hết hạn</option>
-                        <option value="out_of_stock" <?= ($_GET['status'] ?? '') === 'out_of_stock' ? 'selected' : '' ?>>Hết mã</option>
-                        <option value="inactive" <?= ($_GET['status'] ?? '') === 'inactive' ? 'selected' : '' ?>>Tạm dừng</option>
+                        <option value="active" <?= $statusValue === 'active' ? 'selected' : '' ?>>Đang chạy</option>
+                        <option value="pending" <?= $statusValue === 'pending' ? 'selected' : '' ?>>Sắp diễn ra</option>
+                        <option value="expired" <?= $statusValue === 'expired' ? 'selected' : '' ?>>Hết hạn</option>
+                        <option value="out_of_stock" <?= $statusValue === 'out_of_stock' ? 'selected' : '' ?>>Hết lượt</option>
+                        <option value="inactive" <?= $statusValue === 'inactive' ? 'selected' : '' ?>>Ngừng hoạt động</option>
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label small text-uppercase fw-bold">Loại giảm giá</label>
                     <select name="discount_type" class="form-select" id="discountTypeFilter">
                         <option value="">Tất cả</option>
@@ -60,12 +64,20 @@
                         <option value="fixed" <?= ($_GET['discount_type'] ?? '') === 'fixed' ? 'selected' : '' ?>>Cố định</option>
                     </select>
                 </div>
-                <div class="col-md-2 d-flex align-items-end">
+                <div class="col-md-2">
+                    <label class="form-label small text-uppercase fw-bold">Từ ngày</label>
+                    <input type="date" name="created_from" class="form-control" value="<?= htmlspecialchars($_GET['created_from'] ?? '') ?>">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-uppercase fw-bold">Đến ngày</label>
+                    <input type="date" name="created_to" class="form-control" value="<?= htmlspecialchars($_GET['created_to'] ?? '') ?>">
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
                     <div class="d-flex gap-2 w-100">
                         <button type="submit" class="btn btn-primary flex-fill">
-                            <i class="bi bi-search"></i> Tìm
+                            <i class="bi bi-search"></i> Lọc
                         </button>
-                        <?php if (!empty($_GET['keyword']) || !empty($_GET['status']) || !empty($_GET['discount_type'])): ?>
+                        <?php if (!empty($_GET['keyword']) || !empty($_GET['status']) || !empty($_GET['discount_type']) || !empty($_GET['created_from']) || !empty($_GET['created_to'])): ?>
                             <a href="<?= BASE_URL ?>?action=admin-coupons" class="btn btn-outline-secondary" title="Xóa bộ lọc">
                                 <i class="bi bi-x-lg"></i>
                             </a>
@@ -77,13 +89,13 @@
     </div>
 </div>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="admin-section-bar">
     <div>
         <h5 class="mb-0">Danh sách mã giảm giá</h5>
-        <small class="text-muted">
+        <small>
             <?php if (!empty($coupons)): ?>
                 Tìm thấy <strong><?= count($coupons) ?></strong> mã giảm giá
-                <?php if (!empty($_GET['keyword']) || !empty($_GET['status']) || !empty($_GET['discount_type'])): ?>
+                <?php if (!empty($_GET['keyword']) || !empty($_GET['status']) || !empty($_GET['discount_type']) || !empty($_GET['created_from']) || !empty($_GET['created_to'])): ?>
                     (đã lọc)
                 <?php endif; ?>
             <?php else: ?>
@@ -103,9 +115,9 @@
                 <span class="badge bg-danger ms-1"><?= $deletedCount ?></span>
             <?php endif; ?>
         </a>
-        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#couponModal" onclick="openCouponModal()">
+        <a href="<?= BASE_URL ?>?action=admin-coupon-create" class="btn btn-light-soft">
             <i class="bi bi-plus-circle"></i> Thêm mã giảm giá
-        </button>
+        </a>
     </div>
 </div>
 
@@ -167,20 +179,20 @@
                             <?php
                             $calculatedStatus = $coupon['calculated_status'] ?? 'active';
                             $statusBadge = 'success';
-                            $statusText = 'Hoạt động';
+                            $statusText = 'Đang chạy';
                             
                             if ($calculatedStatus === 'expired') {
                                 $statusBadge = 'danger';
-                                $statusText = 'Đã hết hạn';
+                                $statusText = 'Hết hạn';
                             } elseif ($calculatedStatus === 'out_of_stock') {
                                 $statusBadge = 'warning';
-                                $statusText = 'Hết lượt sử dụng';
+                                $statusText = 'Hết lượt';
                             } elseif ($calculatedStatus === 'inactive') {
                                 $statusBadge = 'secondary';
-                                $statusText = 'Tạm dừng';
+                                $statusText = 'Ngừng hoạt động';
                             } elseif ($calculatedStatus === 'pending') {
                                 $statusBadge = 'info';
-                                $statusText = 'Chưa bắt đầu';
+                                $statusText = 'Sắp diễn ra';
                             }
                             ?>
                             <span class="badge bg-<?= $statusBadge ?>">
@@ -188,22 +200,9 @@
                             </span>
                         </td>
                         <td>
-                            <button type="button" 
-                                    class="btn btn-sm btn-primary edit-coupon-btn" 
-                                    data-coupon-id="<?= htmlspecialchars($coupon['coupon_id']) ?>"
-                                    data-coupon-code="<?= htmlspecialchars($coupon['code']) ?>"
-                                    data-coupon-name="<?= htmlspecialchars($coupon['name']) ?>"
-                                    data-coupon-description="<?= htmlspecialchars($coupon['description'] ?? '') ?>"
-                                    data-coupon-discount-type="<?= htmlspecialchars($coupon['discount_type']) ?>"
-                                    data-coupon-discount-value="<?= htmlspecialchars($coupon['discount_value']) ?>"
-                                    data-coupon-min-order="<?= htmlspecialchars($coupon['min_order_amount'] ?? 0) ?>"
-                                    data-coupon-max-discount="<?= htmlspecialchars($coupon['max_discount_amount'] ?? '') ?>"
-                                    data-coupon-start-date="<?= htmlspecialchars($coupon['start_date']) ?>"
-                                    data-coupon-end-date="<?= htmlspecialchars($coupon['end_date']) ?>"
-                                    data-coupon-usage-limit="<?= htmlspecialchars($coupon['usage_limit'] ?? '') ?>"
-                                    data-coupon-status="<?= htmlspecialchars($coupon['status']) ?>">
+                            <a href="<?= BASE_URL ?>?action=admin-coupon-edit&id=<?= htmlspecialchars($coupon['coupon_id']) ?>" class="btn btn-sm btn-primary">
                                 <i class="bi bi-pencil"></i>
-                            </button>
+                            </a>
                             <form method="POST" 
                                   action="<?= BASE_URL ?>?action=admin-coupon-delete" 
                                   class="d-inline"
@@ -220,10 +219,11 @@
         </tbody>
     </table>
 </div>
+</div>
 
 <!-- Modal thêm/sửa mã giảm giá -->
-<div class="modal fade" id="couponModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+<div class="modal fade coupon-modal" id="couponModal" tabindex="-1">
+    <div class="modal-dialog modal-xxl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="couponModalTitle">Thêm mã giảm giá</h5>
@@ -324,6 +324,56 @@
                                    placeholder="Để trống nếu không giới hạn">
                         </div>
                         <div class="col-md-6">
+                            <label class="form-label">Giới hạn mỗi khách hàng</label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   name="per_user_limit" 
+                                   id="perUserLimit" 
+                                   min="1"
+                                   placeholder="Để trống nếu không giới hạn">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Nhóm khách hàng</label>
+                            <select class="form-select" name="customer_group" id="customerGroup">
+                                <option value="">Tất cả</option>
+                                <option value="vip_today">VIP (>= 3 đơn trong ngày)</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="1" id="requireLogin" name="require_login">
+                                        <label class="form-check-label" for="requireLogin">Yêu cầu đăng nhập</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="1" id="newCustomerOnly" name="new_customer_only">
+                                        <label class="form-check-label" for="newCustomerOnly">Chỉ khách mới</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="1" id="excludeSaleItems" name="exclude_sale_items">
+                                        <label class="form-check-label" for="excludeSaleItems">Không áp dụng hàng sale</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="1" id="excludeOtherCoupons" name="exclude_other_coupons">
+                                        <label class="form-check-label" for="excludeOtherCoupons">Không kèm mã khác</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="1" id="returnOnRefund" name="return_on_refund">
+                                        <label class="form-check-label" for="returnOnRefund">Hoàn lượt khi hoàn tiền</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
                             <label class="form-label">Trạng thái <span class="text-danger">*</span></label>
                             <select class="form-select" name="status" id="couponStatus" required>
                                 <option value="active">Hoạt động</option>
@@ -370,6 +420,13 @@ window.openCouponModal = function(coupon = null) {
             document.getElementById('startDate').value = coupon.start_date ? coupon.start_date.replace(' ', 'T').substring(0, 16) : '';
             document.getElementById('endDate').value = coupon.end_date ? coupon.end_date.replace(' ', 'T').substring(0, 16) : '';
             document.getElementById('usageLimit').value = coupon.usage_limit || '';
+            document.getElementById('perUserLimit').value = coupon.per_user_limit || '';
+            document.getElementById('customerGroup').value = coupon.customer_group || '';
+            document.getElementById('requireLogin').checked = coupon.require_login == 1;
+            document.getElementById('newCustomerOnly').checked = coupon.new_customer_only == 1;
+            document.getElementById('excludeSaleItems').checked = coupon.exclude_sale_items == 1;
+            document.getElementById('excludeOtherCoupons').checked = coupon.exclude_other_coupons == 1;
+            document.getElementById('returnOnRefund').checked = coupon.return_on_refund == 1;
             document.getElementById('couponStatus').value = coupon.status || 'active';
             
             // Xử lý max_discount_amount khi sửa
@@ -390,6 +447,13 @@ window.openCouponModal = function(coupon = null) {
             document.getElementById('minOrderAmount').value = '0';
             document.getElementById('maxDiscountAmount').value = '';
             document.getElementById('usageLimit').value = '';
+            document.getElementById('perUserLimit').value = '';
+            document.getElementById('customerGroup').value = '';
+            document.getElementById('requireLogin').checked = false;
+            document.getElementById('newCustomerOnly').checked = false;
+            document.getElementById('excludeSaleItems').checked = false;
+            document.getElementById('excludeOtherCoupons').checked = false;
+            document.getElementById('returnOnRefund').checked = false;
             document.getElementById('couponStatus').value = 'active';
             
             // Set ngày mặc định
@@ -467,6 +531,22 @@ function validateDates() {
 }
 
     // Event listeners
+    // Helper: set values for multi-select (accept array or comma string)
+    function setMultiSelectValues(selectId, values) {
+        const el = document.getElementById(selectId);
+        if (!el) return;
+        let arr = [];
+        if (Array.isArray(values)) {
+            arr = values.map(v => String(v).trim()).filter(Boolean);
+        } else if (typeof values === 'string' && values.trim() !== '') {
+            arr = values.split(',').map(v => v.trim()).filter(Boolean);
+        }
+        Array.from(el.options).forEach(opt => {
+            opt.selected = arr.includes(opt.value);
+        });
+        el.dispatchEvent(new Event('change'));
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         const discountType = document.getElementById('discountType');
         const couponForm = document.getElementById('couponForm');
@@ -521,39 +601,6 @@ function validateDates() {
             });
         }
         
-        // Xử lý nút sửa mã giảm giá
-        const editButtons = document.querySelectorAll('.edit-coupon-btn');
-        editButtons.forEach((btn) => {
-            btn.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                try {
-                    const coupon = {
-                        coupon_id: this.getAttribute('data-coupon-id'),
-                        code: this.getAttribute('data-coupon-code'),
-                        name: this.getAttribute('data-coupon-name'),
-                        description: this.getAttribute('data-coupon-description'),
-                        discount_type: this.getAttribute('data-coupon-discount-type'),
-                        discount_value: this.getAttribute('data-coupon-discount-value'),
-                        min_order_amount: this.getAttribute('data-coupon-min-order'),
-                        max_discount_amount: this.getAttribute('data-coupon-max-discount'),
-                        start_date: this.getAttribute('data-coupon-start-date'),
-                        end_date: this.getAttribute('data-coupon-end-date'),
-                        usage_limit: this.getAttribute('data-coupon-usage-limit'),
-                        status: this.getAttribute('data-coupon-status')
-                    };
-                    if (window.openCouponModal) {
-                        window.openCouponModal(coupon);
-                    } else {
-                        alert('Hàm openCouponModal chưa được định nghĩa. Vui lòng tải lại trang.');
-                    }
-                } catch (error) {
-                    console.error('Lỗi khi xử lý nút sửa:', error);
-                    alert('Có lỗi xảy ra: ' + error.message);
-                }
-            });
-        });
-        
         // Cho phép nhấn Enter để tìm kiếm
         const searchKeyword = document.getElementById('searchKeyword');
         if (searchKeyword) {
@@ -565,16 +612,6 @@ function validateDates() {
             });
         }
         
-        // Nếu tìm thấy đúng 1 mã giảm giá, tự động mở modal
-        <?php if (count($coupons) === 1 && !empty($_GET['keyword'])): ?>
-            const singleCoupon = <?= json_encode($coupons[0]) ?>;
-            // Chờ modal Bootstrap sẵn sàng
-            setTimeout(function() {
-                openCouponModal(singleCoupon);
-                const modal = new bootstrap.Modal(document.getElementById('couponModal'));
-                modal.show();
-            }, 100);
-        <?php endif; ?>
     });
 </script>
 

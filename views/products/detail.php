@@ -1,7 +1,16 @@
 <section class="container product-detail-section">
     <div class="row">
+        <?php
+            // Fallback ảnh chính: ưu tiên ảnh sản phẩm, nếu trống dùng ảnh biến thể đầu tiên (nếu có)
+            $mainImage = $product['image'] ?? '';
+            if (empty($mainImage) && !empty($variants ?? [])) {
+                foreach ($variants as $v) {
+                    if (!empty($v['image_url'])) { $mainImage = $v['image_url']; break; }
+                }
+            }
+        ?>
         <div class="col-md-6 product-gallery">
-            <img id="mainProductImage" src="<?= $product['image'] ?? '' ?>" alt="<?= htmlspecialchars($product['name'] ?? '') ?>" class="product-main-image">
+            <img id="mainProductImage" src="<?= htmlspecialchars($mainImage) ?>" alt="<?= htmlspecialchars($product['name'] ?? '') ?>" class="product-main-image">
             <div class="product-thumbnails" id="productThumbnails">
                 <?php if (!empty($images)): ?>
                     <?php foreach ($images as $index => $img): ?>
@@ -10,8 +19,8 @@
                              onclick="changeMainImage('<?= $img['image_url'] ?>', this)">
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <img src="<?= $product['image'] ?? '' ?>" alt="Thumbnail" class="product-thumbnail active"
-                         onclick="changeMainImage('<?= $product['image'] ?? '' ?>', this)">
+                    <img src="<?= htmlspecialchars($mainImage) ?>" alt="Thumbnail" class="product-thumbnail active"
+                         onclick="changeMainImage('<?= htmlspecialchars($mainImage) ?>', this)">
                 <?php endif; ?>
             </div>
         </div>
@@ -78,7 +87,6 @@
             </form>
         </div>
     </div>
-
     <!-- Reviews Section -->
     <div class="reviews-section mt-5 pt-5 border-top">
         <h2 class="section-title mb-4">Đánh giá sản phẩm</h2>

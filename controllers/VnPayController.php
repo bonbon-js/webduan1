@@ -91,27 +91,25 @@ class VnPayController
                 exit;
             }
             
-            // Kiểm tra trạng thái đơn hàng - chỉ xử lý nếu chưa được xác nhận thanh toán
-            // Nếu đơn hàng đã được xác nhận (status = confirmed), không cần xử lý lại
-            if ($order['status'] !== OrderModel::STATUS_CONFIRMED && 
-                $order['payment_method'] === 'banking') {
+            // Xử lý thanh toán cho đơn đang ở trạng thái UNPAID/PAYMENT_FAILED
+            if (in_array($order['status'], [OrderModel::STATUS_UNPAID, OrderModel::STATUS_PAYMENT_FAILED], true)) {
                 
                 // Kiểm tra response code
                 $responseCode = $result['response_code'] ?? '';
                 
                 if ($responseCode === '00') {
-                    // Thanh toán thành công - cập nhật trạng thái đơn hàng
-                    // Đơn hàng đã được tạo với status = confirmed, nên không cần cập nhật
-                    // Nhưng có thể lưu thông tin giao dịch nếu cần
-                    
+                    // Thanh toán thành công -> chuyển sang PAID rồi PENDING (chờ shop xác nhận)
+                    $this->orderModel->updateStatus($orderId, OrderModel::STATUS_PAID);
+                    $this->orderModel->updateStatus($orderId, OrderModel::STATUS_PENDING);
                     $returnData = [
                         'RspCode' => '00',
                         'Message' => 'Confirm Success'
                     ];
                 } else {
-                    // Thanh toán thất bại
+                    // Thanh toán thất bại: giữ trạng thái UNPAID để khách thanh toán lại
+                    $this->orderModel->updateStatus($orderId, OrderModel::STATUS_UNPAID);
                     $returnData = [
-                        'RspCode' => '00', // Vẫn trả về 00 để VNPay biết đã nhận được
+                        'RspCode' => '00',
                         'Message' => 'Payment failed'
                     ];
                 }
@@ -180,7 +178,12 @@ class VnPayController
                 exit;
             }
             
-            // Đơn hàng đã được tạo với status = confirmed, không cần cập nhật
+            // Cập nhật trạng thái nếu đơn đang UNPAID / PAYMENT_FAILED
+            if (in_array($order['status'], [OrderModel::STATUS_UNPAID, OrderModel::STATUS_PAYMENT_FAILED], true)) {
+                $this->orderModel->updateStatus($orderId, OrderModel::STATUS_PAID);
+                $this->orderModel->updateStatus($orderId, OrderModel::STATUS_PENDING); // chờ shop xác nhận
+            }
+
             // Xóa đơn hàng tạm khỏi session
             unset($_SESSION['pending_vnpay_order']);
             

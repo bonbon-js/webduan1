@@ -1,5 +1,8 @@
 <?php
 
+require_once PATH_MODEL . 'UserModel.php';
+require_once PATH_MODEL . 'ReturnRequestModel.php';
+
 // Controller dành cho admin xử lý danh sách/cập nhật trạng thái đơn
 class AdminOrderController
 {
@@ -8,6 +11,94 @@ class AdminOrderController
     public function __construct()
     {
         $this->orderModel = new OrderModel();
+    }
+
+    public function approveCancel(): void
+    {
+        $this->requireAdmin();
+        $orderId = isset($_POST['order_id']) ? (int)$_POST['order_id'] : 0;
+        if (!$orderId) {
+            set_flash('danger', 'Thiếu mã đơn.');
+            header('Location: ' . BASE_URL . '?action=admin-orders');
+            exit;
+        }
+
+        $order = $this->orderModel->findWithItems($orderId);
+        if (!$order) {
+            set_flash('danger', 'Không tìm thấy đơn hàng.');
+            header('Location: ' . BASE_URL . '?action=admin-orders');
+            exit;
+        }
+
+        if ($order['status'] !== OrderModel::STATUS_CANCEL_REQUEST) {
+            set_flash('warning', 'Đơn không ở trạng thái yêu cầu hủy.');
+            header('Location: ' . BASE_URL . '?action=admin-orders');
+            exit;
+        }
+
+        $this->orderModel->updateStatus($orderId, OrderModel::STATUS_CANCELLED);
+        set_flash('success', 'Đã xác nhận hủy đơn.');
+        header('Location: ' . BASE_URL . '?action=admin-orders');
+        exit;
+    }
+
+    public function confirmOrder(): void
+    {
+        $this->requireAdmin();
+        $orderId = isset($_POST['order_id']) ? (int)$_POST['order_id'] : 0;
+        if (!$orderId) {
+            set_flash('danger', 'Thiếu mã đơn.');
+            header('Location: ' . BASE_URL . '?action=admin-orders');
+            exit;
+        }
+
+        $order = $this->orderModel->findWithItems($orderId);
+        if (!$order) {
+            set_flash('danger', 'Không tìm thấy đơn hàng.');
+            header('Location: ' . BASE_URL . '?action=admin-orders');
+            exit;
+        }
+
+        // Chỉ xác nhận từ PENDING -> TO_SHIP
+        if (!OrderModel::isValidTransition($order['status'], OrderModel::STATUS_TO_SHIP, $order['payment_method'] ?? 'cod')) {
+            set_flash('warning', 'Không thể xác nhận đơn ở trạng thái hiện tại.');
+            header('Location: ' . BASE_URL . '?action=admin-orders');
+            exit;
+        }
+
+        $this->orderModel->updateStatus($orderId, OrderModel::STATUS_TO_SHIP);
+        set_flash('success', 'Đã xác nhận đơn và chuyển sang Đang Giao.');
+        header('Location: ' . BASE_URL . '?action=admin-orders');
+        exit;
+    }
+
+    public function confirmDelivered(): void
+    {
+        $this->requireAdmin();
+        $orderId = isset($_POST['order_id']) ? (int)$_POST['order_id'] : 0;
+        if (!$orderId) {
+            set_flash('danger', 'Thiếu mã đơn.');
+            header('Location: ' . BASE_URL . '?action=admin-orders');
+            exit;
+        }
+
+        $order = $this->orderModel->findWithItems($orderId);
+        if (!$order) {
+            set_flash('danger', 'Không tìm thấy đơn hàng.');
+            header('Location: ' . BASE_URL . '?action=admin-orders');
+            exit;
+        }
+
+        if (!OrderModel::isValidTransition($order['status'], OrderModel::STATUS_DELIVERED, $order['payment_method'] ?? 'cod')) {
+            set_flash('warning', 'Chỉ xác nhận giao khi đơn đang Đang Giao.');
+            header('Location: ' . BASE_URL . '?action=admin-orders');
+            exit;
+        }
+
+        $this->orderModel->updateStatus($orderId, OrderModel::STATUS_DELIVERED);
+        set_flash('success', 'Đã xác nhận đơn hàng đã giao.');
+        header('Location: ' . BASE_URL . '?action=admin-orders');
+        exit;
     }
 
     // Trang danh sách đơn có bộ lọc
@@ -22,6 +113,18 @@ class AdminOrderController
             !empty($keyword) ? $keyword : null,
             !empty($status) ? $status : null
         );
+
+        // Lấy map trả hàng cho các đơn
+        $returnMap = [];
+        try {
+            $returnModel = new ReturnRequestModel();
+            $orderIds = array_map(function ($o) {
+                return (int)($o['id'] ?? 0);
+            }, $orders);
+            $returnMap = $returnModel->getLatestByOrderIds($orderIds);
+        } catch (Throwable $e) {
+            // ignore
+        }
         
         // Lấy map trạng thái để hiển thị trong dropdown
         $statusMap = OrderModel::statuses();
@@ -66,11 +169,19 @@ class AdminOrderController
                 exit;
             }
 
-            // Lưu trạng thái cũ để log
             $oldStatus = $oldOrder['status'] ?? 'unknown';
+            $paymentMethod = $oldOrder['payment_method'] ?? 'cod';
+
+            // Không cho nhảy cóc / lùi trạng thái
+            if (!OrderModel::isValidTransition($oldStatus, $status, $paymentMethod)) {
+                set_flash('danger', 'Chuyển trạng thái không hợp lệ theo thứ tự cho phép.');
+                header('Location: ' . BASE_URL . '?action=admin-orders');
+                exit;
+            }
+
             error_log("AdminOrderController::updateStatus - Old status: $oldStatus, New status: $status");
 
-            // Cập nhật trạng thái
+            // Cập nhật trạng thái (sẽ tự notify trong OrderModel)
             $success = $this->orderModel->updateStatus($orderId, $status);
             
             if (!$success) {
@@ -84,6 +195,17 @@ class AdminOrderController
                 if ($order && isset($order['user_id'])) {
                     // Có thể gửi email thông báo ở đây nếu cần
                     error_log("AdminOrderController::updateStatus - Order #$orderId đã được giao thành công. User ID: " . $order['user_id']);
+
+                    // Thăng hạng VIP nếu đơn đạt điều kiện (>= 2.000.000đ, giao thành công)
+                    $totalAmount = (float)($order['total_amount'] ?? 0);
+                    if ($totalAmount >= 2000000) {
+                        $userModel = new UserModel();
+                        $currentRank = $userModel->getRank((int)$order['user_id']) ?? 'customer';
+                        if ($currentRank !== 'VIP') {
+                            $userModel->updateRank((int)$order['user_id'], 'VIP');
+                            error_log("AdminOrderController::updateStatus - User #" . $order['user_id'] . " promoted to VIP.");
+                        }
+                    }
                 }
                 set_flash('success', 'Cập nhật trạng thái thành công. Khách hàng có thể đánh giá sản phẩm khi xem chi tiết đơn hàng.');
             } else {
@@ -100,6 +222,36 @@ class AdminOrderController
 
         header('Location: ' . BASE_URL . '?action=admin-orders');
         exit;
+    }
+
+    public function detail(): void
+    {
+        $this->requireAdmin();
+        $id = (int)($_GET['id'] ?? 0);
+        if ($id <= 0) {
+            set_flash('danger', 'Thiếu mã đơn hàng');
+            header('Location: ' . BASE_URL . '?action=admin-orders');
+            exit;
+        }
+
+        $order = $this->orderModel->findWithItems($id);
+        $returnRequest = null;
+        try {
+            $returnModel = new ReturnRequestModel();
+            $returnRequest = $returnModel->findByOrder($id);
+        } catch (Throwable $e) {
+            // ignore
+        }
+        if (!$order) {
+            set_flash('danger', 'Không tìm thấy đơn hàng');
+            header('Location: ' . BASE_URL . '?action=admin-orders');
+            exit;
+        }
+
+        $statusMap = OrderModel::statuses();
+        $title = 'Chi tiết đơn hàng';
+        $view  = 'admin/orders/show';
+        require_once PATH_VIEW . 'admin/layout.php';
     }
 
     // Bảo vệ route chỉ dành cho admin

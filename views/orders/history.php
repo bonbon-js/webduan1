@@ -16,33 +16,41 @@
                    class="status-tab <?= !isset($_GET['status']) ? 'active' : '' ?>">
                     Tất cả
                 </a>
-                <a href="<?= BASE_URL ?>?action=order-history&status=<?= OrderModel::STATUS_CONFIRMED ?>" 
-                   class="status-tab <?= ($_GET['status'] ?? '') === OrderModel::STATUS_CONFIRMED ? 'active' : '' ?>">
-                    Xác nhận đơn hàng
+                <a href="<?= BASE_URL ?>?action=order-history&status=<?= OrderModel::STATUS_UNPAID ?>" 
+                   class="status-tab <?= ($_GET['status'] ?? '') === OrderModel::STATUS_UNPAID ? 'active' : '' ?>">
+                    Chờ Thanh Toán
                 </a>
-                <a href="<?= BASE_URL ?>?action=order-history&status=<?= OrderModel::STATUS_PREPARING ?>" 
-                   class="status-tab <?= ($_GET['status'] ?? '') === OrderModel::STATUS_PREPARING ? 'active' : '' ?>">
-                    Đang chuẩn bị đơn hàng
+                <a href="<?= BASE_URL ?>?action=order-history&status=<?= OrderModel::STATUS_PAID ?>" 
+                   class="status-tab <?= ($_GET['status'] ?? '') === OrderModel::STATUS_PAID ? 'active' : '' ?>">
+                    Đã Thanh Toán
                 </a>
-                <a href="<?= BASE_URL ?>?action=order-history&status=<?= OrderModel::STATUS_SHIPPED ?>" 
-                   class="status-tab <?= ($_GET['status'] ?? '') === OrderModel::STATUS_SHIPPED ? 'active' : '' ?>">
-                    Đã giao cho đơn vị vận chuyển
+                <a href="<?= BASE_URL ?>?action=order-history&status=<?= OrderModel::STATUS_PAYMENT_FAILED ?>" 
+                   class="status-tab <?= ($_GET['status'] ?? '') === OrderModel::STATUS_PAYMENT_FAILED ? 'active' : '' ?>">
+                    Thanh toán thất bại
                 </a>
-                <a href="<?= BASE_URL ?>?action=order-history&status=<?= OrderModel::STATUS_OUT_OF_STOCK ?>" 
-                   class="status-tab <?= ($_GET['status'] ?? '') === OrderModel::STATUS_OUT_OF_STOCK ? 'active' : '' ?>">
-                    Hết hàng
+                <a href="<?= BASE_URL ?>?action=order-history&status=<?= OrderModel::STATUS_PENDING ?>" 
+                   class="status-tab <?= ($_GET['status'] ?? '') === OrderModel::STATUS_PENDING ? 'active' : '' ?>">
+                    Chờ Xác Nhận
                 </a>
-                <a href="<?= BASE_URL ?>?action=order-history&status=<?= OrderModel::STATUS_ON_THE_WAY ?>" 
-                   class="status-tab <?= ($_GET['status'] ?? '') === OrderModel::STATUS_ON_THE_WAY ? 'active' : '' ?>">
-                    Đang trên đường giao
+                <a href="<?= BASE_URL ?>?action=order-history&status=<?= OrderModel::STATUS_TO_SHIP ?>" 
+                   class="status-tab <?= ($_GET['status'] ?? '') === OrderModel::STATUS_TO_SHIP ? 'active' : '' ?>">
+                    Đang Giao
                 </a>
                 <a href="<?= BASE_URL ?>?action=order-history&status=<?= OrderModel::STATUS_DELIVERED ?>" 
                    class="status-tab <?= ($_GET['status'] ?? '') === OrderModel::STATUS_DELIVERED ? 'active' : '' ?>">
-                    Đã giao hàng thành công
+                    Đã Giao
+                </a>
+                <a href="<?= BASE_URL ?>?action=order-history&status=<?= OrderModel::STATUS_COMPLETED ?>" 
+                   class="status-tab <?= ($_GET['status'] ?? '') === OrderModel::STATUS_COMPLETED ? 'active' : '' ?>">
+                    Hoàn Thành
                 </a>
                 <a href="<?= BASE_URL ?>?action=order-history&status=<?= OrderModel::STATUS_CANCELLED ?>" 
                    class="status-tab <?= ($_GET['status'] ?? '') === OrderModel::STATUS_CANCELLED ? 'active' : '' ?>">
-                    Đã hủy
+                    Đã Hủy
+                </a>
+                <a href="<?= BASE_URL ?>?action=order-history&status=<?= OrderModel::STATUS_RETURNED ?>" 
+                   class="status-tab <?= ($_GET['status'] ?? '') === OrderModel::STATUS_RETURNED ? 'active' : '' ?>">
+                    Trả Hàng / Hoàn Tiền
                 </a>
             </div>
         </div>
@@ -87,9 +95,21 @@
                             <a href="<?= BASE_URL ?>?action=order-detail&id=<?= $order['id'] ?>" class="btn btn-dark mb-2 d-block">
                                 Xem chi tiết
                             </a>
-                            <?php if ($order['status'] === OrderModel::STATUS_DELIVERED): ?>
+                            <?php if ($order['status'] === OrderModel::STATUS_UNPAID): ?>
+                                <a href="<?= BASE_URL ?>?action=order-pay&id=<?= $order['id'] ?>" class="btn btn-primary mb-2 d-block">
+                                    Thanh toán ngay
+                                </a>
+                            <?php elseif ($order['status'] === OrderModel::STATUS_PAYMENT_FAILED): ?>
+                                <a href="<?= BASE_URL ?>?action=order-pay&id=<?= $order['id'] ?>" class="btn btn-outline-warning mb-2 d-block">
+                                    Thanh toán lại
+                                </a>
+                            <?php elseif ($order['status'] === OrderModel::STATUS_DELIVERED): ?>
                                 <a href="<?= BASE_URL ?>?action=order-detail&id=<?= $order['id'] ?>&review=true" class="btn btn-outline-dark mb-2 d-block">
                                     <i class="bi bi-star-fill"></i> Đánh giá ngay
+                                </a>
+                            <?php elseif ($order['status'] === OrderModel::STATUS_CANCELLED): ?>
+                                <a href="<?= BASE_URL ?>?action=order-rebuy&id=<?= $order['id'] ?>" class="btn btn-outline-dark mb-2 d-block">
+                                    Mua lại
                                 </a>
                             <?php endif; ?>
                             <a href="<?= BASE_URL ?>?action=order-detail&id=<?= $order['id'] ?>" class="btn btn-outline-dark d-block">
