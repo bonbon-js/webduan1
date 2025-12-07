@@ -44,9 +44,13 @@
                     $logoData = base64_encode(file_get_contents($logoPath));
                     $logoSrc = 'data:image/png;base64,' . $logoData;
                 ?>
-                    <img class="logo-image admin-logo" src="<?= $logoSrc ?>" alt="BonBonwear">
+                    <a href="<?= BASE_URL ?>?action=admin-dashboard">
+                        <img class="logo-image admin-logo" src="<?= $logoSrc ?>" alt="BonBonwear">
+                    </a>
                 <?php else: ?>
-                    <span class="logo-text">BONBONWEAR</span>
+                    <a href="<?= BASE_URL ?>?action=admin-dashboard" class="text-decoration-none text-white">
+                        <span class="logo-text">BONBONWEAR</span>
+                    </a>
                 <?php endif; ?>
             </div>
             <nav>
