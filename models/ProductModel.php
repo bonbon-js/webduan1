@@ -625,6 +625,7 @@ class ProductModel extends BaseModel
                     p.description,
                     p.price,
                     p.stock,
+                    p.category_id,
                     c.category_name as category";
         
         $sql = $this->addImageField($sql);
@@ -1055,5 +1056,42 @@ class ProductModel extends BaseModel
             'labels' => $labels,
             'data' => $products
         ];
+    }
+
+    /**
+     * Get stock for a specific variant by size and color
+     * @param int $productId
+     * @param string $size
+     * @param string $color
+     * @return int Stock quantity
+     */
+    public function getVariantStock(int $productId, string $size, string $color): int
+    {
+        try {
+            $sql = "SELECT pv.stock 
+                    FROM product_variants pv
+                    INNER JOIN product_variant_attributes pva1 ON pv.variant_id = pva1.variant_id
+                    INNER JOIN attribute_values av1 ON pva1.value_id = av1.value_id
+                    INNER JOIN attributes a1 ON av1.attribute_id = a1.attribute_id
+                    INNER JOIN product_variant_attributes pva2 ON pv.variant_id = pva2.variant_id
+                    INNER JOIN attribute_values av2 ON pva2.value_id = av2.value_id
+                    INNER JOIN attributes a2 ON av2.attribute_id = a2.attribute_id
+                    WHERE pv.product_id = :product_id
+                    AND a1.attribute_name = 'Size' AND av1.value_name = :size
+                    AND a2.attribute_name = 'Color' AND av2.value_name = :color
+                    LIMIT 1";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':product_id', $productId, PDO::PARAM_INT);
+            $stmt->bindValue(':size', $size, PDO::PARAM_STR);
+            $stmt->bindValue(':color', $color, PDO::PARAM_STR);
+            $stmt->execute();
+            
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $result ? (int)$result['stock'] : 0;
+        } catch (Throwable $e) {
+            error_log("Error getting variant stock: " . $e->getMessage());
+            return 0;
+        }
     }
 }

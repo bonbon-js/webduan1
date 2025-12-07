@@ -264,19 +264,183 @@ document.addEventListener('DOMContentLoaded', function() {
 // Remove previous standalone call to updateCartCount();
 
     // Mở Modal Quick Add
-    function openQuickAdd(id, name, price, image) {
+    function openQuickAdd(id, name, price, image, categoryId) {
         document.getElementById('qaProductId').value = id;
         document.getElementById('qaProductName').textContent = name;
         document.getElementById('qaProductPrice').textContent = new Intl.NumberFormat('vi-VN').format(price) + ' đ';
         document.getElementById('qaProductImage').src = image;
         document.getElementById('qaQuantity').value = 1;
         
-        // Reset selections
-        document.getElementById('sizeS').checked = true;
-        document.getElementById('colorBlack').checked = true;
+        // Store category ID for "view similar" button
+        window.qaCurrentCategoryId = categoryId;
+        
+        // Load product attributes and stock
+        loadQaProductAttributes(id);
         
         const modal = new bootstrap.Modal(document.getElementById('quickAddModal'));
         modal.show();
+    }
+    
+    // Load product attributes for Quick Add modal
+    function loadQaProductAttributes(productId) {
+        fetch(`<?= BASE_URL ?>?action=product-attributes&product_id=${productId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.data) {
+                    renderQaSizeOptions(data.data.sizes || []);
+                    renderQaColorOptions(data.data.colors || []);
+                    
+                    // Load stock for first variant
+                    if (data.data.sizes && data.data.sizes.length > 0 && data.data.colors && data.data.colors.length > 0) {
+                        updateQaStock(productId, data.data.sizes[0], data.data.colors[0]);
+                    }
+                }
+            })
+            .catch(err => console.error('Error loading attributes:', err));
+    }
+    
+    // Render size options for Quick Add
+    function renderQaSizeOptions(sizes) {
+        const container = document.querySelector('#quickAddModal .d-flex.gap-2');
+        if (!container) return;
+        
+        const parent = container.parentElement;
+        parent.style.textAlign = 'left';
+        parent.innerHTML = '<label class="form-label small text-uppercase fw-bold text-muted mb-2 d-block" id="qaSizeLabel" style="text-align: left;">Kích thước</label>';
+        
+        const newContainer = document.createElement('div');
+        newContainer.className = 'd-flex gap-2';
+        newContainer.style.justifyContent = 'flex-start';
+        newContainer.style.textAlign = 'left';
+        
+        sizes.forEach((size, index) => {
+            const input = document.createElement('input');
+            input.type = 'radio';
+            input.className = 'btn-check';
+            input.name = 'qaSize';
+            input.id = 'qaSize' + size;
+            input.value = size;
+            if (index === 0) input.checked = true;
+            
+            const label = document.createElement('label');
+            label.className = 'btn btn-outline-dark rounded-0 px-3';
+            label.htmlFor = 'qaSize' + size;
+            label.textContent = size;
+            
+            input.addEventListener('change', function() {
+                const productId = document.getElementById('qaProductId').value;
+                const color = document.querySelector('input[name="qaColor"]:checked')?.value;
+                if (color) updateQaStock(productId, size, color);
+            });
+            
+            newContainer.appendChild(input);
+            newContainer.appendChild(label);
+        });
+        
+        parent.appendChild(newContainer);
+    }
+    
+    // Render color options for Quick Add
+    function renderQaColorOptions(colors) {
+        const containers = document.querySelectorAll('#quickAddModal .d-flex.gap-2');
+        const colorContainer = containers[1];
+        if (!colorContainer) return;
+        
+        const parent = colorContainer.parentElement;
+        parent.style.textAlign = 'left';
+        parent.innerHTML = '<label class="form-label small text-uppercase fw-bold text-muted mb-2 d-block" id="qaColorLabel" style="text-align: left;">Màu sắc</label>';
+        
+        const newContainer = document.createElement('div');
+        newContainer.className = 'd-flex gap-2';
+        newContainer.style.justifyContent = 'flex-start';
+        newContainer.style.textAlign = 'left';
+        
+        const colorMap = {
+            'Black': '#000', 'White': '#fff', 'Beige': '#f5f5dc',
+            'Red': '#ff0000', 'Blue': '#0000ff', 'Green': '#008000',
+            'Yellow': '#ffff00', 'Pink': '#ffc0cb', 'Gray': '#808080', 'Brown': '#a52a2a'
+        };
+        
+        colors.forEach((color, index) => {
+            const input = document.createElement('input');
+            input.type = 'radio';
+            input.className = 'btn-check';
+            input.name = 'qaColor';
+            input.id = 'qaColor' + color;
+            input.value = color;
+            if (index === 0) input.checked = true;
+            
+            const label = document.createElement('label');
+            label.className = 'btn rounded-circle p-0 border border-2 shadow-sm color-option';
+            label.style.width = '40px';
+            label.style.height = '40px';
+            label.style.backgroundColor = colorMap[color] || '#ccc';
+            label.htmlFor = 'qaColor' + color;
+            label.title = color;
+            if (color.toLowerCase() === 'white') {
+                label.classList.add('border-secondary');
+            }
+            
+            input.addEventListener('change', function() {
+                const productId = document.getElementById('qaProductId').value;
+                const size = document.querySelector('input[name="qaSize"]:checked')?.value;
+                if (size) updateQaStock(productId, size, color);
+            });
+            
+            newContainer.appendChild(input);
+            newContainer.appendChild(label);
+        });
+        
+        parent.appendChild(newContainer);
+    }
+    
+    // Update stock info for Quick Add modal
+    function updateQaStock(productId, size, color) {
+        fetch(`<?= BASE_URL ?>?action=get-variant-stock&product_id=${productId}&size=${size}&color=${color}`)
+            .then(response => response.json())
+            .then(data => {
+                const stockInfo = document.getElementById('qaStockInfo');
+                const quantitySection = document.getElementById('qaQuantitySection');
+                const actionButtons = document.getElementById('qaActionButtons');
+                const outOfStockButton = document.getElementById('qaOutOfStockButton');
+                const quantityInput = document.getElementById('qaQuantity');
+                
+                if (data.success && data.stock !== undefined) {
+                    const stock = parseInt(data.stock);
+                    stockInfo.textContent = stock > 0 ? stock + ' sản phẩm' : 'Hết hàng';
+                    stockInfo.className = stock > 0 ? 'fw-bold text-success' : 'fw-bold text-danger';
+                    
+                    if (stock > 0) {
+                        // Có hàng - hiện nút mua
+                        quantitySection.classList.remove('d-none');
+                        actionButtons.classList.remove('d-none');
+                        outOfStockButton.classList.add('d-none');
+                        quantityInput.max = stock;
+                        if (parseInt(quantityInput.value) > stock) {
+                            quantityInput.value = stock;
+                        }
+                    } else {
+                        // Hết hàng - hiện nút xem sản phẩm tương tự
+                        quantitySection.classList.add('d-none');
+                        actionButtons.classList.add('d-none');
+                        outOfStockButton.classList.remove('d-none');
+                        
+                        const viewSimilarBtn = document.getElementById('qaViewSimilarBtn');
+                        if (window.qaCurrentCategoryId) {
+                            viewSimilarBtn.href = `<?= BASE_URL ?>?action=products&category_id=${window.qaCurrentCategoryId}`;
+                        } else {
+                            viewSimilarBtn.href = `<?= BASE_URL ?>?action=products`;
+                        }
+                    }
+                } else {
+                    stockInfo.textContent = 'Không xác định';
+                    stockInfo.className = 'fw-bold text-muted';
+                }
+            })
+            .catch(err => {
+                console.error('Error loading stock:', err);
+                document.getElementById('qaStockInfo').textContent = 'Không xác định';
+            });
     }
     
     // Thay đổi số lượng trong modal
@@ -411,7 +575,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <img src="<?= $product['image'] ?>" alt="<?= $product['name'] ?>">
                         <div class="product-card-overlay">
                             <?php if (!isset($_SESSION['user']['role']) || $_SESSION['user']['role'] !== 'admin'): ?>
-                            <div class="product-card-icon" onclick="openQuickAdd(<?= $product['id'] ?? 0 ?>, '<?= htmlspecialchars($product['name']) ?>', <?= $product['price'] ?>, '<?= $product['image'] ?>')" title="Thêm vào giỏ hàng">
+                            <div class="product-card-icon" onclick="openQuickAdd(<?= $product['id'] ?? 0 ?>, '<?= htmlspecialchars($product['name']) ?>', <?= $product['price'] ?>, '<?= $product['image'] ?>', <?= $product['category_id'] ?? 0 ?>)" title="Thêm vào giỏ hàng">
                                 <i class="bi bi-bag-plus"></i>
                             </div>
                             <?php endif; ?>
@@ -512,8 +676,16 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </div>
                             </div>
                             
+                            <!-- Stock Info -->
+                            <div class="mb-3">
+                                <p class="small text-muted mb-0">
+                                    <i class="bi bi-box-seam"></i> 
+                                    Tồn kho: <span id="qaStockInfo" class="fw-bold">--</span>
+                                </p>
+                            </div>
+                            
                             <!-- Quantity -->
-                            <div class="mb-4">
+                            <div class="mb-4" id="qaQuantitySection">
                                 <label for="qaQuantity" class="form-label small text-uppercase fw-bold text-muted mb-2 d-block">Số lượng</label>
                                 <div class="input-group input-group-compact">
                                     <button class="btn btn-outline-secondary rounded-0" type="button" onclick="changeQaQty(-1)" aria-label="Giảm số lượng">-</button>
@@ -523,13 +695,20 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                             
                             <!-- Actions -->
-                            <div class="d-grid gap-2">
+                            <div class="d-grid gap-2" id="qaActionButtons">
                                 <button type="button" class="btn btn-dark rounded-0 py-3 text-uppercase fw-bold" onclick="submitQuickAdd('cart')">
                                     Thêm vào giỏ hàng
                                 </button>
                                 <button type="button" class="btn btn-outline-dark rounded-0 py-3 text-uppercase fw-bold" onclick="submitQuickAdd('checkout')">
                                     Mua ngay
                                 </button>
+                            </div>
+                            
+                            <!-- Out of Stock Button -->
+                            <div class="d-none" id="qaOutOfStockButton">
+                                <a href="#" id="qaViewSimilarBtn" class="btn btn-outline-secondary rounded-0 py-3 text-uppercase fw-bold w-100">
+                                    <i class="bi bi-grid"></i> Xem sản phẩm tương tự
+                                </a>
                             </div>
                         </form>
                     </div>

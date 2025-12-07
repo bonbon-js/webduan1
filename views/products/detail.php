@@ -41,8 +41,16 @@
                     </div>
                 </div>
 
+                <!-- Stock Info -->
+                <div class="mb-3">
+                    <p class="small text-muted mb-0">
+                        <i class="bi bi-box-seam"></i> 
+                        Tồn kho: <span id="productStockInfo" class="fw-bold">--</span>
+                    </p>
+                </div>
+
                 <!-- Quantity Selector -->
-                <div class="quantity-selector">
+                <div class="quantity-selector" id="productQuantitySection">
                     <label for="productQuantity">Số lượng</label>
                     <div class="quantity-input-group">
                         <button type="button" onclick="changeQuantity(-1)" aria-label="Giảm số lượng">-</button>
@@ -53,9 +61,14 @@
 
                 <!-- Actions -->
                 <?php if (!isset($_SESSION['user']['role']) || $_SESSION['user']['role'] !== 'admin'): ?>
-                <div>
+                <div id="productActionButtons">
                     <button type="button" class="btn btn-add-to-cart" onclick="addToCart()">Thêm vào giỏ hàng</button>
                     <button type="button" class="btn btn-buy-now" onclick="buyNow()">Mua ngay</button>
+                </div>
+                <div class="d-none" id="productOutOfStockButton">
+                    <a href="<?= BASE_URL ?>?action=products<?= !empty($product['category_id']) ? '&category_id=' . $product['category_id'] : '' ?>" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-grid"></i> Xem sản phẩm tương tự
+                    </a>
                 </div>
                 <?php else: ?>
                 <div class="alert alert-info">
@@ -225,7 +238,7 @@
                     renderSizeOptions(data.data.sizes || []);
                     renderColorOptions(data.data.colors || []);
                     
-                    // Set default and update image
+                    // Set default and update image & stock
                     if (data.data.sizes && data.data.sizes.length > 0) {
                         document.querySelector('.size-option').classList.add('active');
                         document.getElementById('productSize').value = data.data.sizes[0];
@@ -233,7 +246,10 @@
                     if (data.data.colors && data.data.colors.length > 0) {
                         document.querySelector('.color-option').classList.add('active');
                         document.getElementById('productColor').value = data.data.colors[0];
-                        updateProductImages(productId, data.data.sizes[0] || null, data.data.colors[0]);
+                        const firstSize = data.data.sizes[0] || null;
+                        const firstColor = data.data.colors[0];
+                        updateProductImages(productId, firstSize, firstColor);
+                        updateProductStock(productId, firstSize, firstColor);
                     }
                 }
             })
@@ -259,6 +275,7 @@
                 const productId = document.getElementById('productId').value;
                 const color = document.querySelector('.color-option.active')?.dataset.color;
                 updateProductImages(productId, size, color);
+                updateProductStock(productId, size, color);
             });
             container.appendChild(btn);
         });
@@ -285,6 +302,7 @@
                 const productId = document.getElementById('productId').value;
                 const size = document.querySelector('.size-option.active')?.dataset.size;
                 updateProductImages(productId, size, color);
+                updateProductStock(productId, size, color);
             });
             container.appendChild(btn);
         });
@@ -328,6 +346,50 @@
         document.getElementById('mainProductImage').src = src;
         document.querySelectorAll('.product-thumbnail').forEach(el => el.classList.remove('active'));
         element.classList.add('active');
+    }
+
+    // Update product stock based on selected variant
+    function updateProductStock(productId, size, color) {
+        if (!productId || !size || !color) return;
+        
+        fetch(`<?= BASE_URL ?>?action=get-variant-stock&product_id=${productId}&size=${size}&color=${color}`)
+            .then(response => response.json())
+            .then(data => {
+                const stockInfo = document.getElementById('productStockInfo');
+                const quantitySection = document.getElementById('productQuantitySection');
+                const actionButtons = document.getElementById('productActionButtons');
+                const outOfStockButton = document.getElementById('productOutOfStockButton');
+                const quantityInput = document.getElementById('productQuantity');
+                
+                if (data.success && data.stock !== undefined) {
+                    const stock = parseInt(data.stock);
+                    stockInfo.textContent = stock > 0 ? stock + ' sản phẩm' : 'Hết hàng';
+                    stockInfo.className = stock > 0 ? 'fw-bold text-success' : 'fw-bold text-danger';
+                    
+                    if (stock > 0) {
+                        // Có hàng - hiện nút mua
+                        quantitySection.style.display = 'flex';
+                        actionButtons.classList.remove('d-none');
+                        outOfStockButton.classList.add('d-none');
+                        quantityInput.max = stock;
+                        if (parseInt(quantityInput.value) > stock) {
+                            quantityInput.value = stock;
+                        }
+                    } else {
+                        // Hết hàng - hiện nút xem sản phẩm tương tự
+                        quantitySection.style.display = 'none';
+                        actionButtons.classList.add('d-none');
+                        outOfStockButton.classList.remove('d-none');
+                    }
+                } else {
+                    stockInfo.textContent = 'Không xác định';
+                    stockInfo.className = 'fw-bold text-muted';
+                }
+            })
+            .catch(err => {
+                console.error('Error loading stock:', err);
+                document.getElementById('productStockInfo').textContent = 'Không xác định';
+            });
     }
 
     // Change quantity

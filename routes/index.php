@@ -10,6 +10,7 @@ match ($action) {
     'product-detail' => (new ProductController)->detail(),
     'product-attributes' => (new ProductController)->attributes(),
     'variant-images' => (new ProductController)->variantImages(),
+    'get-variant-stock' => (new ProductController)->getVariantStock(),
     'search-api'     => (new ProductController)->searchApi(),
     'search-smart'   => (new ProductController)->searchSmart(),
     
