@@ -111,11 +111,11 @@ class CouponModel extends BaseModel
     ): array
     {
         $coupon = $this->getByCode($code, false);
-
+        
         if (!$coupon) {
             return ['ok' => false, 'message' => 'Mã giảm giá không tồn tại hoặc đã bị xóa.', 'coupon' => null, 'discount' => null];
         }
-
+        
         $status = $this->calculateStatus($coupon);
         if ($status === 'inactive') {
             return ['ok' => false, 'message' => 'Mã đã ngừng hoạt động.', 'coupon' => null, 'discount' => null];
@@ -154,10 +154,15 @@ class CouponModel extends BaseModel
                 return ['ok' => false, 'message' => 'Bạn đã dùng hết số lượt cho mã này.', 'coupon' => null, 'discount' => null];
             }
         }
-
+        
         // Khách mới
-        if (!empty($coupon['new_customer_only']) && !$isNewCustomer) {
-            return ['ok' => false, 'message' => 'Mã chỉ áp dụng cho khách hàng mới.', 'coupon' => null, 'discount' => null];
+        if (!empty($coupon['new_customer_only'])) {
+            if (!$userId) {
+                return ['ok' => false, 'message' => 'Mã chỉ áp dụng cho khách hàng mới, vui lòng đăng nhập.', 'coupon' => null, 'discount' => null];
+            }
+            if (!$isNewCustomer) {
+                return ['ok' => false, 'message' => 'Mã chỉ áp dụng cho khách mới (chưa có đơn giao thành công).', 'coupon' => null, 'discount' => null];
+            }
         }
 
         // Không áp dụng cho sản phẩm đang giảm giá (nếu có cờ)
@@ -169,9 +174,9 @@ class CouponModel extends BaseModel
         if (!empty($coupon['customer_group']) && $coupon['customer_group'] === 'vip_today') {
             if (!$userId) {
                 return ['ok' => false, 'message' => 'Mã VIP yêu cầu đăng nhập.', 'coupon' => null, 'discount' => null];
-            }
+        }
             if (!$isVipToday) {
-                return ['ok' => false, 'message' => 'Mã chỉ áp dụng cho khách VIP (đơn >= 2.000.000đ đã giao thành công).', 'coupon' => null, 'discount' => null];
+                return ['ok' => false, 'message' => 'Mã chỉ áp dụng cho khách VIP (đã có đơn giao thành công từ 2.000.000đ).', 'coupon' => null, 'discount' => null];
             }
             $usedByUserVip = $this->getUserUsageCount((int)$coupon['coupon_id'], $userId);
             if ($usedByUserVip >= 1) {
@@ -211,6 +216,11 @@ class CouponModel extends BaseModel
         } else {
             // Giảm cố định
             $discountAmount = (float)$coupon['discount_value'];
+        }
+        
+        // Nếu cấu hình giảm tối đa lớn hơn hoặc bằng giá trị đơn hàng, cho phép giảm về 0
+        if ($coupon['max_discount_amount'] !== null && (float)$coupon['max_discount_amount'] >= $orderAmount) {
+            $discountAmount = $orderAmount;
         }
         
         // Đảm bảo không giảm quá tổng tiền đơn hàng

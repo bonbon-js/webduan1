@@ -44,6 +44,32 @@ class AdminProductController
         require_once PATH_VIEW . 'admin/layout.php';
     }
 
+    public function detail(): void
+    {
+        $this->requireAdmin();
+        $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        if ($id <= 0) {
+            set_flash('danger', 'Sản phẩm không hợp lệ.');
+            header('Location: ' . BASE_URL . '?action=admin-products');
+            exit;
+        }
+
+        $product = $this->productModel->getProductById($id);
+        if (!$product) {
+            set_flash('danger', 'Không tìm thấy sản phẩm.');
+            header('Location: ' . BASE_URL . '?action=admin-products');
+            exit;
+        }
+
+        // Thuộc tính sản phẩm (size, color)
+        $attributes = $this->productModel->getProductAttributes($id);
+        $variants   = $this->productModel->getVariantsDetailed($id);
+
+        $title = 'Chi tiết sản phẩm';
+        $view  = 'admin/products/show';
+        require_once PATH_VIEW . 'admin/layout.php';
+    }
+
     public function create(): void
     {
         $this->requireAdmin();
@@ -236,6 +262,16 @@ class AdminProductController
             'additional_price' => $this->toFloat($_POST['additional_price'] ?? 0),
             'stock' => (int)($_POST['stock'] ?? 0),
         ];
+        // Upload ảnh biến thể (tùy chọn)
+        if (isset($_FILES['variant_image']) && $_FILES['variant_image']['error'] === UPLOAD_ERR_OK) {
+            $imageUrl = $this->handleImageUpload($_FILES['variant_image']);
+            if (!$imageUrl) {
+                set_flash('danger', 'Không thể upload ảnh biến thể. Vui lòng thử lại.');
+                header('Location: ' . BASE_URL . '?action=admin-product-edit&id=' . $productId);
+                exit;
+            }
+            $variantData['image_url'] = $imageUrl;
+        }
         $valueIds = $this->collectAttributeValues($_POST['attribute_values'] ?? []);
 
         if (empty($valueIds)) {
@@ -276,6 +312,15 @@ class AdminProductController
             'additional_price' => $this->toFloat($_POST['additional_price'] ?? 0),
             'stock' => (int)($_POST['stock'] ?? 0),
         ];
+        if (isset($_FILES['variant_image']) && $_FILES['variant_image']['error'] === UPLOAD_ERR_OK) {
+            $imageUrl = $this->handleImageUpload($_FILES['variant_image']);
+            if (!$imageUrl) {
+                set_flash('danger', 'Không thể upload ảnh biến thể. Vui lòng thử lại.');
+                header('Location: ' . BASE_URL . '?action=admin-product-edit&id=' . $productId);
+                exit;
+            }
+            $variantData['image_url'] = $imageUrl;
+        }
         $valueIds = $this->collectAttributeValues($_POST['attribute_values'] ?? []);
 
         if (empty($valueIds)) {

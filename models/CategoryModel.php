@@ -11,6 +11,22 @@ class CategoryModel extends BaseModel
     }
 
     /**
+     * Kiểm tra tên danh mục đã tồn tại (không phân biệt hoa/thường)
+     */
+    public function existsName(string $name, ?int $excludeId = null): bool
+    {
+        $sql = "SELECT COUNT(*) FROM {$this->table} WHERE LOWER(category_name) = LOWER(:name)";
+        $params = [':name' => $name];
+        if ($excludeId !== null) {
+            $sql .= " AND category_id <> :id";
+            $params[':id'] = $excludeId;
+        }
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
+    /**
      * Tạo danh mục mới
      */
     public function createCategory(string $name, ?string $description = null): int

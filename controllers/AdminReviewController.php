@@ -62,6 +62,49 @@ class AdminReviewController
     }
 
     /**
+     * Trang chi tiết đánh giá
+     */
+    public function detail(): void
+    {
+        $this->requireAdmin();
+
+        $id = (int)($_GET['id'] ?? 0);
+        if ($id <= 0) {
+            set_flash('danger', 'Thiếu mã đánh giá');
+            header('Location: ' . BASE_URL . '?action=admin-reviews');
+            exit;
+        }
+
+        $review = $this->reviewModel->getDetailById($id);
+        if (!$review) {
+            set_flash('danger', 'Không tìm thấy đánh giá');
+            header('Location: ' . BASE_URL . '?action=admin-reviews');
+            exit;
+        }
+
+        // Chuẩn hóa ảnh và lịch sử
+        $images = [];
+        if (!empty($review['images'])) {
+            if (is_array($review['images'])) {
+                $images = $review['images'];
+            } else {
+                $decoded = json_decode($review['images'], true);
+                if (is_array($decoded)) $images = $decoded;
+            }
+        }
+
+        $history = [];
+        if (!empty($review['comment_history'])) {
+            $decoded = json_decode($review['comment_history'], true);
+            if (is_array($decoded)) $history = $decoded;
+        }
+
+        $title = 'Chi tiết đánh giá';
+        $view  = 'admin/reviews/show';
+        require_once PATH_VIEW . 'admin/layout.php';
+    }
+
+    /**
      * Reply đánh giá
      */
     public function reply(): void
@@ -99,30 +142,12 @@ class AdminReviewController
     /**
      * Xóa đánh giá
      */
+    // Xóa đánh giá không được phép
     public function delete(): void
     {
         $this->requireAdmin();
-
         header('Content-Type: application/json');
-
-        $data = json_decode(file_get_contents('php://input'), true);
-        $reviewId = (int)($data['review_id'] ?? 0);
-
-        if (!$reviewId) {
-            echo json_encode(['success' => false, 'message' => 'Thiếu review_id']);
-            exit;
-        }
-
-        try {
-            $success = $this->reviewModel->delete($reviewId);
-            if ($success) {
-                echo json_encode(['success' => true, 'message' => 'Xóa thành công']);
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Không thể xóa']);
-            }
-        } catch (Exception $e) {
-            echo json_encode(['success' => false, 'message' => 'Có lỗi xảy ra: ' . $e->getMessage()]);
-        }
+        echo json_encode(['success' => false, 'message' => 'Không cho phép xóa đánh giá. Vui lòng sử dụng Ẩn/Hiện.']);
     }
 
     private function requireAdmin(): void

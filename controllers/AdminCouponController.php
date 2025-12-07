@@ -102,6 +102,14 @@ class AdminCouponController
         ];
         $formData = $data;
 
+        // Nếu là khách mới: cố định mỗi khách 1 lượt, tự bật hoàn lượt khi hoàn
+        if (!empty($data['new_customer_only'])) {
+            $data['per_user_limit'] = 1;
+            $formData['per_user_limit'] = 1;
+            $data['return_on_refund'] = 1;
+            $formData['return_on_refund'] = 1;
+        }
+
         // Nếu là giảm giá cố định, không cho phép max_discount_amount
         if ($data['discount_type'] === 'fixed') {
             $data['max_discount_amount'] = null;
@@ -215,6 +223,14 @@ class AdminCouponController
             'status' => $_POST['status'] ?? 'active',
         ];
         $formData = $data;
+
+        // Nếu là khách mới: cố định mỗi khách 1 lượt, tự bật hoàn lượt khi hoàn
+        if (!empty($data['new_customer_only'])) {
+            $data['per_user_limit'] = 1;
+            $formData['per_user_limit'] = 1;
+            $data['return_on_refund'] = 1;
+            $formData['return_on_refund'] = 1;
+        }
 
         // Nếu là giảm giá cố định, không cho phép max_discount_amount
         if ($data['discount_type'] === 'fixed') {
@@ -336,8 +352,8 @@ class AdminCouponController
                 $this->couponModel->update($couponId, array_merge($coupon, ['status' => 'inactive']));
                 set_flash('warning', 'Mã đã có lượt sử dụng, chuyển sang trạng thái ngừng hoạt động.');
             } else {
-                $this->couponModel->delete($couponId);
-                set_flash('success', 'Xóa mã giảm giá thành công.');
+            $this->couponModel->delete($couponId);
+            set_flash('success', 'Xóa mã giảm giá thành công.');
             }
         } catch (Throwable $exception) {
             set_flash('danger', 'Không thể xóa: ' . $exception->getMessage());

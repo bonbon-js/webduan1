@@ -86,6 +86,7 @@ class ProductController
 		// Optional: get gallery images
 		$images = $productModel->getProductImages($id);
 		$attributes = $productModel->getProductAttributes($id);
+		$variants   = $productModel->getVariantsDetailed($id);
 		$similarProducts = $productModel->getSimilarProducts((int)$product['category_id'], (int)$product['id'], 8);
 
 		// Load đánh giá sản phẩm
@@ -134,9 +135,14 @@ class ProductController
 		$imagesUrls = [];
 		$variant = $model->getVariantByValueNames($productId, $size, $color);
 		if ($variant) {
-			$images = $model->getVariantImages((int)$variant['variant_id']);
-			if (!empty($images)) {
-				$imagesUrls = array_map(fn($r) => $r['image_url'], $images);
+			// Ưu tiên ảnh ngay trên bảng product_variants nếu có
+			if (!empty($variant['image_url'])) {
+				$imagesUrls = [$variant['image_url']];
+			} else {
+				$images = $model->getVariantImages((int)$variant['variant_id']);
+				if (!empty($images)) {
+					$imagesUrls = array_map(fn($r) => $r['image_url'], $images);
+				}
 			}
 		}
 

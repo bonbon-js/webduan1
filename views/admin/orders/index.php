@@ -63,8 +63,7 @@
                             <th>Khách hàng</th>
                             <th>Liên hệ</th>
                             <th>Giá trị</th>
-                            <th>Trạng thái</th>
-                            <th>Cập nhật</th>
+                            <th>Trạng thái / Cập nhật</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -91,25 +90,48 @@
                                     </td>
                                     <td><?= number_format($order['total_amount'], 0, ',', '.') ?> đ</td>
                                     <td>
-                                        <span class="badge bg-<?= OrderModel::statusBadge($order['status']) ?> px-3 py-2">
-                                            <?= OrderModel::statusLabel($order['status']) ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <form method="POST" action="<?= BASE_URL ?>?action=admin-order-update">
-                                            <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
-                                            <select class="form-select form-select-sm mb-2" name="status">
-                                                <?php foreach ($statusMap as $key => $label): ?>
-                                                    <option value="<?= $key ?>" <?= $order['status'] === $key ? 'selected' : '' ?>>
-                                                        <?= $label ?>
-                                                    </option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                            <button class="btn btn-sm btn-dark w-100" type="submit">Cập nhật</button>
-                                        </form>
+                                        <?php
+                                            $pm = strtolower($order['payment_method'] ?? 'cod');
+                                            $status = $order['status'];
+                                        ?>
+                                        <div class="d-flex flex-column gap-2">
+                                            <div class="d-flex flex-wrap gap-2 align-items-center">
+                                                <span class="badge bg-<?= OrderModel::statusBadge($status) ?> px-3 py-2">
+                                                    <?= OrderModel::statusLabel($status) ?>
+                                                </span>
+                                                <?php 
+                                                    $isPaid = in_array($status, [
+                                                        OrderModel::STATUS_PAID,
+                                                        OrderModel::STATUS_PENDING,
+                                                        OrderModel::STATUS_TO_SHIP,
+                                                        OrderModel::STATUS_DELIVERED,
+                                                        OrderModel::STATUS_COMPLETED,
+                                                    ], true) && ($order['payment_method'] ?? '') === 'banking';
+                                                ?>
+                                                <?php if ($isPaid): ?>
+                                                    <span class="badge bg-success px-2 py-1">Đã thanh toán</span>
+                                                <?php endif; ?>
+                                            </div>
+                                            <?php if ($status === OrderModel::STATUS_CANCEL_REQUEST): ?>
+                                                <form method="POST" action="<?= BASE_URL ?>?action=admin-order-approve-cancel" class="mb-0">
+                                                    <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
+                                                    <button class="btn btn-sm btn-outline-danger w-100">Xác nhận hủy</button>
+                                                </form>
+                                            <?php elseif ($status === OrderModel::STATUS_PENDING): ?>
+                                                <form method="POST" action="<?= BASE_URL ?>?action=admin-order-confirm" class="mb-0">
+                                                    <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
+                                                    <button class="btn btn-sm btn-dark w-100">Xác nhận đơn</button>
+                                                </form>
+                                            <?php elseif ($status === OrderModel::STATUS_TO_SHIP): ?>
+                                                <form method="POST" action="<?= BASE_URL ?>?action=admin-order-delivered" class="mb-0">
+                                                    <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
+                                                    <button class="btn btn-sm btn-outline-primary w-100">Xác nhận đã giao</button>
+                                                </form>
+                                            <?php endif; ?>
+                                        </div>
                                     </td>
                                     <td class="text-end">
-                                        <a href="<?= BASE_URL ?>?action=order-detail&id=<?= $order['id'] ?>" class="btn btn-sm btn-outline-secondary" target="_blank">Xem</a>
+                                        <a href="<?= BASE_URL ?>?action=admin-order-detail&id=<?= $order['id'] ?>" class="btn btn-sm btn-outline-secondary">Xem</a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

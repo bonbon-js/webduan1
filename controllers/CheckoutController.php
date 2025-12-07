@@ -324,7 +324,7 @@ class CheckoutController
             'ward'           => $_POST['ward'] ?? null,
             'note'           => $_POST['note'] ?? null,
             'payment_method' => $_POST['payment_method'] ?? 'cod',
-            'status'         => OrderModel::STATUS_CONFIRMED,
+            'status'         => (($_POST['payment_method'] ?? 'cod') === 'cod') ? OrderModel::STATUS_PENDING : OrderModel::STATUS_UNPAID,
             'total_amount'   => $finalTotal,
             'coupon_id'      => $couponId,
             'discount_amount' => $discountAmount,

@@ -7525,6 +7525,7 @@ input[type="number"] {
 
 .coupon-input-uppercase {
     text-transform: uppercase !important;
+    font-size: 0.9rem; /* giảm cỡ chữ để không bị cắt */
 }
 
 .coupon-badge-small {

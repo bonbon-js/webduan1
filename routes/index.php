@@ -1,5 +1,8 @@
 <?php
 
+// Đảm bảo controller mua hàng được load (phục vụ kiểm tra tĩnh & tránh lỗi thiếu method)
+require_once PATH_CONTROLLER . 'OrderController.php';
+
 $action = $_GET['action'] ?? '/';
 
 match ($action) {
@@ -56,17 +59,25 @@ match ($action) {
     'order-history'  => (new OrderController)->history(),
     'order-detail'   => (new OrderController)->detail(),
     'order-cancel'   => (new OrderController)->cancel(),
+    'order-confirm'  => (new OrderController)->confirmReceived(),
+    'order-pay'      => (new OrderController)->pay(),
+    'order-rebuy'    => (new OrderController)->rebuy(),
     
     // Routes đánh giá cho user
     'review-submit'  => (new ReviewController)->submit(),
     'review-upload-image' => (new ReviewController)->uploadImage(),
     'review-get'     => (new ReviewController)->getByProduct(),
+    'review-update'  => (new ReviewController)->update(),
 
     // Routes quản trị
     'admin-dashboard'    => (new AdminDashboardController)->index(),
     'admin-statistics'   => (new AdminStatisticsController)->index(),
-    'admin-orders'       => (new AdminOrderController)->index(),
-    'admin-order-update' => (new AdminOrderController)->updateStatus(),
+    'admin-orders'            => (new AdminOrderController)->index(),
+    'admin-order-update'      => (new AdminOrderController)->updateStatus(),
+    'admin-order-detail'      => (new AdminOrderController)->detail(),
+    'admin-order-approve-cancel' => (new AdminOrderController)->approveCancel(),
+    'admin-order-confirm'     => (new AdminOrderController)->confirmOrder(),
+    'admin-order-delivered'   => (new AdminOrderController)->confirmDelivered(),
     // Quản lý tài khoản
     'admin-users'        => (new AdminUserController)->index(),
     'admin-user-role'    => (new AdminUserController)->updateRole(),
@@ -104,6 +115,7 @@ match ($action) {
     'admin-products-trash' => (new AdminProductController)->trash(),
     'admin-product-create' => (new AdminProductController)->create(),
     'admin-product-edit'   => (new AdminProductController)->edit(),
+    'admin-product-detail' => (new AdminProductController)->detail(),
     'admin-product-store'  => (new AdminProductController)->store(),
     'admin-product-update' => (new AdminProductController)->update(),
     'admin-product-delete' => (new AdminProductController)->delete(),
@@ -118,6 +130,7 @@ match ($action) {
     'admin-review-reply' => (new AdminReviewController)->reply(),
     'admin-review-toggle-hidden' => (new AdminReviewController)->toggleHidden(),
     'admin-review-delete' => (new AdminReviewController)->delete(),
+    'admin-review-detail' => (new AdminReviewController)->detail(),
     
     // Auth routes
     'show-login'         => (new AuthController)->showLogin(),

@@ -131,6 +131,27 @@
                                     <?php else: ?>
                                         <span class="text-muted">Không có bình luận</span>
                                     <?php endif; ?>
+                                    <?php 
+                                        $history = [];
+                                        if (!empty($review['comment_history'])) {
+                                            $decoded = json_decode($review['comment_history'], true);
+                                            $history = is_array($decoded) ? $decoded : [];
+                                        }
+                                    ?>
+                                    <?php if (!empty($history)): ?>
+                                        <div class="mt-2">
+                                            <small class="text-muted d-block mb-1">Lịch sử sửa:</small>
+                                            <ul class="list-unstyled mb-0 small text-muted">
+                                                <?php foreach (array_reverse($history) as $h): ?>
+                                                    <li>
+                                                        <span class="fw-semibold"><?= htmlspecialchars($h['comment'] ?? '') ?></span>
+                                                        <br>
+                                                        <span><?= htmlspecialchars($h['edited_at'] ?? '') ?></span>
+                                                    </li>
+                                                <?php endforeach; ?>
+                                            </ul>
+                                        </div>
+                                    <?php endif; ?>
                                 </td>
                                 <td>
                                     <?php if (!empty($reviewImages)): ?>
@@ -188,6 +209,11 @@
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm" role="group">
+                                        <a class="btn btn-outline-info"
+                                           href="<?= BASE_URL ?>?action=admin-review-detail&id=<?= $review['review_id'] ?>"
+                                           title="Xem chi tiết">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
                                         <button type="button" 
                                                 class="btn btn-outline-primary" 
                                                 onclick="openReplyModal(<?= $review['review_id'] ?>, '<?= htmlspecialchars(addslashes($review['reply'] ?? '')) ?>')"
@@ -196,15 +222,9 @@
                                         </button>
                                         <button type="button" 
                                                 class="btn btn-outline-<?= $review['is_hidden'] ? 'success' : 'warning' ?>" 
-                                                onclick="toggleHidden(<?= $review['review_id'] ?>, <?= $review['is_hidden'] ? 0 : 1 ?>)"
+                                                onclick="toggleHidden(<?= $review['review_id'] ?>, <?= $review['is_hidden'] ? 'true' : 'false' ?>)"
                                                 title="<?= $review['is_hidden'] ? 'Hiển thị' : 'Ẩn' ?>">
                                             <i class="bi bi-eye<?= $review['is_hidden'] ? '' : '-slash' ?>"></i>
-                                        </button>
-                                        <button type="button" 
-                                                class="btn btn-outline-danger" 
-                                                onclick="deleteReview(<?= $review['review_id'] ?>)"
-                                                title="Xóa">
-                                            <i class="bi bi-trash"></i>
                                         </button>
                                     </div>
                                 </td>
@@ -253,6 +273,68 @@
                 <button type="button" class="btn btn-primary" onclick="submitReply()">
                     <i class="bi bi-send me-1"></i>Gửi phản hồi
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Chi tiết đánh giá -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title">
+                    <i class="bi bi-eye me-2"></i>Chi tiết đánh giá
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="mb-2">
+                            <small class="text-muted">Người dùng</small>
+                            <div id="detailUser"></div>
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted">Sản phẩm</small>
+                            <div id="detailProduct"></div>
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted">Đánh giá</small>
+                            <div id="detailRating"></div>
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted">Trạng thái</small>
+                            <div id="detailStatus"></div>
+                        </div>
+                        <div class="mb-2">
+                            <small class="text-muted">Thời gian</small>
+                            <div id="detailTime"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <small class="text-muted">Bình luận hiện tại</small>
+                            <div class="border rounded p-2 bg-light" id="detailComment"></div>
+                        </div>
+                        <div class="mb-3">
+                            <small class="text-muted">Ảnh</small>
+                            <div class="d-flex flex-wrap gap-2" id="detailImages"></div>
+                        </div>
+                        <div>
+                            <small class="text-muted">Phản hồi của admin</small>
+                            <div class="border rounded p-2 bg-light" id="detailReply"></div>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div>
+                    <small class="text-muted d-block mb-1">Lịch sử sửa bình luận</small>
+                    <div id="detailHistory"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
             </div>
         </div>
     </div>
@@ -310,8 +392,9 @@ function submitReply() {
     });
 }
 
-function toggleHidden(reviewId, currentStatus) {
-    if (!confirm('Bạn có chắc chắn muốn ' + (currentStatus ? 'hiển thị' : 'ẩn') + ' đánh giá này?')) {
+function toggleHidden(reviewId, isCurrentlyHidden) {
+    const actionLabel = isCurrentlyHidden ? 'hiển thị' : 'ẩn';
+    if (!confirm('Bạn có chắc chắn muốn ' + actionLabel + ' đánh giá này?')) {
         return;
     }
     
@@ -327,35 +410,6 @@ function toggleHidden(reviewId, currentStatus) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            location.reload();
-        } else {
-            alert(data.message || 'Có lỗi xảy ra');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Có lỗi xảy ra. Vui lòng thử lại.');
-    });
-}
-
-function deleteReview(reviewId) {
-    if (!confirm('Bạn có chắc chắn muốn xóa đánh giá này? Hành động này không thể hoàn tác.')) {
-        return;
-    }
-    
-    fetch('<?= BASE_URL ?>?action=admin-review-delete', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            review_id: parseInt(reviewId)
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Xóa thành công!');
             location.reload();
         } else {
             alert(data.message || 'Có lỗi xảy ra');

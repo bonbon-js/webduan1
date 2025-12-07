@@ -27,6 +27,34 @@ error_log("Order detail page - currentOrderId: $currentOrderId, order['id']: " .
             <a href="<?= BASE_URL ?>?action=order-history" class="btn btn-outline-dark">Quay lại danh sách</a>
         </div>
 
+        <?php if (($order['status'] ?? '') === OrderModel::STATUS_UNPAID && strtolower($order['payment_method'] ?? '') !== 'cod'): ?>
+            <div class="alert alert-warning d-flex align-items-center justify-content-between">
+                <div>
+                    <strong>Đơn đang chờ thanh toán.</strong> Vui lòng thanh toán trong 24h, quá hạn hệ thống sẽ tự hủy.
+                </div>
+                <a class="btn btn-sm btn-primary" href="<?= BASE_URL ?>?action=order-pay&id=<?= $order['id'] ?>">Thanh toán ngay</a>
+            </div>
+        <?php elseif (($order['status'] ?? '') === OrderModel::STATUS_PAYMENT_FAILED && strtolower($order['payment_method'] ?? '') !== 'cod'): ?>
+            <div class="alert alert-danger d-flex align-items-center justify-content-between">
+                <div>
+                    <strong>Thanh toán thất bại.</strong> Vui lòng thanh toán lại, quá hạn 24h đơn sẽ bị hủy.
+                </div>
+                <a class="btn btn-sm btn-outline-warning" href="<?= BASE_URL ?>?action=order-pay&id=<?= $order['id'] ?>">Thanh toán lại</a>
+            </div>
+        <?php endif; ?>
+
+        <?php if (($order['status'] ?? '') === OrderModel::STATUS_DELIVERED): ?>
+            <div class="alert alert-info d-flex align-items-center justify-content-between">
+                <div>
+                    <strong>Đơn đã giao.</strong> Bạn có thể đánh giá ngay hoặc bấm “Tôi đã nhận hàng” để hoàn tất.
+                </div>
+                <form method="POST" action="<?= BASE_URL ?>?action=order-confirm" class="mb-0">
+                    <input type="hidden" name="order_id" value="<?= $currentOrderId ?>">
+                    <button type="submit" class="btn btn-primary btn-sm">Tôi đã nhận hàng</button>
+                </form>
+            </div>
+        <?php endif; ?>
+
         <?php if ($canReview): 
             // Kiểm tra xem còn sản phẩm nào chưa đánh giá không
             $hasUnreviewedItems = false;
@@ -50,14 +78,14 @@ error_log("Order detail page - currentOrderId: $currentOrderId, order['id']: " .
             
             // Kiểm tra xem có tham số review=true trong URL không (khi admin vừa cập nhật status hoặc vừa đặt hàng)
             $showReviewPrompt = isset($_GET['review']) && $_GET['review'] === 'true';
-            // Tự động hiển thị thông báo đánh giá khi trạng thái là delivered và có sản phẩm chưa đánh giá
+            // Tự động hiển thị thông báo đánh giá khi trạng thái là completed và có sản phẩm chưa đánh giá
             $autoShowReview = $hasUnreviewedItems;
         ?>
             <?php if ($hasUnreviewedItems): ?>
                 <div class="alert alert-warning alert-dismissible fade show d-flex align-items-center mb-4 border-warning shadow-sm" role="alert" id="reviewNotification">
                     <i class="bi bi-star-fill me-3 fs-3 text-warning"></i>
                     <div class="flex-grow-1">
-                        <strong class="text-dark fs-5">🎉 Đơn hàng đã được giao thành công!</strong>
+                        <strong class="text-dark fs-5">🎉 Đơn hàng đã hoàn thành!</strong>
                         <p class="mb-0 text-dark mt-1">
                             <?php if ($unreviewedCount > 1): ?>
                                 Bạn có <strong><?= $unreviewedCount ?> sản phẩm</strong> chưa được đánh giá. 
@@ -106,14 +134,42 @@ error_log("Order detail page - currentOrderId: $currentOrderId, order['id']: " .
                         <i class="bi bi-info-circle me-2"></i>Trạng thái đơn hàng
                     </h5>
                     <div class="mb-3">
-                        <span class="badge bg-<?= OrderModel::statusBadge($order['status']) ?> px-3 py-2 fs-6">
-                            <?= OrderModel::statusLabel($order['status']) ?>
-                        </span>
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <span class="badge bg-<?= OrderModel::statusBadge($order['status']) ?> px-3 py-2 fs-6">
+                                <?= OrderModel::statusLabel($order['status']) ?>
+                            </span>
+                            <?php if (($order['status'] ?? '') === OrderModel::STATUS_CANCELLED): ?>
+                                <a href="<?= BASE_URL ?>?action=order-rebuy&id=<?= $order['id'] ?>" class="btn btn-sm btn-outline-dark">
+                                    Mua lại
+                                </a>
+                            <?php endif; ?>
+                        </div>
                     </div>
 
                     <div class="status-timeline">
                         <?php 
                         $statuses = OrderModel::statuses();
+                        $isCod = strtolower($order['payment_method'] ?? '') === 'cod';
+                        // Nếu thanh toán COD, bỏ các trạng thái liên quan thanh toán online
+                        if ($isCod) {
+                            unset(
+                                $statuses[OrderModel::STATUS_UNPAID],
+                                $statuses[OrderModel::STATUS_PAID],
+                                $statuses[OrderModel::STATUS_PAYMENT_FAILED]
+                            );
+                        } else {
+                            // Nếu đã thanh toán thành công (PAID/PENDING/TO_SHIP/DELIVERED/COMPLETED),
+                            // ẩn trạng thái "Thanh toán thất bại"
+                            if ($order['status'] !== OrderModel::STATUS_PAYMENT_FAILED) {
+                                unset($statuses[OrderModel::STATUS_PAYMENT_FAILED]);
+                            }
+                        }
+                        // Nếu đã hủy, chỉ hiển thị trạng thái hiện tại là Đã Hủy
+                        if (($order['status'] ?? '') === OrderModel::STATUS_CANCELLED) {
+                            $statuses = [
+                                OrderModel::STATUS_CANCELLED => OrderModel::statusLabel(OrderModel::STATUS_CANCELLED)
+                            ];
+                        }
                         $currentStatusIndex = array_search($order['status'], array_keys($statuses));
                         $statusIndex = 0;
                         foreach ($statuses as $key => $label): 
@@ -151,13 +207,24 @@ error_log("Order detail page - currentOrderId: $currentOrderId, order['id']: " .
                 <?php if ($canCancel): ?>
                     <div class="order-summary-card">
                         <h5 class="fw-bold mb-3">Hủy đơn hàng</h5>
-                        <form method="POST" action="<?= BASE_URL ?>?action=order-cancel">
+                        <form method="POST" action="<?= BASE_URL ?>?action=order-cancel" onsubmit="return validateCancelReason()">
                             <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
                             <div class="mb-3">
-                                <label class="form-label small text-uppercase">Lý do (tuỳ chọn)</label>
-                                <textarea class="form-control" name="reason" rows="3" placeholder="Ví dụ: Đổi ý, đặt nhầm size..."></textarea>
+                                <label class="form-label small text-uppercase">Lý do hủy <span class="text-danger">*</span></label>
+                                <select class="form-select" name="reason_predefined" id="cancelReasonSelect" required>
+                                    <option value="">-- Chọn lý do --</option>
+                                    <option value="Chọn nhầm sản phẩm">Chọn nhầm sản phẩm</option>
+                                    <option value="Muốn cập nhật địa chỉ/SDT">Muốn cập nhật địa chỉ/SDT</option>
+                                    <option value="Thay đổi phương thức thanh toán">Thay đổi phương thức thanh toán</option>
+                                    <option value="Thời gian giao hàng không phù hợp">Thời gian giao hàng không phù hợp</option>
+                                    <option value="Lý do khác">Lý do khác</option>
+                                </select>
                             </div>
-                            <button type="submit" class="btn btn-outline-danger w-100">Hủy đơn</button>
+                            <div class="mb-3" id="cancelReasonOtherWrap" style="display:none;">
+                                <label class="form-label small text-uppercase">Lý do khác</label>
+                                <textarea class="form-control" name="reason_other" rows="3" placeholder="Nhập lý do khác (tối thiểu 5 ký tự)"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-outline-danger w-100">Gửi yêu cầu hủy</button>
                         </form>
                     </div>
                 <?php endif; ?>
@@ -266,7 +333,7 @@ error_log("Order detail page - currentOrderId: $currentOrderId, order['id']: " .
                                                                     </div>
                                                                 </div>
                                                                 <?php if (!empty($existingReview['comment'])): ?>
-                                                                    <p class="mb-2 text-muted"><?= nl2br(htmlspecialchars($existingReview['comment'])) ?></p>
+                                                                    <p class="mb-2 text-muted mb-1"><?= nl2br(htmlspecialchars($existingReview['comment'])) ?></p>
                                                                 <?php endif; ?>
                                                                 <?php if (!empty($reviewImages)): ?>
                                                                     <div class="review-images mt-2 mb-2">
@@ -285,6 +352,20 @@ error_log("Order detail page - currentOrderId: $currentOrderId, order['id']: " .
                                                                         <p class="mb-0 small"><?= nl2br(htmlspecialchars($existingReview['reply'])) ?></p>
                                                                     </div>
                                                                 <?php endif; ?>
+                                                                <button class="btn btn-outline-dark btn-sm mt-2" type="button" data-bs-toggle="collapse" data-bs-target="#editReview_<?= $orderItemId ?>">
+                                                                    <i class="bi bi-pencil"></i> Sửa đánh giá
+                                                                </button>
+                                                                <div class="collapse mt-3" id="editReview_<?= $orderItemId ?>">
+                                                                    <form class="review-edit-form" data-review-id="<?= $existingReview['review_id'] ?>">
+                                                                        <input type="hidden" name="review_id" value="<?= $existingReview['review_id'] ?>">
+                                                                        <div class="mb-2">
+                                                                            <label class="form-label small">Cập nhật bình luận</label>
+                                                                            <textarea name="comment" class="form-control" rows="3" required><?= htmlspecialchars($existingReview['comment'] ?? '') ?></textarea>
+                                                                            <small class="text-muted">Không thể xóa, chỉ sửa nội dung.</small>
+                                                                        </div>
+                                                                        <button type="submit" class="btn btn-dark btn-sm">Lưu chỉnh sửa</button>
+                                                                    </form>
+                                                                </div>
                                                             </div>
                                                             <small class="text-muted"><?= date('d/m/Y', strtotime($existingReview['created_at'])) ?></small>
                                                         </div>
@@ -317,8 +398,8 @@ error_log("Order detail page - currentOrderId: $currentOrderId, order['id']: " .
                                                                 <textarea name="comment" class="form-control" rows="3" placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."></textarea>
                                                             </div>
                                                             <div class="mb-3">
-                                                                <label class="form-label small">Upload ảnh (tùy chọn, tối đa 5 ảnh)</label>
-                                                                <input type="file" class="form-control review-image-input" accept="image/*" multiple data-order-item-id="<?= $orderItemId ?>">
+                                                                <label class="form-label small">Upload ảnh (tùy chọn, tối đa 1 ảnh)</label>
+                                                                <input type="file" class="form-control review-image-input" accept="image/*" data-order-item-id="<?= $orderItemId ?>">
                                                                 <small class="text-muted">Chấp nhận: JPG, PNG, GIF, WEBP (tối đa 5MB/ảnh)</small>
                                                                 <div class="review-images-preview mt-2 d-flex flex-wrap gap-2" id="reviewImagesPreview_<?= $orderItemId ?>"></div>
                                                             </div>
@@ -349,10 +430,10 @@ error_log("Order detail page - currentOrderId: $currentOrderId, order['id']: " .
 <?php if ($canReview): ?>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Tự động cuộn đến phần đánh giá khi trạng thái là "delivered" và có sản phẩm chưa đánh giá
+    // Tự động cuộn đến phần đánh giá khi trạng thái là "delivered" hoặc "completed" và có sản phẩm chưa đánh giá
     <?php if ($hasUnreviewedItems && $firstUnreviewedItemId): ?>
     // QUAN TRỌNG: Tự động cuộn đến form đánh giá khi:
-    // 1. Trạng thái đơn hàng là "delivered" (đã giao hàng thành công)
+    // 1. Trạng thái đơn hàng là "delivered" hoặc "completed"
     // 2. Có tham số review=true trong URL (khi admin vừa cập nhật status)
     // 3. Có thông báo đánh giá hiển thị
     const urlParams = new URLSearchParams(window.location.search);
@@ -360,10 +441,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const hasReviewParam = urlParams.get('review') === 'true';
     const hasNotification = document.getElementById('reviewNotification') !== null;
     
-    // Tự động cuộn nếu trạng thái là delivered hoặc có tham số review=true
-    const shouldAutoScroll = orderStatus === 'delivered' || hasReviewParam || hasNotification;
+    // Tự động cuộn nếu trạng thái là delivered/completed hoặc có tham số review=true
+    const shouldAutoScroll = (orderStatus === 'delivered' || orderStatus === 'completed') || hasReviewParam || hasNotification;
     
-    if (shouldAutoScroll && orderStatus === 'delivered') {
+    if (shouldAutoScroll && (orderStatus === 'delivered' || orderStatus === 'completed')) {
         // Đợi một chút để đảm bảo DOM đã load xong
         setTimeout(() => {
             const reviewElement = document.getElementById('reviewItem_<?= $firstUnreviewedItemId ?>');
@@ -475,13 +556,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const orderItemId = this.dataset.orderItemId;
             const previewContainer = document.getElementById('reviewImagesPreview_' + orderItemId);
             const files = Array.from(this.files);
-            
-            if (files.length > 5) {
-                showErrorToast('Chỉ có thể upload tối đa 5 ảnh');
+            if (files.length > 1) {
+                showErrorToast('Chỉ được tải lên 1 ảnh cho mỗi đánh giá');
                 this.value = '';
                 return;
             }
-            
+
             previewContainer.innerHTML = '';
             const uploadedImages = [];
             
@@ -516,9 +596,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     const uploadData = await uploadResponse.json();
                     if (uploadData.success) {
                         uploadedImages.push(uploadData.url);
-                        // Lưu vào data attribute
+                        // Lưu vào data attribute (chỉ 1 ảnh)
                         const form = input.closest('.review-form');
-                        form.dataset.uploadedImages = JSON.stringify(uploadedImages);
+                        form.dataset.uploadedImages = JSON.stringify(uploadedImages.slice(0,1));
                         showSuccessToast('Upload ảnh thành công!');
                     } else {
                         showErrorToast('Lỗi upload ảnh: ' + (uploadData.message || 'Vui lòng thử lại'));
@@ -531,7 +611,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Xử lý submit form đánh giá
+    // Xử lý submit form đánh giá mới
     const reviewForms = document.querySelectorAll('.review-form');
     
     reviewForms.forEach(form => {
@@ -694,7 +774,87 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // Xử lý submit form chỉnh sửa bình luận
+    const editForms = document.querySelectorAll('.review-edit-form');
+    editForms.forEach(form => {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const reviewId = parseInt(this.dataset.reviewId || this.querySelector('input[name="review_id"]')?.value || 0);
+            const comment = this.querySelector('textarea[name="comment"]')?.value.trim() || '';
+
+            if (!reviewId) {
+                showErrorToast('Không tìm thấy review_id');
+                return;
+            }
+            if (!comment) {
+                showErrorToast('Vui lòng nhập nội dung bình luận');
+                return;
+            }
+
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const original = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Đang lưu...';
+
+            try {
+                const resp = await fetch('<?= BASE_URL ?>?action=review-update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ review_id: reviewId, comment })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    showSuccessToast('Đã lưu chỉnh sửa bình luận');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showErrorToast(data.message || 'Có lỗi khi lưu chỉnh sửa');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = original;
+                }
+            } catch (err) {
+                console.error(err);
+                showErrorToast('Có lỗi xảy ra. Vui lòng thử lại.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = original;
+            }
+        });
+    });
 });
 </script>
 <?php endif; ?>
+
+<script>
+// Hiển thị ô "Lý do khác" khi chọn
+document.addEventListener('DOMContentLoaded', function() {
+    const select = document.getElementById('cancelReasonSelect');
+    const otherWrap = document.getElementById('cancelReasonOtherWrap');
+    if (select) {
+        select.addEventListener('change', function() {
+            if (this.value === 'Lý do khác') {
+                otherWrap.style.display = '';
+            } else {
+                otherWrap.style.display = 'none';
+            }
+        });
+    }
+});
+
+function validateCancelReason() {
+    const select = document.getElementById('cancelReasonSelect');
+    const otherWrap = document.getElementById('cancelReasonOtherWrap');
+    if (!select || !select.value) {
+        alert('Vui lòng chọn lý do hủy');
+        return false;
+    }
+    if (select.value === 'Lý do khác') {
+        const other = document.querySelector('textarea[name="reason_other"]');
+        if (!other || other.value.trim().length < 5) {
+            alert('Vui lòng nhập lý do khác (tối thiểu 5 ký tự)');
+            return false;
+        }
+    }
+    return true;
+}
+</script>
 

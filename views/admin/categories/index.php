@@ -8,6 +8,27 @@
     </div>
 </div>
 
+<div class="card mb-3">
+    <div class="card-body">
+        <form class="row g-3" method="GET" action="<?= BASE_URL ?>">
+            <input type="hidden" name="action" value="admin-categories">
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold text-uppercase">Tìm danh mục</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" name="keyword" class="form-control" placeholder="Tên danh mục..." value="<?= htmlspecialchars($searchKeyword ?? '') ?>">
+                </div>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button class="btn btn-primary w-100" type="submit"><i class="bi bi-funnel"></i> Lọc</button>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <a class="btn btn-outline-secondary w-100" href="<?= BASE_URL ?>?action=admin-categories"><i class="bi bi-x-lg"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="admin-table">
     <table>
         <thead>
