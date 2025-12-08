@@ -63,7 +63,13 @@ class ProductModel extends BaseModel
     private function addImageField(string $sql, string $alias = 'pi'): string
     {
         if ($this->hasProductImagesTable()) {
-            return $sql . ", {$alias}.image_url as image";
+            // Ưu tiên ảnh primary, nếu không có thì lấy ảnh đầu tiên của sản phẩm
+            return $sql . ", (
+                SELECT image_url FROM product_images i 
+                WHERE i.product_id = p.product_id 
+                ORDER BY i.is_primary DESC, i.image_id ASC 
+                LIMIT 1
+            ) as image";
         }
         return $sql . ", NULL as image";
     }
@@ -1287,7 +1293,7 @@ class ProductModel extends BaseModel
      * @param string $color
      * @return int Stock quantity
      */
-    public function getVariantStock(int $productId, string $size, string $color): int
+    public function getVariantStock(int $productId, ?string $size, ?string $color): int
     {
         try {
             // Sử dụng method getVariantByValueNames đã có sẵn

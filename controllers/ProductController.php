@@ -255,19 +255,19 @@ class ProductController
 	{
 		header('Content-Type: application/json');
 		
-		$productId = isset($_GET['product_id']) ? (int)$_GET['product_id'] : 0;
-		$size = isset($_GET['size']) ? trim($_GET['size']) : '';
-		$color = isset($_GET['color']) ? trim($_GET['color']) : '';
-		
-		if (!$productId || !$size || !$color) {
-			echo json_encode(['success' => false, 'message' => 'Missing parameters']);
-			exit;
-		}
+        $productId = isset($_GET['product_id']) ? (int)$_GET['product_id'] : 0;
+        $size = isset($_GET['size']) ? trim($_GET['size']) : '';
+        $color = isset($_GET['color']) ? trim($_GET['color']) : '';
+        
+        if (!$productId || ($size === '' && $color === '')) {
+            echo json_encode(['success' => false, 'message' => 'Missing parameters']);
+            exit;
+        }
 		
 		require_once PATH_MODEL . 'ProductModel.php';
 		$productModel = new ProductModel();
 		
-		$stock = $productModel->getVariantStock($productId, $size, $color);
+        $stock = $productModel->getVariantStock($productId, $size ?: null, $color ?: null);
 		
 		echo json_encode([
 			'success' => true,

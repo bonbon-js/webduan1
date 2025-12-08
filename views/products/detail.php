@@ -131,17 +131,52 @@
             </div>
         <?php endif; ?>
 
-        <!-- Reviews List -->
+        <!-- Reviews Filters + List -->
         <?php if (!empty($reviews)): ?>
-            <div class="reviews-list">
+            <div class="review-filters d-flex flex-wrap gap-2 mb-3">
+                <?php 
+                    $totalReviews = $reviewStats['total_reviews'] ?? count($reviews);
+                    $countComment = count(array_filter($reviews, fn($r) => !empty($r['comment'])));
+                    $countMedia   = count(array_filter($reviews, function($r) {
+                        $imgs = $r['images'] ?? [];
+                        if (is_string($imgs)) {
+                            $imgs = json_decode($imgs, true);
+                        }
+                        return !empty($imgs);
+                    }));
+                ?>
+                <button type="button" class="btn btn-sm btn-outline-secondary review-filter-btn active" data-filter="all">
+                    Tất cả (<?= $totalReviews ?>)
+                </button>
+                <?php for ($star = 5; $star >=1; $star--): 
+                    $countStar = $reviewStats['rating_' . $star] ?? 0;
+                ?>
+                    <button type="button" class="btn btn-sm btn-outline-secondary review-filter-btn" data-filter="star-<?= $star ?>">
+                        <?= $star ?> Sao (<?= $countStar ?>)
+                    </button>
+                <?php endfor; ?>
+                <button type="button" class="btn btn-sm btn-outline-secondary review-filter-btn" data-filter="comment">
+                    Có bình luận (<?= $countComment ?>)
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary review-filter-btn" data-filter="media">
+                    Có hình ảnh / Video (<?= $countMedia ?>)
+                </button>
+            </div>
+
+            <div class="reviews-list" id="reviewsList">
                 <?php foreach ($reviews as $review): 
                     $reviewImages = $review['images'] ?? [];
                     if (is_string($reviewImages)) {
                         $reviewImages = json_decode($reviewImages, true);
                         if (!is_array($reviewImages)) $reviewImages = [];
                     }
+                    $hasComment = !empty($review['comment']);
+                    $hasImages  = !empty($reviewImages);
                 ?>
-                    <div class="review-item mb-4 p-3 border rounded">
+                    <div class="review-item mb-4 p-3 border rounded"
+                         data-rating="<?= (int)($review['rating'] ?? 0) ?>"
+                         data-has-comment="<?= $hasComment ? '1' : '0' ?>"
+                         data-has-media="<?= $hasImages ? '1' : '0' ?>">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <div>
                                 <strong><?= htmlspecialchars($review['user_name'] ?? 'Khách hàng') ?></strong>
@@ -153,10 +188,10 @@
                             </div>
                             <small class="text-muted"><?= date('d/m/Y', strtotime($review['created_at'])) ?></small>
                         </div>
-                        <?php if (!empty($review['comment'])): ?>
+                        <?php if ($hasComment): ?>
                             <p class="mb-2"><?= nl2br(htmlspecialchars($review['comment'])) ?></p>
                         <?php endif; ?>
-                        <?php if (!empty($reviewImages)): ?>
+                        <?php if ($hasImages): ?>
                             <div class="review-images mt-2 mb-2">
                                 <div class="d-flex flex-wrap gap-2">
                                     <?php foreach ($reviewImages as $img): ?>
@@ -176,6 +211,7 @@
                     </div>
                 <?php endforeach; ?>
             </div>
+            <div id="reviewEmptyState" class="alert alert-light text-center d-none">Không có đánh giá phù hợp bộ lọc.</div>
         <?php endif; ?>
     </div>
 
@@ -254,8 +290,11 @@
                     if (data.data.colors && data.data.colors.length > 0) {
                         document.querySelector('.color-option').classList.add('active');
                         document.getElementById('productColor').value = data.data.colors[0];
-                        const firstSize = data.data.sizes[0] || null;
-                        const firstColor = data.data.colors[0];
+                    }
+
+                    const firstSize = (data.data.sizes && data.data.sizes.length > 0) ? data.data.sizes[0] : null;
+                    const firstColor = (data.data.colors && data.data.colors.length > 0) ? data.data.colors[0] : null;
+                    if (firstSize || firstColor) {
                         updateProductImages(productId, firstSize, firstColor);
                         updateProductStock(productId, firstSize, firstColor);
                     }
@@ -358,9 +397,13 @@
 
     // Update product stock based on selected variant
     function updateProductStock(productId, size, color) {
-        if (!productId || !size || !color) return;
+        if (!productId || (!size && !color)) return;
         
-        fetch(`<?= BASE_URL ?>?action=get-variant-stock&product_id=${productId}&size=${size}&color=${color}`)
+        const params = new URLSearchParams({ product_id: productId });
+        if (size) params.append('size', size);
+        if (color) params.append('color', color);
+
+        fetch(`<?= BASE_URL ?>?action=get-variant-stock&${params.toString()}`)
             .then(response => response.json())
             .then(data => {
                 const stockInfo = document.getElementById('productStockInfo');
@@ -531,5 +574,47 @@
         // Redirect to detail page or open modal
         window.location.href = `<?= BASE_URL ?>?action=product-detail&id=${id}`;
     }
+
+    // Review filters
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterBtns = document.querySelectorAll('.review-filter-btn');
+        const reviewItems = document.querySelectorAll('.review-item');
+        const emptyState = document.getElementById('reviewEmptyState');
+
+        function applyFilter(filter) {
+            let visible = 0;
+            reviewItems.forEach(item => {
+                const rating = parseInt(item.dataset.rating || 0);
+                const hasCmt = item.dataset.hasComment === '1';
+                const hasMedia = item.dataset.hasMedia === '1';
+
+                let show = false;
+                if (filter === 'all') show = true;
+                else if (filter.startsWith('star-')) {
+                    const star = parseInt(filter.split('-')[1] || 0);
+                    show = rating === star;
+                } else if (filter === 'comment') {
+                    show = hasCmt;
+                } else if (filter === 'media') {
+                    show = hasMedia;
+                }
+
+                item.style.display = show ? '' : 'none';
+                if (show) visible++;
+            });
+
+            if (emptyState) {
+                emptyState.classList.toggle('d-none', visible > 0);
+            }
+        }
+
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                applyFilter(btn.dataset.filter);
+            });
+        });
+    });
 </script>
 
