@@ -645,15 +645,15 @@ class ProductModel extends BaseModel
                 JOIN product_attribute_values pav ON pv.variant_id = pav.variant_id
                 JOIN attribute_values av ON pav.value_id = av.value_id
                 WHERE pv.product_id = ?
-                  AND LOWER(av.value_name) IN ($inPlaceholders)
-                GROUP BY pv.variant_id, pv.sku, pv.additional_price, pv.stock
-                HAVING COUNT(DISTINCT av.value_name) = ?
+                  AND LOWER(TRIM(av.value_name)) IN ($inPlaceholders)
+                GROUP BY pv.variant_id, pv.sku, pv.additional_price, pv.stock, pv.image_url
+                HAVING COUNT(DISTINCT LOWER(TRIM(av.value_name))) = ?
                 LIMIT 1";
         $stmt = $this->pdo->prepare($sql);
         $bindIndex = 1;
         $stmt->bindValue($bindIndex++, $productId, PDO::PARAM_INT);
         foreach ($selected as $name) {
-            $stmt->bindValue($bindIndex++, mb_strtolower($name), PDO::PARAM_STR);
+            $stmt->bindValue($bindIndex++, mb_strtolower(trim($name)), PDO::PARAM_STR);
         }
         $stmt->bindValue($bindIndex++, count($selected), PDO::PARAM_INT);
         $stmt->execute();
@@ -1290,27 +1290,14 @@ class ProductModel extends BaseModel
     public function getVariantStock(int $productId, string $size, string $color): int
     {
         try {
-            $sql = "SELECT pv.stock 
-                    FROM product_variants pv
-                    INNER JOIN product_variant_attributes pva1 ON pv.variant_id = pva1.variant_id
-                    INNER JOIN attribute_values av1 ON pva1.value_id = av1.value_id
-                    INNER JOIN attributes a1 ON av1.attribute_id = a1.attribute_id
-                    INNER JOIN product_variant_attributes pva2 ON pv.variant_id = pva2.variant_id
-                    INNER JOIN attribute_values av2 ON pva2.value_id = av2.value_id
-                    INNER JOIN attributes a2 ON av2.attribute_id = a2.attribute_id
-                    WHERE pv.product_id = :product_id
-                    AND a1.attribute_name = 'Size' AND av1.value_name = :size
-                    AND a2.attribute_name = 'Color' AND av2.value_name = :color
-                    LIMIT 1";
+            // Sử dụng method getVariantByValueNames đã có sẵn
+            $variant = $this->getVariantByValueNames($productId, $size, $color);
             
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->bindValue(':product_id', $productId, PDO::PARAM_INT);
-            $stmt->bindValue(':size', $size, PDO::PARAM_STR);
-            $stmt->bindValue(':color', $color, PDO::PARAM_STR);
-            $stmt->execute();
+            if ($variant && isset($variant['stock'])) {
+                return (int)$variant['stock'];
+            }
             
-            $result = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $result ? (int)$result['stock'] : 0;
+            return 0;
         } catch (Throwable $e) {
             error_log("Error getting variant stock: " . $e->getMessage());
             return 0;
