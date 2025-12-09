@@ -216,7 +216,7 @@ class OrderController
         }
 
         if (!$this->orderModel->canCancel($order)) {
-            set_flash('warning', 'Chỉ có thể yêu cầu hủy khi đơn hàng đang Chờ Xác Nhận.');
+            set_flash('warning', 'Chỉ có thể hủy đơn hàng khi đơn chưa được giao.');
             header('Location: ' . BASE_URL . '?action=order-detail&id=' . $orderId);
             exit;
         }
@@ -229,13 +229,13 @@ class OrderController
             $reason = $reasonOther;
         }
 
-        // Yêu cầu hủy: chuyển sang trạng thái cancel_request, admin sẽ xác nhận
-        $this->orderModel->updateStatus($orderId, OrderModel::STATUS_CANCEL_REQUEST);
+        // Hủy trực tiếp: chuyển sang trạng thái cancelled
+        $this->orderModel->updateStatus($orderId, OrderModel::STATUS_CANCELLED);
 
         // Lưu lý do vào order nếu có (bỏ qua nếu bảng không có cột cancel_reason)
         $this->orderModel->saveCancelReason($orderId, $reason ?: null);
 
-        set_flash('success', 'Đã gửi yêu cầu hủy đơn. Vui lòng chờ shop xác nhận.');
+        set_flash('success', 'Đã hủy đơn hàng thành công.');
         header('Location: ' . BASE_URL . '?action=order-detail&id=' . $orderId);
         exit;
     }

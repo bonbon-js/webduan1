@@ -544,10 +544,17 @@ class OrderModel extends BaseModel
         ]);
     }
 
-    // Điều kiện cho phép hủy đơn
+    // Điều kiện cho phép hủy đơn - chỉ được hủy khi đơn chưa được giao
     public function canCancel(array $order): bool
     {
-        return in_array($order['status'], [self::STATUS_UNPAID, self::STATUS_PENDING], true);
+        // Cho phép hủy các trạng thái trước khi giao hàng
+        return in_array($order['status'], [
+            self::STATUS_UNPAID,
+            self::STATUS_PAYMENT_FAILED,
+            self::STATUS_PAID,
+            self::STATUS_PENDING,
+            self::STATUS_TO_SHIP
+        ], true);
     }
 
     // Lưu lý do hủy đơn (nếu cột tồn tại)

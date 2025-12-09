@@ -129,11 +129,11 @@ error_log("Order detail page - currentOrderId: $currentOrderId, order['id']: " .
                     </div>
                 </div>
 
-                <div class="order-summary-card mb-4">
-                    <h5 class="fw-bold mb-3">
-                        <i class="bi bi-info-circle me-2"></i>Trạng thái đơn hàng
-                    </h5>
-                    <?php if (!empty($returnData)): ?>
+                <?php if (!empty($returnData)): ?>
+                    <div class="order-summary-card mb-4">
+                        <h5 class="fw-bold mb-3">
+                            <i class="bi bi-info-circle me-2"></i>Trả hàng
+                        </h5>
                         <div class="alert alert-warning py-2 mb-3">
                             <div class="d-flex flex-column gap-1">
                                 <div><strong>Trả hàng:</strong> <?= htmlspecialchars(ReturnRequestModel::statusLabel($returnData['status'])) ?></div>
@@ -148,100 +148,22 @@ error_log("Order detail page - currentOrderId: $currentOrderId, order['id']: " .
                                 <?php endif; ?>
                             </div>
                         </div>
-                    <?php endif; ?>
-                    <div class="mb-3">
+                    </div>
+                <?php endif; ?>
+                
+                <?php if (($order['status'] ?? '') === OrderModel::STATUS_CANCELLED): ?>
+                    <div class="order-summary-card mb-4">
                         <div class="d-flex flex-wrap align-items-center gap-2">
-                            <span class="badge bg-<?= OrderModel::statusBadge($order['status']) ?> px-3 py-2 fs-6">
-                                <?= OrderModel::statusLabel($order['status']) ?>
-                            </span>
-                            <?php if (($order['status'] ?? '') === OrderModel::STATUS_CANCELLED): ?>
-                                <a href="<?= BASE_URL ?>?action=order-rebuy&id=<?= $order['id'] ?>" class="btn btn-sm btn-outline-dark">
-                                    Mua lại
-                                </a>
-                            <?php endif; ?>
+                            <a href="<?= BASE_URL ?>?action=order-rebuy&id=<?= $order['id'] ?>" class="btn btn-outline-dark">
+                                Mua lại
+                            </a>
                         </div>
-                    </div>
-
-                    <div class="status-timeline">
-                        <?php 
-                        $statuses = OrderModel::statuses();
-                        $isCod = strtolower($order['payment_method'] ?? '') === 'cod';
-                        // Nếu thanh toán COD, bỏ các trạng thái liên quan thanh toán online
-                        if ($isCod) {
-                            unset(
-                                $statuses[OrderModel::STATUS_UNPAID],
-                                $statuses[OrderModel::STATUS_PAID],
-                                $statuses[OrderModel::STATUS_PAYMENT_FAILED]
-                            );
-                        } else {
-                            // Nếu đã thanh toán thành công (PAID/PENDING/TO_SHIP/DELIVERED/COMPLETED),
-                            // ẩn trạng thái "Thanh toán thất bại"
-                            if ($order['status'] !== OrderModel::STATUS_PAYMENT_FAILED) {
-                                unset($statuses[OrderModel::STATUS_PAYMENT_FAILED]);
-                            }
-                        }
-                        // Nếu đã hủy, chỉ hiển thị trạng thái hiện tại là Đã Hủy
-                        if (($order['status'] ?? '') === OrderModel::STATUS_CANCELLED) {
-                            $statuses = [
-                                OrderModel::STATUS_CANCELLED => OrderModel::statusLabel(OrderModel::STATUS_CANCELLED)
-                            ];
-                        }
-                        $currentStatusIndex = array_search($order['status'], array_keys($statuses));
-                        $statusIndex = 0;
-                        foreach ($statuses as $key => $label): 
-                            $isActive = $statusIndex <= $currentStatusIndex;
-                            $isCurrent = $order['status'] === $key;
-                        ?>
-                            <div class="status-step-item <?= $isActive ? 'active' : '' ?> <?= $isCurrent ? 'current' : '' ?>">
-                                <div class="status-step-dot">
-                                    <?php if ($isActive): ?>
-                                        <i class="bi bi-check-circle-fill"></i>
-                                    <?php else: ?>
-                                        <i class="bi bi-circle"></i>
-                                    <?php endif; ?>
-                                </div>
-                                <div class="status-step-label">
-                                    <strong><?= $label ?></strong>
-                                    <?php if ($isCurrent): ?>
-                                        <span class="badge bg-primary ms-2">Hiện tại</span>
-                                    <?php endif; ?>
-                                </div>
+                        <?php if (!empty($order['cancel_reason'])): ?>
+                            <div class="alert alert-light border mt-3">
+                                <strong>Lý do hủy:</strong>
+                                <div><?= htmlspecialchars($order['cancel_reason']) ?></div>
                             </div>
-                        <?php 
-                            $statusIndex++;
-                        endforeach; ?>
-                    </div>
-
-                    <?php if (!empty($order['cancel_reason'])): ?>
-                        <div class="alert alert-light border mt-3">
-                            <strong>Lý do hủy:</strong>
-                            <div><?= htmlspecialchars($order['cancel_reason']) ?></div>
-                        </div>
-                    <?php endif; ?>
-                </div>
-
-                <?php if ($canCancel): ?>
-                    <div class="order-summary-card">
-                        <h5 class="fw-bold mb-3">Hủy đơn hàng</h5>
-                        <form method="POST" action="<?= BASE_URL ?>?action=order-cancel" onsubmit="return validateCancelReason()">
-                            <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
-                            <div class="mb-3">
-                                <label class="form-label small text-uppercase">Lý do hủy <span class="text-danger">*</span></label>
-                                <select class="form-select" name="reason_predefined" id="cancelReasonSelect" required>
-                                    <option value="">-- Chọn lý do --</option>
-                                    <option value="Chọn nhầm sản phẩm">Chọn nhầm sản phẩm</option>
-                                    <option value="Muốn cập nhật địa chỉ/SDT">Muốn cập nhật địa chỉ/SDT</option>
-                                    <option value="Thay đổi phương thức thanh toán">Thay đổi phương thức thanh toán</option>
-                                    <option value="Thời gian giao hàng không phù hợp">Thời gian giao hàng không phù hợp</option>
-                                    <option value="Lý do khác">Lý do khác</option>
-                                </select>
-                            </div>
-                            <div class="mb-3" id="cancelReasonOtherWrap" style="display:none;">
-                                <label class="form-label small text-uppercase">Lý do khác</label>
-                                <textarea class="form-control" name="reason_other" rows="3" placeholder="Nhập lý do khác (tối thiểu 5 ký tự)"></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-outline-danger w-100">Gửi yêu cầu hủy</button>
-                        </form>
+                        <?php endif; ?>
                     </div>
                 <?php endif; ?>
 
@@ -331,6 +253,7 @@ error_log("Order detail page - currentOrderId: $currentOrderId, order['id']: " .
                                     <th>Sản phẩm</th>
                                     <th>Thuộc tính</th>
                                     <th>Số lượng</th>
+                                    <th>Trạng thái</th>
                                     <th class="text-end">Thành tiền</th>
                                 </tr>
                             </thead>
@@ -380,6 +303,11 @@ error_log("Order detail page - currentOrderId: $currentOrderId, order['id']: " .
                                         <td>
                                             <span class="badge bg-secondary"><?= $item['quantity'] ?></span>
                                         </td>
+                                        <td>
+                                            <span class="badge bg-<?= OrderModel::statusBadge($order['status']) ?>">
+                                                <?= OrderModel::statusLabel($order['status']) ?>
+                                            </span>
+                                        </td>
                                         <td class="text-end">
                                             <strong><?= number_format($item['quantity'] * $item['unit_price'], 0, ',', '.') ?> đ</strong>
                                             <div class="small text-muted"><?= number_format($item['unit_price'], 0, ',', '.') ?> đ/SP</div>
@@ -387,7 +315,7 @@ error_log("Order detail page - currentOrderId: $currentOrderId, order['id']: " .
                                     </tr>
                                     <?php if ($canReview && $orderItemId): ?>
                                         <tr class="review-row" id="reviewItem_<?= $orderItemId ?>">
-                                            <td colspan="4" class="border-top-0 pt-0">
+                                            <td colspan="5" class="border-top-0 pt-0">
                                                 <?php if ($hasReviewed && $existingReview): 
                                                     $reviewImages = [];
                                                     if (!empty($existingReview['images'])) {
@@ -499,6 +427,34 @@ error_log("Order detail page - currentOrderId: $currentOrderId, order['id']: " .
                             </tbody>
                         </table>
                     </div>
+                    
+                    <?php if ($canCancel): ?>
+                        <hr class="my-4">
+                        <div class="mt-4">
+                            <h6 class="fw-bold mb-3">Hủy đơn hàng</h6>
+                            <form method="POST" action="<?= BASE_URL ?>?action=order-cancel" onsubmit="return validateCancelReason()">
+                                <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label small text-uppercase">Lý do hủy <span class="text-danger">*</span></label>
+                                        <select class="form-select" name="reason_predefined" id="cancelReasonSelect" required>
+                                            <option value="">-- Chọn lý do --</option>
+                                            <option value="Chọn nhầm sản phẩm">Chọn nhầm sản phẩm</option>
+                                            <option value="Muốn cập nhật địa chỉ/SDT">Muốn cập nhật địa chỉ/SDT</option>
+                                            <option value="Thay đổi phương thức thanh toán">Thay đổi phương thức thanh toán</option>
+                                            <option value="Thời gian giao hàng không phù hợp">Thời gian giao hàng không phù hợp</option>
+                                            <option value="Lý do khác">Lý do khác</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3" id="cancelReasonOtherWrap" style="display:none;">
+                                        <label class="form-label small text-uppercase">Lý do khác</label>
+                                        <textarea class="form-control" name="reason_other" rows="3" placeholder="Nhập lý do khác (tối thiểu 5 ký tự)"></textarea>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-outline-danger">Hủy đơn hàng</button>
+                            </form>
+                        </div>
+                    <?php endif; ?>
                 </div>
 
                 <?php if (!empty($order['note'])): ?>
