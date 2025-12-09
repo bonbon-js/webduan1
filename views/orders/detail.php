@@ -46,7 +46,7 @@ error_log("Order detail page - currentOrderId: $currentOrderId, order['id']: " .
         <?php if (($order['status'] ?? '') === OrderModel::STATUS_DELIVERED): ?>
             <div class="alert alert-info d-flex align-items-center justify-content-between">
                 <div>
-                    <strong>Đơn đã giao.</strong> Bạn có thể đánh giá ngay hoặc bấm “Tôi đã nhận hàng” để hoàn tất.
+                    <strong>Đơn đã giao.</strong> Bấm "Tôi đã nhận hàng" để hoàn tất và có thể đánh giá sản phẩm.
                 </div>
                 <form method="POST" action="<?= BASE_URL ?>?action=order-confirm" class="mb-0">
                     <input type="hidden" name="order_id" value="<?= $currentOrderId ?>">

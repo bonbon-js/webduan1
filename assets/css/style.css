@@ -3956,8 +3956,20 @@ input[type="number"] {
 .quantity-selector {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 25px;
+    gap: 15px;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+
+.quantity-selector label {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    letter-spacing: 1px;
+    color: #333;
+    margin: 0;
 }
 
 .quantity-selector label {
@@ -4244,23 +4256,26 @@ input[type="number"] {
 }
 
 .color-option {
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     cursor: pointer;
     border: 3px solid transparent;
-    transition: all 0.3s;
+    transition: all 0.3s ease;
     position: relative;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .color-option:hover {
-    transform: scale(1.1);
+    transform: scale(1.15);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
 .color-option.active {
     border-color: #000;
-    outline: 2px solid #000;
-    outline-offset: 2px;
+    outline: 3px solid #000;
+    outline-offset: 3px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
 }
 
 .color-option.white {
@@ -8433,6 +8448,7 @@ input[type="number"] {
 
 /* Quick Add Modal - Fix overflow issue */
 #quickAddModal .modal-dialog {
+    max-width: 1000px;
     max-height: 90vh;
     margin: 1.75rem auto;
 }
@@ -8442,6 +8458,7 @@ input[type="number"] {
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    border-radius: 16px;
 }
 
 #quickAddModal .modal-content .row {
@@ -8461,8 +8478,19 @@ input[type="number"] {
 }
 
 /* Adjust padding for better fit */
+#quickAddModal .modal-content .col-md-6:first-child {
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 #quickAddModal .modal-content .col-md-6:last-child > div {
-    padding: 2rem 2.5rem !important;
+    padding: 2.5rem 3rem !important;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 /* Responsive adjustments */
@@ -9203,6 +9231,14 @@ input[type="number"] {
     object-fit: cover;
     border-radius: 8px;
     border: 1px solid #e2e8f0;
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+.admin-table td .product-image {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
 }
 .action-buttons {
     display: flex;
@@ -9761,8 +9797,10 @@ textarea.form-control {
 }
 
 .modal-product-image {
-    max-height: 400px;
+    max-height: 500px;
+    max-width: 100%;
     object-fit: contain;
+    border-radius: 8px;
 }
 
 .input-group-compact {

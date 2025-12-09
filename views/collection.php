@@ -31,15 +31,28 @@
                     <div class="row g-4">
                         <?php foreach ($collection['products'] as $product): 
                             $productId = (int)($product['product_id'] ?? 0);
-                            $imageUrl = $product['image_url'] ?? $product['image'] ?? '';
+                            // Thử nhiều cách để lấy hình ảnh
+                            $imageUrl = '';
+                            if (!empty($product['image_url'])) {
+                                $imageUrl = $product['image_url'];
+                            } elseif (!empty($product['image'])) {
+                                $imageUrl = $product['image'];
+                            } elseif (!empty($product['primary_image'])) {
+                                $imageUrl = $product['primary_image'];
+                            }
+                            // Nếu vẫn không có, thử lấy từ BASE_URL
+                            if (empty($imageUrl) && $productId > 0) {
+                                // Fallback: sử dụng placeholder hoặc lấy từ API
+                                $imageUrl = BASE_URL . 'assets/images/logo.png';
+                            }
                             $price = (float)($product['price'] ?? 0);
                             $productName = htmlspecialchars($product['product_name'] ?? '');
                         ?>
                             <div class="col-6 col-md-4 col-lg-3">
                                 <div class="collection-product-card">
                                     <a href="<?= BASE_URL ?>?action=product-detail&id=<?= $productId ?>" class="product-image-wrapper">
-                                        <?php if ($imageUrl): ?>
-                                            <img src="<?= htmlspecialchars($imageUrl) ?>" alt="<?= $productName ?>" class="product-image">
+                                        <?php if ($imageUrl && $imageUrl !== BASE_URL . 'assets/images/logo.png'): ?>
+                                            <img src="<?= htmlspecialchars($imageUrl) ?>" alt="<?= $productName ?>" class="product-image" onerror="this.onerror=null; this.src='<?= BASE_URL ?>assets/images/logo.png'; this.parentElement.innerHTML='<div class=\'product-image-placeholder\'><i class=\'bi bi-image\'></i></div>';">
                                         <?php else: ?>
                                             <div class="product-image-placeholder">
                                                 <i class="bi bi-image"></i>

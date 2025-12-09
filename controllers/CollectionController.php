@@ -23,11 +23,22 @@ class CollectionController
                 // Chuyển đổi field names để phù hợp với view
                 $formattedProducts = [];
                 foreach ($products as $product) {
+                    // Lấy hình ảnh từ nhiều nguồn
+                    $imageUrl = '';
+                    if (!empty($product['image'])) {
+                        $imageUrl = $product['image'];
+                    } elseif (!empty($product['image_url'])) {
+                        $imageUrl = $product['image_url'];
+                    } elseif (!empty($product['primary_image'])) {
+                        $imageUrl = $product['primary_image'];
+                    }
+                    
                     $formattedProducts[] = [
                         'product_id' => $product['id'] ?? $product['product_id'] ?? 0,
                         'product_name' => $product['name'] ?? $product['product_name'] ?? '',
                         'price' => $product['price'] ?? 0,
-                        'image_url' => $product['image'] ?? $product['image_url'] ?? '',
+                        'image_url' => $imageUrl,
+                        'image' => $imageUrl,
                         'description' => $product['description'] ?? '',
                     ];
                 }

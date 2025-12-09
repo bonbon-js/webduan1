@@ -193,7 +193,12 @@ class CartController
                 ];
             }
 
-            echo json_encode(['success' => true, 'message' => 'Đã thêm vào giỏ hàng']);
+            // Trả về cartKey để có thể dùng cho "Mua ngay"
+            echo json_encode([
+                'success' => true, 
+                'message' => 'Đã thêm vào giỏ hàng',
+                'cart_key' => $cartKey
+            ]);
             exit;
         } catch (Exception $e) {
             error_log("CartController::add error: " . $e->getMessage() . " | Stack trace: " . $e->getTraceAsString());

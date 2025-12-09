@@ -112,9 +112,6 @@
                                     Mua lại
                                 </a>
                             <?php endif; ?>
-                            <a href="<?= BASE_URL ?>?action=order-detail&id=<?= $order['id'] ?>" class="btn btn-outline-dark d-block">
-                                <i class="bi bi-telephone-fill"></i> Liên hệ người bán
-                            </a>
                         </div>
                     </div>
                     

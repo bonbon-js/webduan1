@@ -109,10 +109,10 @@ class OrderController
 
         $canCancel = $this->orderModel->canCancel($order);
         
-        // Load thông tin đánh giá nếu đơn hàng đã giao hoặc hoàn thành
-        // Cho phép đánh giá khi trạng thái là DELIVERED hoặc COMPLETED
+        // Load thông tin đánh giá chỉ khi đơn hàng đã hoàn thành
+        // Chỉ cho phép đánh giá khi trạng thái là COMPLETED (sau khi user ấn "Tôi đã nhận hàng")
         $reviews = [];
-        $canReview = in_array($order['status'], [OrderModel::STATUS_DELIVERED, OrderModel::STATUS_COMPLETED], true);
+        $canReview = ($order['status'] ?? '') === OrderModel::STATUS_COMPLETED;
         
         if ($canReview) {
             require_once PATH_MODEL . 'ReviewModel.php';

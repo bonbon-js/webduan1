@@ -625,7 +625,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- Quick Add Modal -->
 <div class="modal fade" id="quickAddModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content border-0 shadow-lg overflow-hidden">
             <div class="row g-0">
                 <div class="col-md-6">

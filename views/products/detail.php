@@ -1,5 +1,5 @@
-<section class="container product-detail-section">
-    <div class="row">
+<section class="container product-detail-section py-5">
+    <div class="row g-5">
         <?php
             // Fallback ảnh chính: ưu tiên ảnh sản phẩm, nếu trống dùng ảnh biến thể đầu tiên (nếu có)
             $mainImage = $product['image'] ?? '';
@@ -9,8 +9,10 @@
                 }
             }
         ?>
-        <div class="col-md-6 product-gallery">
-            <img id="mainProductImage" src="<?= htmlspecialchars($mainImage) ?>" alt="<?= htmlspecialchars($product['name'] ?? '') ?>" class="product-main-image">
+        <div class="col-lg-6 product-gallery">
+            <div class="product-main-image-wrapper mb-4">
+                <img id="mainProductImage" src="<?= htmlspecialchars($mainImage) ?>" alt="<?= htmlspecialchars($product['name'] ?? '') ?>" class="product-main-image rounded shadow-sm">
+            </div>
             <div class="product-thumbnails" id="productThumbnails">
                 <?php if (!empty($images)): ?>
                     <?php foreach ($images as $index => $img): ?>
@@ -24,10 +26,16 @@
                 <?php endif; ?>
             </div>
         </div>
-        <div class="col-md-6 product-info">
-            <h1><?= htmlspecialchars($product['name'] ?? '') ?></h1>
-            <p class="product-price"><?= number_format($product['price'] ?? 0, 0, ',', '.') ?> đ</p>
-            <p class="product-description"><?= nl2br(htmlspecialchars($product['description'] ?? '')) ?></p>
+        <div class="col-lg-6 product-info">
+            <div class="product-header mb-4">
+                <h1 class="product-title mb-3"><?= htmlspecialchars($product['name'] ?? '') ?></h1>
+                <div class="product-price-wrapper mb-4">
+                    <span class="product-price"><?= number_format($product['price'] ?? 0, 0, ',', '.') ?> đ</span>
+                </div>
+            </div>
+            <div class="product-description-wrapper mb-4">
+                <p class="product-description"><?= nl2br(htmlspecialchars($product['description'] ?? '')) ?></p>
+            </div>
 
             <form id="productDetailForm">
                 <input type="hidden" id="productId" value="<?= $product['id'] ?? 0 ?>">
@@ -517,12 +525,78 @@
         });
     }
 
-    // Buy now
+    // Buy now - chỉ mua sản phẩm này và chuyển thẳng đến thanh toán
     function buyNow() {
-        addToCart();
-        setTimeout(() => {
-            window.location.href = '<?= BASE_URL ?>?action=checkout';
-        }, 500);
+        const productId = document.getElementById('productId').value;
+        const quantity = document.getElementById('productQuantity').value;
+        const size = document.querySelector('.size-option.active')?.dataset.size;
+        const color = document.querySelector('.color-option.active')?.dataset.color;
+        
+        if (!size || !color) {
+            showToast('Vui lòng chọn đầy đủ thuộc tính sản phẩm', 'warning');
+            return;
+        }
+        
+        const data = {
+            product_id: productId,
+            quantity: quantity,
+            size: size,
+            color: color
+        };
+        
+        fetch('<?= BASE_URL ?>?action=cart-add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(res => {
+            if (res.require_login) {
+                showToast('Vui lòng đăng nhập để mua hàng', 'warning');
+                setTimeout(() => {
+                    window.location.href = '<?= BASE_URL ?>?action=show-login';
+                }, 1500);
+                return;
+            }
+            
+            if (res.success) {
+                updateCartCount();
+                // Lấy cartKey từ response hoặc tạo từ productId, size, color
+                const cartKey = res.cart_key || (productId + '_' + (size || 'null') + '_' + (color || 'null'));
+                
+                // Chỉ chọn sản phẩm này để thanh toán
+                fetch('<?= BASE_URL ?>?action=cart-set-selected', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        selected_items: [cartKey]
+                    })
+                })
+                .then(() => {
+                    // Chuyển đến trang checkout với chỉ sản phẩm này được chọn
+                    window.location.href = '<?= BASE_URL ?>?action=checkout';
+                })
+                .catch(err => {
+                    console.error('Error setting selected items:', err);
+                    // Vẫn chuyển đến checkout
+                    window.location.href = '<?= BASE_URL ?>?action=checkout';
+                });
+            } else {
+                showToast(res.message || 'Có lỗi xảy ra', 'error');
+                console.error('Add to cart error:', res);
+            }
+        })
+        .catch(err => {
+            console.error('Add to cart error:', err);
+            showToast('Có lỗi xảy ra khi thêm vào giỏ hàng', 'error');
+        });
     }
 
     // Toast notification
