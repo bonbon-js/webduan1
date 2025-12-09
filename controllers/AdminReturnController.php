@@ -93,7 +93,7 @@ class AdminReturnController
     }
 
     /**
-     * Hoàn tiền đơn giản (mock) - đánh dấu hoàn tiền thành công.
+     * Hoàn tiền đơn giản - đánh dấu hoàn tiền thành công.
      */
     public function refund(): void
     {
@@ -115,12 +115,12 @@ class AdminReturnController
             exit;
         }
 
-        // Đơn giản: đánh dấu refunded (mock)
+        // Đơn giản: đánh dấu refunded
         $this->returnModel->updateStatus($requestId, ReturnRequestModel::STATUS_REFUNDED);
         $this->orderModel->updateStatus($orderId, OrderModel::STATUS_RETURNED);
         $this->notifyUser($orderId, 'return_refunded', 'Đã hoàn tiền', 'Yêu cầu trả hàng đã được hoàn tiền.', ReturnRequestModel::STATUS_REFUNDED);
 
-        set_flash('success', 'Đã đánh dấu hoàn tiền (mock)');
+        set_flash('success', 'Đã đánh dấu hoàn tiền');
         header('Location: ' . BASE_URL . '?action=admin-order-detail&id=' . $orderId);
         exit;
     }
