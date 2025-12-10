@@ -146,29 +146,9 @@ class ProductModel extends BaseModel
         $this->pdo->beginTransaction();
 
         try {
-            // Kiểm tra xem có cột image không
-            $hasImageColumn = false;
-            try {
-                $stmt = $this->pdo->query("SHOW COLUMNS FROM {$this->table} LIKE 'image'");
-                $hasImageColumn = $stmt->rowCount() > 0;
-            } catch (PDOException $e) {
-                error_log("ProductModel::createProduct - Cannot check image column: " . $e->getMessage());
-            }
-            
             $sql = "
-                INSERT INTO {$this->table} (product_name, description, price, stock, category_id";
-            
-            if ($hasImageColumn && isset($data['image_url'])) {
-                $sql .= ", image";
-            }
-            
-            $sql .= ") VALUES (:name, :description, :price, :stock, :category_id";
-            
-            if ($hasImageColumn && isset($data['image_url'])) {
-                $sql .= ", :image";
-            }
-            
-            $sql .= ")";
+                INSERT INTO {$this->table} (product_name, description, price, stock, category_id)
+                VALUES (:name, :description, :price, :stock, :category_id)";
             
             $stmt = $this->pdo->prepare($sql);
             $params = [
@@ -178,10 +158,6 @@ class ProductModel extends BaseModel
                 ':stock'       => $data['stock'],
                 ':category_id' => $data['category_id'] ?: null,
             ];
-            
-            if ($hasImageColumn && isset($data['image_url'])) {
-                $params[':image'] = $data['image_url'];
-            }
             
             $stmt->execute($params);
 
@@ -226,15 +202,6 @@ class ProductModel extends BaseModel
                 error_log("ProductModel::updateProduct - Cannot check updated_at column: " . $e->getMessage());
             }
             
-            // Kiểm tra xem có cột image không
-            $hasImageColumn = false;
-            try {
-                $stmt = $this->pdo->query("SHOW COLUMNS FROM {$this->table} LIKE 'image'");
-                $hasImageColumn = $stmt->rowCount() > 0;
-            } catch (PDOException $e) {
-                error_log("ProductModel::updateProduct - Cannot check image column: " . $e->getMessage());
-            }
-            
             $sql = "
                 UPDATE {$this->table}
                 SET product_name = :name,
@@ -245,11 +212,6 @@ class ProductModel extends BaseModel
             
             if ($hasUpdatedAt) {
                 $sql .= ", updated_at = CURRENT_TIMESTAMP";
-            }
-            
-            // Cập nhật cột image trong bảng products nếu có
-            if ($hasImageColumn && isset($data['image_url'])) {
-                $sql .= ", image = :image";
             }
             
             $sql .= " WHERE product_id = :id";
@@ -263,10 +225,6 @@ class ProductModel extends BaseModel
                 ':category_id' => $data['category_id'] ?: null,
                 ':id'          => $productId,
             ];
-            
-            if ($hasImageColumn && isset($data['image_url'])) {
-                $params[':image'] = $data['image_url'];
-            }
             
             $stmt->execute($params);
             
