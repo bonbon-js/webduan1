@@ -149,7 +149,7 @@
                         
                         <!-- Form nhập mã -->
                         <div class="mb-3">
-                            <div class="input-group">
+                            <div id="cccccccccc" class="input-group">
                                 <input type="text" 
                                        class="form-control coupon-input-uppercase" 
                                        id="couponCodeInput" 
@@ -183,7 +183,11 @@
                             </div>
                         </div>
                     </div>
-                    
+                    <style>
+                        #cccccccccc {border-radius: 60px !important;
+
+                        }
+                    </style>
                     <h4 class="mb-4 text-uppercase fs-6 fw-bold">Tóm tắt đơn hàng</h4>
                     <div class="summary-row">
                         <span>Tạm tính</span>
