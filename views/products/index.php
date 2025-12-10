@@ -84,8 +84,8 @@
                                     <i class="bi bi-eye"></i>
                                 </a>
                                 <?php if (!isset($_SESSION['user']['role']) || $_SESSION['user']['role'] !== 'admin'): ?>
-                                <button type="button" class="product-card-icon" title="Xem nhanh" onclick="openProductModal(<?= $product['id'] ?? 0 ?>, '<?= htmlspecialchars($product['name']) ?>', <?= $product['price'] ?>, '<?= $product['image'] ?>')">
-                                    <i class="bi bi-lightning-charge"></i>
+                                <button type="button" class="product-card-icon" title="Thêm vào giỏ" onclick="openProductModal(<?= $product['id'] ?? 0 ?>, '<?= htmlspecialchars($product['name']) ?>', <?= $product['price'] ?>, '<?= $product['image'] ?>', <?= (int)($product['category_id'] ?? 0) ?>)">
+                                    <i class="bi bi-bag-plus"></i>
                                 </button>
                                 <?php endif; ?>
                             </div>
@@ -139,10 +139,10 @@
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content pm-modal shadow-lg border-0 overflow-hidden">
             <div class="row g-0 h-100">
-                <div class="col-md-5 pm-left">
+                <div class="col-md-6 pm-left">
                     <img id="pmProductImage" src="" alt="Product" class="pm-image">
                 </div>
-                <div class="col-md-7 pm-right position-relative">
+                <div class="col-md-6 pm-right position-relative">
                     <button type="button" class="btn-close pm-close" data-bs-dismiss="modal" aria-label="Close"></button>
 
                     <div class="pm-header">
@@ -152,6 +152,7 @@
 
                     <form id="productModalForm" class="pm-form">
                         <input type="hidden" id="pmProductId">
+                        <input type="hidden" id="pmCategoryId">
 
                         <div class="pm-field" id="pmSizeField">
                             <label class="pm-label">Kích thước</label>
@@ -164,6 +165,11 @@
                         </div>
 
                         <div class="pm-field">
+                            <label class="pm-label">Tồn kho</label>
+                            <div id="pmStockInfo" class="text-muted small">--</div>
+                        </div>
+
+                        <div class="pm-field">
                             <label class="pm-label">Số lượng</label>
                             <div class="input-group input-group-compact pm-quantity">
                                 <button class="btn btn-outline-secondary rounded-0" type="button" onclick="changePmQty(-1)" aria-label="Giảm số lượng">-</button>
@@ -172,9 +178,14 @@
                             </div>
                         </div>
 
-                        <div class="d-grid gap-2">
+                        <div class="d-grid gap-2" id="pmActions">
                             <button type="button" class="btn btn-dark rounded-0 py-3 text-uppercase fw-bold" onclick="submitProductModal('cart')">Thêm vào giỏ hàng</button>
                             <button type="button" class="btn btn-outline-dark rounded-0 py-3 text-uppercase fw-bold" onclick="submitProductModal('checkout')">Mua ngay</button>
+                        </div>
+                        <div class="d-grid gap-2 d-none" id="pmSimilar">
+                            <a id="pmSimilarLink" class="btn btn-outline-secondary rounded-0 py-3 text-uppercase fw-bold" href="<?= BASE_URL ?>?action=products">
+                                Sản phẩm tương tự
+                            </a>
                         </div>
                     </form>
                 </div>
@@ -197,12 +208,15 @@
         'Brown': '#a52a2a'
     };
 
-    function openProductModal(id, name, price, image) {
+    function openProductModal(id, name, price, image, categoryId = 0) {
         document.getElementById('pmProductId').value = id;
+        document.getElementById('pmCategoryId').value = categoryId || 0;
         document.getElementById('pmProductName').textContent = name;
         document.getElementById('pmProductPrice').textContent = new Intl.NumberFormat('vi-VN').format(price) + ' đ';
         document.getElementById('pmProductImage').src = image;
         document.getElementById('pmQuantity').value = 1;
+        togglePmActions(true);
+        setPmStock('--');
 
         loadPmAttributes(id);
 
@@ -222,6 +236,9 @@
                     const firstColor = (data.data.colors && data.data.colors.length > 0) ? data.data.colors[0] : null;
                     if (firstSize || firstColor) {
                         updatePmImage(productId, firstSize, firstColor);
+                        updatePmStock(productId, firstSize, firstColor);
+                    } else {
+                        setPmStock('--');
                     }
                 }
             })
@@ -229,6 +246,7 @@
                 console.error('Error loading attributes:', err);
                 renderPmSizeOptions([]);
                 renderPmColorOptions([]);
+                setPmStock('--');
             });
     }
 
@@ -252,6 +270,7 @@
                 const productId = document.getElementById('pmProductId').value;
                 const color = document.querySelector('.pm-color.active')?.dataset.color;
                 updatePmImage(productId, size, color);
+                updatePmStock(productId, size, color);
             });
             container.appendChild(btn);
         });
@@ -279,6 +298,7 @@
                 const productId = document.getElementById('pmProductId').value;
                 const size = document.querySelector('.pm-size.active')?.dataset.size;
                 updatePmImage(productId, size, color);
+                updatePmStock(productId, size, color);
             });
             container.appendChild(btn);
         });
@@ -298,6 +318,62 @@
                 }
             })
             .catch(err => console.error('Error updating image:', err));
+    }
+
+    function updatePmStock(productId, size, color) {
+        if (!productId) return;
+        const params = new URLSearchParams({ product_id: productId });
+        if (size) params.append('size', size);
+        if (color) params.append('color', color);
+        setPmStock('Đang tải...');
+        fetch(`<?= BASE_URL ?>?action=get-variant-stock&${params.toString()}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const stock = data.stock ?? data.data?.stock ?? 0;
+                    const label = stock > 0 ? `Còn ${stock} sản phẩm` : 'Hết hàng';
+                    setPmStock(label, stock > 0 ? 'success' : 'danger');
+                    togglePmActions(stock > 0);
+                } else {
+                    setPmStock('Không lấy được tồn kho', 'muted');
+                    togglePmActions(true);
+                }
+            })
+            .catch(err => {
+                console.error('Error updating stock:', err);
+                setPmStock('Không lấy được tồn kho', 'muted');
+                togglePmActions(true);
+            });
+    }
+
+    function setPmStock(text, status = 'muted') {
+        const el = document.getElementById('pmStockInfo');
+        if (!el) return;
+        el.textContent = text;
+        el.classList.remove('text-success', 'text-danger', 'text-muted');
+        if (status === 'success') el.classList.add('text-success');
+        else if (status === 'danger') el.classList.add('text-danger');
+        else el.classList.add('text-muted');
+    }
+
+    function togglePmActions(inStock) {
+        const actions = document.getElementById('pmActions');
+        const similar = document.getElementById('pmSimilar');
+        const catId = parseInt(document.getElementById('pmCategoryId')?.value || '0', 10);
+        const similarLink = document.getElementById('pmSimilarLink');
+        if (similarLink) {
+            const url = catId > 0
+                ? '<?= BASE_URL ?>?action=products&category_id=' + catId
+                : '<?= BASE_URL ?>?action=products';
+            similarLink.href = url;
+        }
+        if (inStock) {
+            actions?.classList.remove('d-none');
+            similar?.classList.add('d-none');
+        } else {
+            actions?.classList.add('d-none');
+            similar?.classList.remove('d-none');
+        }
     }
 
     function changePmQty(delta) {
@@ -326,7 +402,7 @@
         const colorEl = document.querySelector('.pm-color.active');
 
         if (!sizeEl || !colorEl) {
-            alert('Vui lòng chọn đầy đủ thuộc tính sản phẩm');
+            showPmToast('Vui lòng chọn đầy đủ thuộc tính sản phẩm', 'warning');
             return;
         }
 
@@ -350,7 +426,7 @@
             const modal = bootstrap.Modal.getInstance(document.getElementById('productModal'));
             if (res.require_login) {
                 if (modal) modal.hide();
-                alert('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng');
+                showPmToast('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng', 'warning');
                 setTimeout(() => {
                     window.location.href = '<?= BASE_URL ?>?action=show-login';
                 }, 1000);
@@ -361,17 +437,17 @@
                 if (modal) modal.hide();
                 updateCartCount();
                 if (action === 'cart') {
-                    alert('Đã thêm sản phẩm vào giỏ hàng!');
+                    showPmToast('Đã thêm sản phẩm vào giỏ hàng!', 'success');
                 } else {
                     window.location.href = '<?= BASE_URL ?>?action=checkout';
                 }
             } else {
-                alert(res.message || 'Có lỗi xảy ra');
+                showPmToast(res.message || 'Có lỗi xảy ra', 'error');
             }
         })
         .catch(err => {
             console.error(err);
-            alert('Có lỗi xảy ra khi thêm vào giỏ hàng');
+            showPmToast('Có lỗi xảy ra khi thêm vào giỏ hàng', 'error');
         });
     }
 
@@ -385,6 +461,38 @@
                 }
             })
             .catch(err => console.error('Lỗi cập nhật giỏ hàng:', err));
+    }
+
+    function showPmToast(message, type = 'success') {
+        const colors = {
+            success: 'bg-success text-white',
+            error: 'bg-danger text-white',
+            warning: 'bg-warning text-dark',
+            info: 'bg-info text-dark'
+        };
+        let container = document.getElementById('pmToastContainer');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'pmToastContainer';
+            container.className = 'position-fixed bottom-0 end-0 p-3';
+            container.style.zIndex = '1100';
+            document.body.appendChild(container);
+        }
+        const toastEl = document.createElement('div');
+        toastEl.className = `toast align-items-center ${colors[type] || colors.success} border-0 mb-2`;
+        toastEl.role = 'alert';
+        toastEl.setAttribute('aria-live', 'assertive');
+        toastEl.setAttribute('aria-atomic', 'true');
+        toastEl.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">${message}</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        `;
+        container.appendChild(toastEl);
+        const toast = new bootstrap.Toast(toastEl, { delay: 2500 });
+        toast.show();
+        toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
     }
 </script>
 
