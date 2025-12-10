@@ -116,6 +116,37 @@ class CartController
                 $finalPrice += (float)$variant['additional_price'];
             }
 
+            // Kiểm tra số lượng tồn kho
+            $availableStock = 0;
+            if ($variant && isset($variant['stock'])) {
+                // Nếu có variant, lấy stock từ variant
+                $availableStock = (int)$variant['stock'];
+            } else {
+                // Nếu không có variant, lấy stock từ sản phẩm
+                $availableStock = (int)($product['stock'] ?? 0);
+            }
+
+            // Kiểm tra số lượng trong giỏ hàng hiện tại (nếu đã có)
+            $cartKey = $productId . '_' . ($size ?? 'null') . '_' . ($color ?? 'null');
+            $currentCartQuantity = 0;
+            if (isset($_SESSION['cart'][$cartKey])) {
+                $currentCartQuantity = (int)$_SESSION['cart'][$cartKey]['quantity'];
+            }
+
+            // Tính tổng số lượng sau khi thêm
+            $totalQuantity = $currentCartQuantity + $quantity;
+
+            // Kiểm tra nếu vượt quá số lượng tồn kho
+            if ($totalQuantity > $availableStock) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => "Số lượng tồn kho không đủ. Hiện tại còn {$availableStock} sản phẩm. Vui lòng chọn số lượng nhỏ hơn hoặc bằng {$availableStock}.",
+                    'available_stock' => $availableStock,
+                    'requested_quantity' => $totalQuantity
+                ]);
+                exit;
+            }
+
             // Lấy ảnh sản phẩm
             $productImage = $product['image'] ?? '';
             if (!$productImage) {
@@ -151,6 +182,13 @@ class CartController
                     ]);
                     exit;
                 }
+                
+                // Trừ số lượng tồn kho sau khi lưu vào giỏ hàng thành công
+                $stockDecreased = $this->productModel->decreaseStock($productId, $variantId, $size, $color, $quantity);
+                if (!$stockDecreased) {
+                    error_log("Failed to decrease stock. User: $userId, Product: $productId, Variant: " . ($variantId ?? 'NULL') . ", Quantity: $quantity");
+                    // Không throw error vì đã lưu vào giỏ hàng, chỉ log
+                }
             } catch (Exception $e) {
                 error_log("Exception when saving cart item: " . $e->getMessage() . " | Stack: " . $e->getTraceAsString());
                 echo json_encode([
@@ -170,8 +208,6 @@ class CartController
             }
 
             // Sau khi lưu vào database thành công, mới lưu vào session
-            // Tạo key duy nhất cho session cart
-            $cartKey = $productId . '_' . ($size ?? 'null') . '_' . ($color ?? 'null');
 
             // Lưu vào session
             if (!isset($_SESSION['cart'])) {
@@ -226,8 +262,48 @@ class CartController
         $item = $_SESSION['cart'][$cartKey];
         $productId = (int)$item['id'];
         $variantId = isset($item['variant_id']) ? (int)$item['variant_id'] : null;
+        $size = $item['size'] ?? null;
+        $color = $item['color'] ?? null;
 
         if ($quantity > 0) {
+            // Kiểm tra số lượng tồn kho trước khi cập nhật
+            $availableStock = 0;
+            
+            // Lấy thông tin sản phẩm và variant
+            $product = $this->productModel->getProductById($productId);
+            if (!$product) {
+                echo json_encode(['success' => false, 'message' => 'Sản phẩm không tồn tại']);
+                exit;
+            }
+            
+            if ($variantId) {
+                // Nếu có variant, lấy stock từ variant
+                $variant = $this->productModel->getVariantByValueNames($productId, $size, $color);
+                if ($variant && isset($variant['stock'])) {
+                    $availableStock = (int)$variant['stock'];
+                } else {
+                    $availableStock = 0;
+                }
+            } else {
+                // Nếu không có variant, lấy stock từ sản phẩm
+                $availableStock = (int)($product['stock'] ?? 0);
+            }
+            
+            // Kiểm tra nếu vượt quá số lượng tồn kho
+            if ($quantity > $availableStock) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => "Số lượng tồn kho không đủ. Hiện tại còn {$availableStock} sản phẩm. Vui lòng chọn số lượng nhỏ hơn hoặc bằng {$availableStock}.",
+                    'available_stock' => $availableStock,
+                    'requested_quantity' => $quantity
+                ]);
+                exit;
+            }
+            
+            // Lấy số lượng cũ để tính chênh lệch
+            $oldQuantity = (int)$item['quantity'];
+            $quantityDiff = $quantity - $oldQuantity;
+            
             // Cập nhật số lượng trong session
             $_SESSION['cart'][$cartKey]['quantity'] = $quantity;
             
@@ -242,10 +318,22 @@ class CartController
                     echo json_encode(['success' => false, 'message' => 'Không thể cập nhật số lượng. Vui lòng thử lại.']);
                     exit;
                 }
+                
+                // Cập nhật stock: nếu tăng số lượng thì trừ stock, nếu giảm thì cộng lại
+                if ($quantityDiff > 0) {
+                    // Tăng số lượng -> trừ stock
+                    $this->productModel->decreaseStock($productId, $variantId, $size, $color, $quantityDiff);
+                } elseif ($quantityDiff < 0) {
+                    // Giảm số lượng -> cộng lại stock
+                    $this->productModel->increaseStock($productId, $variantId, $size, $color, abs($quantityDiff));
+                }
             }
             
             echo json_encode(['success' => true]);
         } else {
+            // Lấy số lượng cũ để cộng lại stock
+            $oldQuantity = (int)$item['quantity'];
+            
             // Xóa khỏi session
             unset($_SESSION['cart'][$cartKey]);
             
@@ -264,6 +352,11 @@ class CartController
                         exit;
                     }
                 }
+                
+                // Cộng lại stock khi xóa khỏi giỏ hàng
+                if ($oldQuantity > 0) {
+                    $this->productModel->increaseStock($productId, $variantId, $size, $color, $oldQuantity);
+                }
             }
             
             echo json_encode(['success' => true]);
@@ -279,6 +372,14 @@ class CartController
             exit;
         }
 
+        // Lấy thông tin item trước khi xóa để cộng lại stock
+        $item = $_SESSION['cart'][$cartKey];
+        $productId = (int)$item['id'];
+        $variantId = isset($item['variant_id']) ? (int)$item['variant_id'] : null;
+        $size = $item['size'] ?? null;
+        $color = $item['color'] ?? null;
+        $quantity = (int)$item['quantity'];
+
         // Xóa khỏi session
         unset($_SESSION['cart'][$cartKey]);
 
@@ -287,12 +388,17 @@ class CartController
             $userId = (int)$_SESSION['user']['id'];
             $cartId = $this->cartModel->getOrCreateCartIdByUserId($userId);
             
-            $cartItemId = $this->cartModel->findCartItemIdByKey($cartId, $cartKey);
+            $cartItemId = $this->cartModel->findCartItemIdByKey($cartId, $cartKey, $variantId);
             if ($cartItemId) {
                 $deleted = $this->cartModel->deleteItem($cartItemId);
                 if (!$deleted) {
                     error_log("Failed to delete cart item from database for user $userId");
                 }
+            }
+            
+            // Cộng lại stock khi xóa khỏi giỏ hàng
+            if ($quantity > 0) {
+                $this->productModel->increaseStock($productId, $variantId, $size, $color, $quantity);
             }
         }
 
@@ -332,7 +438,11 @@ class CartController
             }
             
             $item = $_SESSION['cart'][$cartKey];
+            $productId = (int)$item['id'];
             $variantIdFromSession = isset($item['variant_id']) ? (int)$item['variant_id'] : null;
+            $size = $item['size'] ?? null;
+            $color = $item['color'] ?? null;
+            $quantity = (int)$item['quantity'];
             
             // Xóa khỏi session trước
             unset($_SESSION['cart'][$cartKey]);
@@ -352,6 +462,11 @@ class CartController
                     } else {
                         // Nếu không tìm thấy trong DB, vẫn OK vì đã xóa khỏi session
                         error_log("Cart item not found in DB for cartKey: $cartKey, variant_id: " . ($variantIdFromSession ?? 'null') . ", user: $userId");
+                    }
+                    
+                    // Cộng lại stock khi xóa khỏi giỏ hàng
+                    if ($quantity > 0 && $productId > 0) {
+                        $this->productModel->increaseStock($productId, $variantIdFromSession, $size, $color, $quantity);
                     }
                 } catch (Exception $e) {
                     $errors[] = "Lỗi khi xóa sản phẩm $cartKey: " . $e->getMessage();

@@ -197,6 +197,30 @@ class CheckoutController
             if ($productId > 0) {
                 $product = $productModel->getProductById($productId);
                 if ($product) {
+                    // Kiểm tra số lượng tồn kho
+                    $availableStock = 0;
+                    $variant = null;
+                    
+                    if ($size || $color) {
+                        $variant = $productModel->getVariantByValueNames($productId, $size, $color);
+                        if ($variant && isset($variant['stock'])) {
+                            $availableStock = (int)$variant['stock'];
+                        } else {
+                            $availableStock = 0;
+                        }
+                    } else {
+                        $availableStock = (int)($product['stock'] ?? 0);
+                    }
+                    
+                    // Kiểm tra nếu số lượng mua vượt quá số lượng tồn kho
+                    $requestedQuantity = (int)($item['quantity'] ?? 1);
+                    if ($requestedQuantity > $availableStock) {
+                        $productName = $item['name'] ?? 'Sản phẩm';
+                        set_flash('danger', "Số lượng tồn kho không đủ cho sản phẩm \"{$productName}\". Hiện tại còn {$availableStock} sản phẩm. Vui lòng giảm số lượng hoặc xóa sản phẩm khỏi giỏ hàng.");
+                        header('Location: ' . BASE_URL . '?action=cart-list');
+                        exit;
+                    }
+                    
                     // Lấy ảnh sản phẩm
                     $productImage = $product['image'] ?? '';
                     if (!$productImage) {
@@ -207,11 +231,8 @@ class CheckoutController
                     }
                     
                     // Nếu có variant, ưu tiên ảnh variant
-                    if ($size || $color) {
-                        $variant = $productModel->getVariantByValueNames($productId, $size, $color);
-                        if ($variant && !empty($variant['image_url'])) {
-                            $productImage = $variant['image_url'];
-                        }
+                    if ($variant && !empty($variant['image_url'])) {
+                        $productImage = $variant['image_url'];
                     }
                 }
             }

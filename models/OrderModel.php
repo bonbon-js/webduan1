@@ -291,9 +291,8 @@ class OrderModel extends BaseModel
                 )
             ");
 
-            // Load ProductModel để trừ tồn kho
-            require_once PATH_MODEL . 'ProductModel.php';
-            $productModel = new ProductModel();
+            // Lưu ý: Stock đã được trừ khi thêm vào giỏ hàng, nên không cần trừ lại khi tạo đơn hàng
+            // Stock sẽ được cộng lại khi hủy đơn hàng (xem method restoreStockForOrder)
             
             foreach ($items as $item) {
                 $itemStmt->execute([
@@ -306,42 +305,6 @@ class OrderModel extends BaseModel
                     ':unit_price'    => $item['unit_price'],
                     ':image_url'     => $item['image_url'] ?? null,
                 ]);
-                
-                // Trừ số lượng tồn kho
-                $productId = (int)($item['product_id'] ?? 0);
-                $quantity = (int)($item['quantity'] ?? 0);
-                $size = $item['variant_size'] ?? null;
-                $color = $item['variant_color'] ?? null;
-                
-                if ($productId > 0 && $quantity > 0) {
-                    // Tìm variant_id từ size và color
-                    $variant = $productModel->getVariantByValueNames($productId, $size, $color);
-                    
-                    if ($variant && isset($variant['variant_id'])) {
-                        // Trừ tồn kho từ product_variants (luôn trừ, không kiểm tra stock >= quantity)
-                        $variantId = (int)$variant['variant_id'];
-                        $updateStmt = $this->pdo->prepare("
-                            UPDATE product_variants 
-                            SET stock = GREATEST(0, stock - :quantity) 
-                            WHERE variant_id = :variant_id
-                        ");
-                        $updateStmt->execute([
-                            ':quantity' => $quantity,
-                            ':variant_id' => $variantId
-                        ]);
-                    } else {
-                        // Không có variant, trừ tồn kho từ products table (luôn trừ, không kiểm tra stock >= quantity)
-                        $updateStmt = $this->pdo->prepare("
-                            UPDATE products 
-                            SET stock = GREATEST(0, stock - :quantity) 
-                            WHERE product_id = :product_id
-                        ");
-                        $updateStmt->execute([
-                            ':quantity' => $quantity,
-                            ':product_id' => $productId
-                        ]);
-                    }
-                }
             }
 
             $this->pdo->commit();

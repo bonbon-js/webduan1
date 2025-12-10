@@ -1501,4 +1501,122 @@ class ProductModel extends BaseModel
             return 0;
         }
     }
+
+    /**
+     * Trừ số lượng tồn kho (khi thêm vào giỏ hàng)
+     * @param int $productId
+     * @param ?int $variantId
+     * @param ?string $size
+     * @param ?string $color
+     * @param int $quantity
+     * @return bool
+     */
+    public function decreaseStock(int $productId, ?int $variantId, ?string $size, ?string $color, int $quantity): bool
+    {
+        try {
+            if ($quantity <= 0) {
+                return false;
+            }
+
+            if ($variantId !== null) {
+                // Trừ tồn kho từ product_variants
+                $stmt = $this->pdo->prepare("
+                    UPDATE product_variants 
+                    SET stock = GREATEST(0, stock - :quantity) 
+                    WHERE variant_id = :variant_id
+                ");
+                $stmt->bindValue(':quantity', $quantity, PDO::PARAM_INT);
+                $stmt->bindValue(':variant_id', $variantId, PDO::PARAM_INT);
+                return $stmt->execute();
+            } else {
+                // Tìm variant từ size và color nếu có
+                if ($size || $color) {
+                    $variant = $this->getVariantByValueNames($productId, $size, $color);
+                    if ($variant && isset($variant['variant_id'])) {
+                        $variantId = (int)$variant['variant_id'];
+                        $stmt = $this->pdo->prepare("
+                            UPDATE product_variants 
+                            SET stock = GREATEST(0, stock - :quantity) 
+                            WHERE variant_id = :variant_id
+                        ");
+                        $stmt->bindValue(':quantity', $quantity, PDO::PARAM_INT);
+                        $stmt->bindValue(':variant_id', $variantId, PDO::PARAM_INT);
+                        return $stmt->execute();
+                    }
+                }
+                
+                // Không có variant, trừ tồn kho từ products table
+                $stmt = $this->pdo->prepare("
+                    UPDATE products 
+                    SET stock = GREATEST(0, stock - :quantity) 
+                    WHERE product_id = :product_id
+                ");
+                $stmt->bindValue(':quantity', $quantity, PDO::PARAM_INT);
+                $stmt->bindValue(':product_id', $productId, PDO::PARAM_INT);
+                return $stmt->execute();
+            }
+        } catch (Throwable $e) {
+            error_log("Error decreasing stock: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Cộng lại số lượng tồn kho (khi xóa khỏi giỏ hàng hoặc giảm số lượng)
+     * @param int $productId
+     * @param ?int $variantId
+     * @param ?string $size
+     * @param ?string $color
+     * @param int $quantity
+     * @return bool
+     */
+    public function increaseStock(int $productId, ?int $variantId, ?string $size, ?string $color, int $quantity): bool
+    {
+        try {
+            if ($quantity <= 0) {
+                return false;
+            }
+
+            if ($variantId !== null) {
+                // Cộng lại tồn kho vào product_variants
+                $stmt = $this->pdo->prepare("
+                    UPDATE product_variants 
+                    SET stock = stock + :quantity 
+                    WHERE variant_id = :variant_id
+                ");
+                $stmt->bindValue(':quantity', $quantity, PDO::PARAM_INT);
+                $stmt->bindValue(':variant_id', $variantId, PDO::PARAM_INT);
+                return $stmt->execute();
+            } else {
+                // Tìm variant từ size và color nếu có
+                if ($size || $color) {
+                    $variant = $this->getVariantByValueNames($productId, $size, $color);
+                    if ($variant && isset($variant['variant_id'])) {
+                        $variantId = (int)$variant['variant_id'];
+                        $stmt = $this->pdo->prepare("
+                            UPDATE product_variants 
+                            SET stock = stock + :quantity 
+                            WHERE variant_id = :variant_id
+                        ");
+                        $stmt->bindValue(':quantity', $quantity, PDO::PARAM_INT);
+                        $stmt->bindValue(':variant_id', $variantId, PDO::PARAM_INT);
+                        return $stmt->execute();
+                    }
+                }
+                
+                // Không có variant, cộng lại tồn kho vào products table
+                $stmt = $this->pdo->prepare("
+                    UPDATE products 
+                    SET stock = stock + :quantity 
+                    WHERE product_id = :product_id
+                ");
+                $stmt->bindValue(':quantity', $quantity, PDO::PARAM_INT);
+                $stmt->bindValue(':product_id', $productId, PDO::PARAM_INT);
+                return $stmt->execute();
+            }
+        } catch (Throwable $e) {
+            error_log("Error increasing stock: " . $e->getMessage());
+            return false;
+        }
+    }
 }
