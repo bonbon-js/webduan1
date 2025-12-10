@@ -8473,55 +8473,151 @@ input[type="number"] {
    ============================================ */
 
 /* Quick Add Modal - Fix overflow issue */
-#quickAddModal .modal-dialog {
+/* Product modal (new) */
+#productModal .modal-dialog {
     max-width: 1200px;
     width: min(96vw, 1200px);
-    max-height: 92vh;
-    margin: 1.5rem auto;
-}
-
-#quickAddModal .modal-content {
-    max-height: 92vh;
-    height: 100%;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    border-radius: 16px;
-}
-
-#quickAddModal .modal-content .row {
-    flex: 1;
-    overflow: hidden;
-    height: 100%;
-}
-
-#quickAddModal .modal-content .col-md-6 {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-
-/* Make the right side (form) scrollable */
-#quickAddModal .modal-content .col-md-6:last-child {
-    overflow-y: auto;
-    max-height: 92vh;
-}
-
-/* Adjust padding for better fit */
-#quickAddModal .modal-content .col-md-6:first-child {
-    min-height: 400px;
+    margin: 0 auto;
+    min-height: calc(100vh - 2rem);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 2rem;
 }
 
-#quickAddModal .modal-content .col-md-6:last-child > div {
-    padding: 2.25rem 2.75rem !important;
-    min-height: 400px;
+.pm-modal {
+    background: #fff;
+    border-radius: 14px;
+    width: 100%;
+    height: 100%;
+}
+
+.pm-left {
+    background: #f6f7f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    min-height: 360px;
+}
+
+.pm-image {
+    max-width: 100%;
+    max-height: 420px;
+    object-fit: contain;
+    border-radius: 10px;
+}
+
+.pm-right {
+    padding: 2rem 2.4rem;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    gap: 1.25rem;
+}
+
+.pm-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 2;
+}
+
+.pm-header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.pm-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin: 0;
+    color: #111;
+}
+
+.pm-price {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+    color: #444;
+}
+
+.pm-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+.pm-field {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.pm-label {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.85rem;
+    color: #333;
+    min-width: 120px;
+    margin: 0;
+}
+
+.pm-options {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.pm-size {
+    padding: 10px 18px;
+    border: 2px solid #e0e0e0;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.25s;
+    text-transform: uppercase;
+    font-weight: 600;
+    min-width: 52px;
+    text-align: center;
+}
+
+.pm-size:hover {
+    border-color: #000;
+}
+
+.pm-size.active {
+    background: #000;
+    color: #fff;
+    border-color: #000;
+}
+
+.pm-color {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    outline: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pm-color:hover {
+    transform: scale(1.05);
+}
+
+.pm-color.active {
+    border-color: #000;
+    outline: 2px solid #000;
+    outline-offset: 2px;
+}
+
+.pm-color.white {
+    border: 2px solid #ccc;
+}
+
+.pm-quantity {
+    width: 140px;
 }
 
 /* Responsive adjustments */
