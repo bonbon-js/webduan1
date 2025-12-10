@@ -847,24 +847,55 @@ class OrderModel extends BaseModel
 
     /**
      * Doanh thu theo từng ngày trong khoảng (để vẽ line chart)
+     * Fill tất cả các ngày trong khoảng, kể cả ngày không có đơn hàng (revenue = 0)
      */
     public function getDailyRevenue(string $fromDate, string $toDate): array
     {
-        $sql = "
-            SELECT DATE(created_at) AS d, COALESCE(SUM(total_amount), 0) AS revenue
-            FROM orders_new
-            WHERE status = :status
-              AND DATE(created_at) BETWEEN :from_date AND :to_date
-            GROUP BY DATE(created_at)
-            ORDER BY d
-        ";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
-            ':status' => self::STATUS_DELIVERED,
-            ':from_date' => $fromDate,
-            ':to_date' => $toDate,
-        ]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        try {
+            // Lấy doanh thu theo ngày từ database
+            $sql = "
+                SELECT DATE(created_at) AS d, COALESCE(SUM(total_amount), 0) AS revenue
+                FROM orders_new
+                WHERE status = :status
+                  AND DATE(created_at) BETWEEN :from_date AND :to_date
+                GROUP BY DATE(created_at)
+                ORDER BY d
+            ";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([
+                ':status' => self::STATUS_DELIVERED,
+                ':from_date' => $fromDate,
+                ':to_date' => $toDate,
+            ]);
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Tạo map từ kết quả query
+            $revenueMap = [];
+            foreach ($results as $row) {
+                $revenueMap[$row['d']] = (float)$row['revenue'];
+            }
+            
+            // Fill tất cả các ngày trong khoảng
+            $dailyRevenue = [];
+            $start = new DateTime($fromDate);
+            $end = new DateTime($toDate);
+            $end->modify('+1 day'); // Để include cả ngày cuối
+            
+            $current = clone $start;
+            while ($current < $end) {
+                $dateStr = $current->format('Y-m-d');
+                $dailyRevenue[] = [
+                    'd' => $dateStr,
+                    'revenue' => $revenueMap[$dateStr] ?? 0.0
+                ];
+                $current->modify('+1 day');
+            }
+            
+            return $dailyRevenue;
+        } catch (Exception $e) {
+            error_log("OrderModel::getDailyRevenue error: " . $e->getMessage());
+            return [];
+        }
     }
 
     /**

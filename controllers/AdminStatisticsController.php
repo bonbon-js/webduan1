@@ -24,50 +24,79 @@ class AdminStatisticsController
         require_once PATH_MODEL . 'CouponModel.php';
         $couponModel = new CouponModel();
 
-        $fromDate = $_GET['from_date'] ?? null;
-        $toDate   = $_GET['to_date'] ?? null;
-        $preset   = $_GET['preset'] ?? 'today';
+        $preset = $_GET['preset'] ?? 'today';
         $statusFilter = $_GET['status_filter'] ?? null;
         $paymentFilter = $_GET['payment_filter'] ?? null;
         $categoryFilter = $_GET['category_filter'] ?? null;
 
-        // Preset time ranges
+        // Preset time ranges - xử lý trước khi lấy from_date/to_date từ GET
         $now = new DateTime('now', new DateTimeZone('Asia/Ho_Chi_Minh'));
-        switch ($preset) {
-            case 'yesterday':
-                $fromDate = $toDate = $now->modify('-1 day')->format('Y-m-d');
-                break;
-            case '7d':
-                $toDate = $toDate ?: $now->format('Y-m-d');
-                $fromDate = $fromDate ?: (new DateTime($toDate))->modify('-6 day')->format('Y-m-d');
-                break;
-            case 'this_month':
-                $fromDate = $fromDate ?: $now->format('Y-m-01');
-                $toDate = $toDate ?: $now->format('Y-m-t');
-                break;
-            case 'last_month':
-                $firstDayLastMonth = (new DateTime('first day of last month'))->format('Y-m-d');
-                $lastDayLastMonth = (new DateTime('last day of last month'))->format('Y-m-d');
-                $fromDate = $fromDate ?: $firstDayLastMonth;
-                $toDate = $toDate ?: $lastDayLastMonth;
-                break;
-            case 'quarter':
-                $month = (int)$now->format('n');
-                $quarter = (int)ceil($month / 3);
-                $startMonth = ($quarter - 1) * 3 + 1;
-                $fromDate = $fromDate ?: sprintf("%s-%02d-01", $now->format('Y'), $startMonth);
-                $toDate = $toDate ?: (new DateTime($fromDate))->modify('+2 month')->format('Y-m-t');
-                break;
-            case 'today':
-            default:
-                $fromDate = $fromDate ?: $now->format('Y-m-d');
-                $toDate = $toDate ?: $now->format('Y-m-d');
+        $fromDate = null;
+        $toDate = null;
+        
+        // Nếu có preset được chọn và không phải custom, tính toán date range từ preset
+        if (!empty($preset) && $preset !== 'custom') {
+            switch ($preset) {
+                case 'yesterday':
+                    $yesterday = clone $now;
+                    $yesterday->modify('-1 day');
+                    $fromDate = $yesterday->format('Y-m-d');
+                    $toDate = $yesterday->format('Y-m-d');
+                    break;
+                case '7d':
+                    $toDate = $now->format('Y-m-d');
+                    $fromDateObj = clone $now;
+                    $fromDateObj->modify('-6 days');
+                    $fromDate = $fromDateObj->format('Y-m-d');
+                    break;
+                case 'this_month':
+                    $fromDate = $now->format('Y-m-01');
+                    $toDate = $now->format('Y-m-t');
+                    break;
+                case 'last_month':
+                    $firstDayLastMonth = new DateTime('first day of last month', new DateTimeZone('Asia/Ho_Chi_Minh'));
+                    $lastDayLastMonth = new DateTime('last day of last month', new DateTimeZone('Asia/Ho_Chi_Minh'));
+                    $fromDate = $firstDayLastMonth->format('Y-m-d');
+                    $toDate = $lastDayLastMonth->format('Y-m-d');
+                    break;
+                case 'quarter':
+                    $month = (int)$now->format('n');
+                    $quarter = (int)ceil($month / 3);
+                    $startMonth = ($quarter - 1) * 3 + 1;
+                    $fromDate = sprintf("%s-%02d-01", $now->format('Y'), $startMonth);
+                    $quarterStart = new DateTime($fromDate, new DateTimeZone('Asia/Ho_Chi_Minh'));
+                    $quarterEnd = clone $quarterStart;
+                    $quarterEnd->modify('+2 months');
+                    $toDate = $quarterEnd->format('Y-m-t');
+                    break;
+                case 'today':
+                default:
+                    $fromDate = $now->format('Y-m-d');
+                    $toDate = $now->format('Y-m-d');
+                    break;
+            }
+        } else {
+            // Nếu preset là custom hoặc không có, lấy từ GET
+            if (!empty($_GET['from_date'])) {
+                $fromDate = $_GET['from_date'];
+            }
+            if (!empty($_GET['to_date'])) {
+                $toDate = $_GET['to_date'];
+            }
         }
 
-        // Mặc định khung thời gian: hôm nay
+        // Mặc định khung thời gian: hôm nay nếu không có date
         if (!$fromDate || !$toDate) {
             $fromDate = date('Y-m-d');
             $toDate   = date('Y-m-d');
+            $preset = 'today'; // Reset preset về today nếu không có date
+        }
+        
+        // Đảm bảo fromDate <= toDate
+        if ($fromDate > $toDate) {
+            $temp = $fromDate;
+            $fromDate = $toDate;
+            $toDate = $temp;
         }
 
         // === KPI CHÍNH ===

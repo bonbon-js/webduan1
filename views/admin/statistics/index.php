@@ -18,22 +18,23 @@ require_once PATH_MODEL . 'OrderModel.php';
                 <input type="hidden" name="action" value="admin-statistics">
                 <div class="col-md-2">
                     <label class="form-label fw-bold">Preset</label>
-                    <select name="preset" class="form-select" onchange="this.form.submit()">
+                    <select name="preset" id="presetSelect" class="form-select" onchange="handlePresetChange(this)">
                         <option value="today" <?= ($filterPreset ?? '') === 'today' ? 'selected' : '' ?>>Hôm nay</option>
                         <option value="yesterday" <?= ($filterPreset ?? '') === 'yesterday' ? 'selected' : '' ?>>Hôm qua</option>
                         <option value="7d" <?= ($filterPreset ?? '') === '7d' ? 'selected' : '' ?>>7 ngày gần nhất</option>
                         <option value="this_month" <?= ($filterPreset ?? '') === 'this_month' ? 'selected' : '' ?>>Tháng này</option>
                         <option value="last_month" <?= ($filterPreset ?? '') === 'last_month' ? 'selected' : '' ?>>Tháng trước</option>
                         <option value="quarter" <?= ($filterPreset ?? '') === 'quarter' ? 'selected' : '' ?>>Quý hiện tại</option>
+                        <option value="custom" <?= ($filterPreset ?? '') === 'custom' ? 'selected' : '' ?>>Tùy chọn</option>
                     </select>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-bold">Từ ngày</label>
-                    <input type="date" name="from_date" class="form-control" value="<?= htmlspecialchars($filterFrom ?? '') ?>">
+                    <input type="date" name="from_date" id="fromDate" class="form-control" value="<?= htmlspecialchars($filterFrom ?? '') ?>" onchange="document.getElementById('presetSelect').value='custom';">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-bold">Đến ngày</label>
-                    <input type="date" name="to_date" class="form-control" value="<?= htmlspecialchars($filterTo ?? '') ?>">
+                    <input type="date" name="to_date" id="toDate" class="form-control" value="<?= htmlspecialchars($filterTo ?? '') ?>" onchange="document.getElementById('presetSelect').value='custom';">
                 </div>
                 <div class="col-md-2">
                     <button class="btn btn-primary w-100" type="submit"><i class="bi bi-funnel"></i> Lọc</button>
@@ -559,28 +560,171 @@ require_once PATH_MODEL . 'OrderModel.php';
 <!-- Chart.js Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Doanh thu theo ngày (Line Chart)
-    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-    new Chart(revenueCtx, {
-        type: 'line',
-        data: {
-            labels: <?= json_encode(array_column($dailyRevenue ?? [], 'd')) ?>,
-            datasets: [{
-                label: 'Doanh thu (₫)',
-                data: <?= json_encode(array_map('floatval', array_column($dailyRevenue ?? [], 'revenue'))) ?>,
-                borderColor: '#3b82f6',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: true } },
-            scales: { y: { beginAtZero: true } }
+    // Xử lý preset change
+    function handlePresetChange(select) {
+        const preset = select.value;
+        const fromDateInput = document.getElementById('fromDate');
+        const toDateInput = document.getElementById('toDate');
+        const now = new Date();
+        
+        let fromDate = '';
+        let toDate = '';
+        
+        switch(preset) {
+            case 'today':
+                fromDate = toDate = formatDate(now);
+                break;
+            case 'yesterday':
+                const yesterday = new Date(now);
+                yesterday.setDate(yesterday.getDate() - 1);
+                fromDate = toDate = formatDate(yesterday);
+                break;
+            case '7d':
+                toDate = formatDate(now);
+                const sevenDaysAgo = new Date(now);
+                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+                fromDate = formatDate(sevenDaysAgo);
+                break;
+            case 'this_month':
+                fromDate = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-01';
+                const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                toDate = formatDate(lastDay);
+                break;
+            case 'last_month':
+                const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                fromDate = formatDate(lastMonth);
+                const lastDayLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+                toDate = formatDate(lastDayLastMonth);
+                break;
+            case 'quarter':
+                const month = now.getMonth() + 1;
+                const quarter = Math.ceil(month / 3);
+                const startMonth = (quarter - 1) * 3 + 1;
+                fromDate = now.getFullYear() + '-' + String(startMonth).padStart(2, '0') + '-01';
+                const quarterEnd = new Date(now.getFullYear(), startMonth + 2, 0);
+                toDate = formatDate(quarterEnd);
+                break;
+            case 'custom':
+                // Không thay đổi date, để user tự nhập
+                return;
         }
-    });
+        
+        if (fromDate && toDate) {
+            fromDateInput.value = fromDate;
+            toDateInput.value = toDate;
+            // Tự động submit form
+            select.form.submit();
+        }
+    }
+    
+    function formatDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return year + '-' + month + '-' + day;
+    }
+</script>
+<script>
+    // Doanh thu theo ngày (Line Chart - Biểu đồ đường)
+    const revenueCtx = document.getElementById('revenueChart');
+    if (revenueCtx) {
+        const dailyRevenueData = <?= json_encode($dailyRevenue ?? []) ?>;
+        const revenueLabels = dailyRevenueData.map(item => {
+            const date = new Date(item.d);
+            return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+        });
+        const revenueData = dailyRevenueData.map(item => parseFloat(item.revenue) || 0);
+        
+        new Chart(revenueCtx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: revenueLabels,
+                datasets: [{
+                    label: 'Doanh thu (₫)',
+                    data: revenueData,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '#3b82f6',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointHoverBackgroundColor: '#2563eb',
+                    pointHoverBorderColor: '#ffffff',
+                    pointHoverBorderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                plugins: { 
+                    legend: { 
+                        display: true,
+                        position: 'top'
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleFont: {
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            size: 13
+                        },
+                        callbacks: {
+                            title: function(context) {
+                                return 'Ngày: ' + context[0].label;
+                            },
+                            label: function(context) {
+                                return 'Doanh thu: ' + new Intl.NumberFormat('vi-VN').format(context.parsed.y) + ' ₫';
+                            }
+                        }
+                    }
+                },
+                scales: { 
+                    y: { 
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                if (value >= 1000000) {
+                                    return (value / 1000000).toFixed(1) + 'M ₫';
+                                } else if (value >= 1000) {
+                                    return (value / 1000).toFixed(0) + 'K ₫';
+                                }
+                                return new Intl.NumberFormat('vi-VN').format(value) + ' ₫';
+                            },
+                            font: {
+                                size: 11
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45,
+                            font: {
+                                size: 11
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
 
     // Đơn hàng theo ngày (Bar Chart)
     const ordersCtx = document.getElementById('ordersChart').getContext('2d');
