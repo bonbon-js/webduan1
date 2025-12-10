@@ -140,6 +140,9 @@ class ProductModel extends BaseModel
      */
     public function createProduct(array $data): int
     {
+        // Đảm bảo PDO có chế độ exception
+        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        
         $this->pdo->beginTransaction();
 
         try {
@@ -149,7 +152,7 @@ class ProductModel extends BaseModel
                 $stmt = $this->pdo->query("SHOW COLUMNS FROM {$this->table} LIKE 'image'");
                 $hasImageColumn = $stmt->rowCount() > 0;
             } catch (PDOException $e) {
-                // Bỏ qua nếu không có quyền
+                error_log("ProductModel::createProduct - Cannot check image column: " . $e->getMessage());
             }
             
             $sql = "
@@ -183,13 +186,22 @@ class ProductModel extends BaseModel
             $stmt->execute($params);
 
             $productId = (int)$this->pdo->lastInsertId();
+            
+            if ($productId <= 0) {
+                throw new RuntimeException("Không thể lấy ID sản phẩm mới tạo.");
+            }
 
             $this->upsertPrimaryImage($productId, $data['image_url'] ?? null);
 
             $this->pdo->commit();
+            error_log("ProductModel::createProduct - Successfully created product with ID: " . $productId);
             return $productId;
         } catch (Throwable $exception) {
-            $this->pdo->rollBack();
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            error_log("ProductModel::createProduct error: " . $exception->getMessage());
+            error_log("ProductModel::createProduct - Stack trace: " . $exception->getTraceAsString());
             throw $exception;
         }
     }
@@ -199,6 +211,9 @@ class ProductModel extends BaseModel
      */
     public function updateProduct(int $productId, array $data): bool
     {
+        // Đảm bảo PDO có chế độ exception
+        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        
         $this->pdo->beginTransaction();
 
         try {
@@ -208,7 +223,7 @@ class ProductModel extends BaseModel
                 $stmt = $this->pdo->query("SHOW COLUMNS FROM {$this->table} LIKE 'updated_at'");
                 $hasUpdatedAt = $stmt->rowCount() > 0;
             } catch (PDOException $e) {
-                // Bỏ qua nếu không có quyền
+                error_log("ProductModel::updateProduct - Cannot check updated_at column: " . $e->getMessage());
             }
             
             // Kiểm tra xem có cột image không
@@ -217,7 +232,7 @@ class ProductModel extends BaseModel
                 $stmt = $this->pdo->query("SHOW COLUMNS FROM {$this->table} LIKE 'image'");
                 $hasImageColumn = $stmt->rowCount() > 0;
             } catch (PDOException $e) {
-                // Bỏ qua nếu không có quyền
+                error_log("ProductModel::updateProduct - Cannot check image column: " . $e->getMessage());
             }
             
             $sql = "
@@ -229,7 +244,7 @@ class ProductModel extends BaseModel
                     category_id = :category_id";
             
             if ($hasUpdatedAt) {
-                $sql .= ", updated_at = NOW()";
+                $sql .= ", updated_at = CURRENT_TIMESTAMP";
             }
             
             // Cập nhật cột image trong bảng products nếu có
@@ -254,6 +269,13 @@ class ProductModel extends BaseModel
             }
             
             $stmt->execute($params);
+            
+            // Kiểm tra xem có dòng nào được cập nhật không
+            $affectedRows = $stmt->rowCount();
+            if ($affectedRows === 0) {
+                error_log("ProductModel::updateProduct - No rows affected for product_id: " . $productId);
+                throw new RuntimeException("Không tìm thấy sản phẩm với ID: " . $productId);
+            }
 
             // Cập nhật ảnh trong bảng product_images nếu có
             if (isset($data['image_url'])) {
@@ -261,10 +283,14 @@ class ProductModel extends BaseModel
             }
 
             $this->pdo->commit();
+            error_log("ProductModel::updateProduct - Successfully updated product_id: " . $productId);
             return true;
         } catch (Throwable $exception) {
-            $this->pdo->rollBack();
-            error_log("ProductModel::updateProduct error: " . $exception->getMessage());
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            error_log("ProductModel::updateProduct error for product_id {$productId}: " . $exception->getMessage());
+            error_log("ProductModel::updateProduct - Stack trace: " . $exception->getTraceAsString());
             throw $exception;
         }
     }

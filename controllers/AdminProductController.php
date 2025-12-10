@@ -126,12 +126,22 @@ class AdminProductController
         
         try {
             $productId = $this->productModel->createProduct($payload);
-            $this->notifyNewProduct($productId, $payload);
-            set_flash('success', 'Đã tạo sản phẩm. Bạn có thể thêm biến thể ngay bây giờ.');
-            header('Location: ' . BASE_URL . '?action=admin-product-edit&id=' . $productId);
+            if ($productId > 0) {
+                $this->notifyNewProduct($productId, $payload);
+                set_flash('success', 'Đã tạo sản phẩm thành công. Bạn có thể thêm biến thể ngay bây giờ.');
+                error_log("AdminProductController::store - Successfully created product_id: " . $productId);
+                header('Location: ' . BASE_URL . '?action=admin-product-edit&id=' . $productId);
+            } else {
+                set_flash('danger', 'Không thể tạo sản phẩm: Không lấy được ID sản phẩm.');
+                error_log("AdminProductController::store - createProduct returned invalid ID: " . $productId);
+                header('Location: ' . BASE_URL . '?action=admin-product-create');
+            }
             exit;
         } catch (Throwable $exception) {
-            set_flash('danger', 'Không thể tạo sản phẩm: ' . $exception->getMessage());
+            $errorMsg = 'Không thể tạo sản phẩm: ' . $exception->getMessage();
+            set_flash('danger', $errorMsg);
+            error_log("AdminProductController::store - Exception: " . $exception->getMessage());
+            error_log("AdminProductController::store - Stack trace: " . $exception->getTraceAsString());
             header('Location: ' . BASE_URL . '?action=admin-product-create');
             exit;
         }
@@ -155,10 +165,19 @@ class AdminProductController
         }
 
         try {
-            $this->productModel->updateProduct($productId, $payload);
-            set_flash('success', 'Đã cập nhật sản phẩm.');
+            $result = $this->productModel->updateProduct($productId, $payload);
+            if ($result) {
+                set_flash('success', 'Đã cập nhật sản phẩm thành công.');
+                error_log("AdminProductController::update - Successfully updated product_id: " . $productId);
+            } else {
+                set_flash('danger', 'Cập nhật sản phẩm thất bại.');
+                error_log("AdminProductController::update - updateProduct returned false for product_id: " . $productId);
+            }
         } catch (Throwable $exception) {
-            set_flash('danger', 'Không thể cập nhật sản phẩm: ' . $exception->getMessage());
+            $errorMsg = 'Không thể cập nhật sản phẩm: ' . $exception->getMessage();
+            set_flash('danger', $errorMsg);
+            error_log("AdminProductController::update - Exception: " . $exception->getMessage());
+            error_log("AdminProductController::update - Stack trace: " . $exception->getTraceAsString());
         }
 
         header('Location: ' . BASE_URL . '?action=admin-product-edit&id=' . $productId);
