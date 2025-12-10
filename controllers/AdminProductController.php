@@ -388,7 +388,16 @@ class AdminProductController
     {
         $name = trim($_POST['name'] ?? '');
         $description = trim($_POST['description'] ?? '') ?: null;
-        $price = $this->toFloat($_POST['price'] ?? 0);
+        $originalPrice = $this->toFloat($_POST['original_price'] ?? 0);
+        // Xử lý sale_price: nếu rỗng hoặc 0 thì set null
+        $salePriceInput = trim($_POST['sale_price'] ?? '');
+        $salePrice = null;
+        if ($salePriceInput !== '' && $salePriceInput !== '0') {
+            $salePriceFloat = $this->toFloat($salePriceInput);
+            if ($salePriceFloat > 0) {
+                $salePrice = $salePriceFloat;
+            }
+        }
         $stock = (int)($_POST['stock'] ?? 0);
         $categoryId = isset($_POST['category_id']) ? (int)$_POST['category_id'] : null;
         $productId = isset($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
@@ -410,15 +419,27 @@ class AdminProductController
             }
         }
 
-        if ($name === '' || $price < 0) {
-            set_flash('danger', 'Vui lòng nhập ít nhất tên và giá hợp lệ.');
+        // Validation: giá gốc là bắt buộc
+        if ($name === '' || $originalPrice < 0) {
+            set_flash('danger', 'Vui lòng nhập ít nhất tên và giá gốc hợp lệ.');
             return null;
         }
+
+        // Validation: giá giảm giá phải nhỏ hơn giá gốc
+        if ($salePrice !== null && $salePrice >= $originalPrice) {
+            set_flash('danger', 'Giá giảm giá phải nhỏ hơn giá gốc.');
+            return null;
+        }
+
+        // Giá hiển thị: nếu có sale_price thì dùng sale_price, nếu không thì dùng original_price
+        $displayPrice = $salePrice !== null && $salePrice > 0 ? $salePrice : $originalPrice;
 
         $payload = [
             'name' => $name,
             'description' => $description,
-            'price' => $price,
+            'price' => $displayPrice, // Giá hiển thị
+            'original_price' => $originalPrice,
+            'sale_price' => $salePrice,
             'stock' => max(0, $stock),
             'category_id' => $categoryId,
         ];

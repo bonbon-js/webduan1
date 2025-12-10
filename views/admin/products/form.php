@@ -43,11 +43,18 @@ $productId = $isEditing ? (int)$product['id'] : null;
         </div>
 
         <?php $hasVariants = !empty($variants ?? []); ?>
-        <div class="form-grid-2">
+        <div class="form-grid-3">
             <div>
-                <label class="form-label" for="price">Giá bán (VNĐ) <span class="text-danger">*</span></label>
-                <input type="number" id="price" name="price" min="0" step="1000" class="form-control" required
-                       value="<?= htmlspecialchars((string)(int)(float)($product['price'] ?? 0)) ?>" placeholder="0">
+                <label class="form-label" for="original_price">Giá gốc (VNĐ) <span class="text-danger">*</span></label>
+                <input type="number" id="original_price" name="original_price" min="0" step="1000" class="form-control" required
+                       value="<?= htmlspecialchars((string)(int)(float)($product['original_price'] ?? $product['price'] ?? 0)) ?>" placeholder="0">
+                <small class="text-muted">Giá gốc của sản phẩm</small>
+            </div>
+            <div>
+                <label class="form-label" for="sale_price">Giá giảm giá (VNĐ)</label>
+                <input type="number" id="sale_price" name="sale_price" min="0" step="1000" class="form-control"
+                       value="<?= htmlspecialchars((string)(int)(float)($product['sale_price'] ?? '')) ?>" placeholder="Để trống nếu không giảm giá">
+                <small class="text-muted">Giá bán sau khi giảm (tùy chọn)</small>
             </div>
             <div>
                 <?php if ($hasVariants): ?>
@@ -61,6 +68,63 @@ $productId = $isEditing ? (int)$product['id'] : null;
                 <?php endif; ?>
             </div>
         </div>
+        
+        <div class="mb-3" id="pricePreview" style="padding: 0.75rem; background-color: #f8f9fa; border-radius: 6px; border-left: 4px solid #3b82f6;">
+            <small class="text-muted d-block mb-1"><strong>Xem trước giá hiển thị:</strong></small>
+            <div id="priceDisplay">
+                <span class="text-success fw-bold" id="displayPrice"><?= number_format((float)($product['sale_price'] ?? $product['original_price'] ?? $product['price'] ?? 0), 0, ',', '.') ?> đ</span>
+                <?php if (!empty($product['sale_price']) || (!empty($product['original_price']) && !empty($product['sale_price']))): ?>
+                    <span class="text-muted text-decoration-line-through ms-2" id="displayOriginalPrice"><?= number_format((float)($product['original_price'] ?? $product['price'] ?? 0), 0, ',', '.') ?> đ</span>
+                <?php endif; ?>
+            </div>
+        </div>
+        
+        <script>
+        // Cập nhật preview giá khi người dùng nhập
+        document.addEventListener('DOMContentLoaded', function() {
+            const originalPriceInput = document.getElementById('original_price');
+            const salePriceInput = document.getElementById('sale_price');
+            const displayPrice = document.getElementById('displayPrice');
+            const displayOriginalPrice = document.getElementById('displayOriginalPrice');
+            const pricePreview = document.getElementById('pricePreview');
+            
+            function updatePricePreview() {
+                const originalPrice = parseFloat(originalPriceInput.value) || 0;
+                const salePrice = parseFloat(salePriceInput.value) || null;
+                
+                if (salePrice && salePrice > 0 && salePrice < originalPrice) {
+                    // Có giá giảm giá
+                    displayPrice.textContent = formatPrice(salePrice) + ' đ';
+                    if (!displayOriginalPrice) {
+                        const originalSpan = document.createElement('span');
+                        originalSpan.className = 'text-muted text-decoration-line-through ms-2';
+                        originalSpan.id = 'displayOriginalPrice';
+                        displayPrice.parentElement.appendChild(originalSpan);
+                    }
+                    document.getElementById('displayOriginalPrice').textContent = formatPrice(originalPrice) + ' đ';
+                    pricePreview.style.display = 'block';
+                } else {
+                    // Không có giá giảm giá
+                    displayPrice.textContent = formatPrice(originalPrice) + ' đ';
+                    if (displayOriginalPrice) {
+                        displayOriginalPrice.remove();
+                    }
+                    pricePreview.style.display = 'block';
+                }
+            }
+            
+            function formatPrice(price) {
+                return new Intl.NumberFormat('vi-VN').format(Math.round(price));
+            }
+            
+            if (originalPriceInput) {
+                originalPriceInput.addEventListener('input', updatePricePreview);
+            }
+            if (salePriceInput) {
+                salePriceInput.addEventListener('input', updatePricePreview);
+            }
+        });
+        </script>
 
         <div style="margin-bottom: 1.5rem;">
             <label class="form-label" for="image">Ảnh đại diện sản phẩm</label>
