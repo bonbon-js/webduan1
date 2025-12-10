@@ -473,6 +473,49 @@ error_log("Order detail page - currentOrderId: $currentOrderId, order['id']: " .
     </div>
 </section>
 
+<!-- Modal thông báo thanh toán thành công -->
+<div class="modal fade" id="paymentSuccessModal" tabindex="-1" aria-labelledby="paymentSuccessModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center pb-5">
+                <div class="mb-4">
+                    <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center" style="width: 100px; height: 100px;">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 3.5rem;"></i>
+                    </div>
+                </div>
+                <h3 class="fw-bold mb-3">Thanh toán thành công!</h3>
+                <p class="text-muted mb-4">
+                    Cảm ơn bạn đã đặt hàng. Đơn hàng <strong><?= htmlspecialchars($order['order_code'] ?? '#' . $currentOrderId) ?></strong> của bạn đã được xác nhận.<br>
+                    Chúng tôi sẽ xử lý và giao hàng cho bạn sớm nhất có thể.
+                </p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <a href="<?= BASE_URL ?>?action=order-history" class="btn btn-outline-dark">Xem tất cả đơn hàng</a>
+                    <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Tiếp tục mua sắm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Tự động hiển thị modal khi có tham số payment_success=1 trong URL
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('payment_success') === '1') {
+        const modal = new bootstrap.Modal(document.getElementById('paymentSuccessModal'));
+        modal.show();
+        
+        // Xóa tham số payment_success khỏi URL sau khi hiển thị modal
+        urlParams.delete('payment_success');
+        const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '');
+        window.history.replaceState({}, '', newUrl);
+    }
+});
+</script>
+
 <?php if ($canReview): ?>
 <script>
 document.addEventListener('DOMContentLoaded', function() {

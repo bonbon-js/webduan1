@@ -199,7 +199,7 @@ class VnPayController
             unset($_SESSION['applied_coupon']);
             
             set_flash('success', 'Thanh toán thành công! Đơn hàng #' . $order['order_code'] . ' của bạn đã được xác nhận.');
-            header('Location: ' . BASE_URL . '?action=order-detail&id=' . $orderId);
+            header('Location: ' . BASE_URL . '?action=order-detail&id=' . $orderId . '&payment_success=1');
             exit;
         } else {
             // Thanh toán thất bại hoặc bị hủy

@@ -138,10 +138,17 @@ class CheckoutController
         }
 
         // Kiểm tra nhanh các field bắt buộc
+        $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
         $requiredFields = ['fullname', 'phone', 'email', 'address'];
         foreach ($requiredFields as $field) {
             if (empty($_POST[$field])) {
-                set_flash('danger', 'Vui lòng nhập đầy đủ thông tin giao hàng.');
+                $errorMessage = 'Vui lòng nhập đầy đủ thông tin giao hàng.';
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => false, 'message' => $errorMessage]);
+                    exit;
+                }
+                set_flash('danger', $errorMessage);
                 header('Location: ' . BASE_URL . '?action=checkout');
                 exit;
             }
@@ -569,6 +576,21 @@ class CheckoutController
             }
             
             set_flash('success', 'Đặt hàng thành công! Chúng tôi sẽ liên hệ để xác nhận. Bạn có thể theo dõi trạng thái đơn hàng tại đây.');
+            
+            // Kiểm tra nếu là AJAX request thì trả về JSON
+            $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'success' => true,
+                    'order_id' => $orderId,
+                    'total_amount' => $finalTotal,
+                    'redirect_url' => BASE_URL . '?action=order-detail&id=' . $orderId,
+                    'message' => 'Đặt hàng thành công!'
+                ]);
+                exit;
+            }
+            
             // Chuyển hướng sang trang chi tiết đơn hàng vừa đặt để hiển thị thông tin chi tiết
             header('Location: ' . BASE_URL . '?action=order-detail&id=' . $orderId);
             exit;
@@ -585,6 +607,17 @@ class CheckoutController
             error_log('Message: ' . $exception->getMessage());
             error_log('File: ' . $exception->getFile() . ':' . $exception->getLine());
             error_log('Trace: ' . $exception->getTraceAsString());
+            
+            // Kiểm tra nếu là AJAX request thì trả về JSON
+            $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'success' => false,
+                    'message' => $errorMessage
+                ]);
+                exit;
+            }
             
             set_flash('danger', $errorMessage);
             header('Location: ' . BASE_URL . '?action=checkout');

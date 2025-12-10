@@ -1265,6 +1265,111 @@ function selectSearchResult(result) {
 
 
 
+// Xử lý submit form checkout qua AJAX
+document.addEventListener('DOMContentLoaded', function() {
+    const checkoutForm = document.getElementById('checkoutForm');
+    const btnPlaceOrder = document.getElementById('btnPlaceOrder');
+    
+    if (checkoutForm && btnPlaceOrder) {
+        checkoutForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Disable button để tránh submit nhiều lần
+            btnPlaceOrder.disabled = true;
+            const originalText = btnPlaceOrder.textContent;
+            btnPlaceOrder.textContent = 'Đang xử lý...';
+            
+            // Lấy dữ liệu form
+            const formData = new FormData(checkoutForm);
+            
+            // Gửi request qua AJAX với header để controller biết đây là AJAX request
+            fetch('<?= BASE_URL ?>?action=checkout-process', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(response => {
+                // Kiểm tra content-type để biết response là JSON hay HTML
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    return response.json();
+                } else {
+                    // Nếu không phải JSON, có thể là redirect hoặc HTML
+                    // Trong trường hợp này, reload trang để xem flash message
+                    window.location.reload();
+                    return null;
+                }
+            })
+            .then(data => {
+                if (data) {
+                    if (data.success) {
+                        // Hiển thị modal thành công
+                        showSuccessModal(data.order_id, data.total_amount, data.redirect_url || '<?= BASE_URL ?>?action=order-detail&id=' + data.order_id);
+                    } else {
+                        alert(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
+                        btnPlaceOrder.disabled = false;
+                        btnPlaceOrder.textContent = originalText;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.');
+                btnPlaceOrder.disabled = false;
+                btnPlaceOrder.textContent = originalText;
+            });
+        });
+    }
+});
+
+// Hiển thị modal thành công
+function showSuccessModal(orderId, totalAmount, redirectUrl) {
+    const modalElement = document.getElementById('successPaymentModal');
+    if (!modalElement) return;
+    
+    const modal = new bootstrap.Modal(modalElement);
+    const orderIdElement = document.getElementById('successOrderId');
+    const orderTotalElement = document.getElementById('successOrderTotal');
+    const viewOrderBtn = document.getElementById('btnViewOrder');
+    
+    if (orderIdElement) {
+        orderIdElement.textContent = '#' + orderId;
+    }
+    
+    if (orderTotalElement && totalAmount) {
+        orderTotalElement.textContent = formatCurrency(totalAmount);
+    }
+    
+    if (viewOrderBtn) {
+        viewOrderBtn.onclick = function() {
+            window.location.href = redirectUrl;
+        };
+    }
+    
+    modal.show();
+    
+    // Tự động redirect sau 10 giây nếu user không click
+    let redirectTimeout = setTimeout(function() {
+        if (redirectUrl) {
+            window.location.href = redirectUrl;
+        }
+    }, 10000);
+    
+    // Hủy timeout nếu user click vào nút
+    if (viewOrderBtn) {
+        viewOrderBtn.addEventListener('click', function() {
+            clearTimeout(redirectTimeout);
+        });
+    }
+    
+    // Hủy timeout khi đóng modal
+    modalElement.addEventListener('hidden.bs.modal', function() {
+        clearTimeout(redirectTimeout);
+    });
+}
+
 function searchAndSelectAddress(provinceName, districtName, wardName, callback) {
     if (!provinceName) {
         if (callback) callback();
@@ -1413,7 +1518,7 @@ function searchAndSelectAddress(provinceName, districtName, wardName, callback) 
 
 <div class="checkout-page">
     <div class="container checkout-container">
-        <form action="<?= BASE_URL ?>?action=checkout-process" method="POST">
+        <form action="<?= BASE_URL ?>?action=checkout-process" method="POST" id="checkoutForm">
             <div class="row g-4">
                 <!-- Thông tin giao hàng -->
                 <div class="col-lg-7">
@@ -1653,11 +1758,38 @@ function searchAndSelectAddress(provinceName, districtName, wardName, callback) 
                             </div>
                         </div>
                         
-                        <button type="submit" class="btn-place-order">ĐẶT HÀNG</button>
+                        <button type="submit" class="btn-place-order" id="btnPlaceOrder">ĐẶT HÀNG</button>
                     </div>
                 </div>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Modal Thanh Toán Thành Công -->
+<div class="modal fade" id="successPaymentModal" tabindex="-1" aria-labelledby="successPaymentModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-5">
+                <div class="success-icon mb-4">
+                    <i class="bi bi-check-circle-fill text-success" style="font-size: 80px;"></i>
+                </div>
+                <h3 class="modal-title mb-3" id="successPaymentModalLabel">Đặt Hàng Thành Công!</h3>
+                <p class="text-muted mb-4">Cảm ơn bạn đã đặt hàng. Chúng tôi sẽ liên hệ với bạn sớm nhất có thể.</p>
+                <div class="order-info mb-4">
+                    <p class="mb-2"><strong>Mã đơn hàng:</strong> <span id="successOrderId" class="text-primary"></span></p>
+                    <p class="mb-0"><strong>Tổng tiền:</strong> <span id="successOrderTotal" class="text-primary"></span></p>
+                </div>
+                <div class="d-flex gap-3 justify-content-center">
+                    <button type="button" class="btn btn-outline-secondary" onclick="window.location.href='<?= BASE_URL ?>'">
+                        Về Trang Chủ
+                    </button>
+                    <button type="button" class="btn btn-dark" id="btnViewOrder">
+                        Xem Đơn Hàng
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
