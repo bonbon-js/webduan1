@@ -1,4 +1,25 @@
-c`user_id`, `order_id`, `discount_amount`, `used_at`) VALUES
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `coupon_usage`
+--
+
+DROP TABLE IF EXISTS `coupon_usage`;
+
+CREATE TABLE `coupon_usage` (
+  `id` int(11) NOT NULL,
+  `coupon_id` int(11) DEFAULT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `order_id` int(11) DEFAULT NULL,
+  `discount_amount` decimal(10,2) DEFAULT NULL,
+  `used_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `coupon_usage`
+--
+
+INSERT INTO `coupon_usage` (`id`, `coupon_id`, `user_id`, `order_id`, `discount_amount`, `used_at`) VALUES
 (1, 5, 3, 16, 30000.00, '2025-12-06 23:11:00'),
 (2, 2, 3, 17, 100000.00, '2025-12-06 23:14:22'),
 (3, 4, 3, 18, 15000.00, '2025-12-07 14:09:01'),
@@ -16,6 +37,8 @@ c`user_id`, `order_id`, `discount_amount`, `used_at`) VALUES
 --
 -- Cấu trúc bảng cho bảng `notifications`
 --
+
+DROP TABLE IF EXISTS `notifications`;
 
 CREATE TABLE `notifications` (
   `id` int(11) NOT NULL,
@@ -55,6 +78,8 @@ INSERT INTO `notifications` (`id`, `user_id`, `type`, `title`, `content`, `actio
 -- Cấu trúc bảng cho bảng `orders`
 --
 
+DROP TABLE IF EXISTS `orders`;
+
 CREATE TABLE `orders` (
   `order_id` int(11) NOT NULL,
   `order_date` datetime DEFAULT NULL,
@@ -70,6 +95,8 @@ CREATE TABLE `orders` (
 --
 -- Cấu trúc bảng cho bảng `orders_new`
 --
+
+DROP TABLE IF EXISTS `orders_new`;
 
 CREATE TABLE `orders_new` (
   `id` int(11) NOT NULL,
@@ -114,6 +141,8 @@ INSERT INTO `orders_new` (`id`, `order_code`, `user_id`, `fullname`, `email`, `p
 -- Cấu trúc bảng cho bảng `order_details`
 --
 
+DROP TABLE IF EXISTS `order_details`;
+
 CREATE TABLE `order_details` (
   `detail_id` int(11) NOT NULL,
   `order_id` int(11) DEFAULT NULL,
@@ -128,6 +157,8 @@ CREATE TABLE `order_details` (
 --
 -- Cấu trúc bảng cho bảng `order_items`
 --
+
+DROP TABLE IF EXISTS `order_items`;
 
 CREATE TABLE `order_items` (
   `id` int(11) NOT NULL,
@@ -205,6 +236,8 @@ INSERT INTO `order_items` (`id`, `order_id`, `product_id`, `product_name`, `vari
 -- Cấu trúc bảng cho bảng `password_resets`
 --
 
+DROP TABLE IF EXISTS `password_resets`;
+
 CREATE TABLE `password_resets` (
   `reset_id` int(11) NOT NULL,
   `user_id` int(11) DEFAULT NULL,
@@ -229,6 +262,8 @@ INSERT INTO `password_resets` (`reset_id`, `user_id`, `token`, `otp_code`, `expi
 --
 -- Cấu trúc bảng cho bảng `posts`
 --
+
+DROP TABLE IF EXISTS `posts`;
 
 CREATE TABLE `posts` (
   `post_id` int(11) NOT NULL,
@@ -260,6 +295,8 @@ INSERT INTO `posts` (`post_id`, `user_id`, `title`, `excerpt`, `slug`, `content`
 --
 -- Cấu trúc bảng cho bảng `products`
 --
+
+DROP TABLE IF EXISTS `products`;
 
 CREATE TABLE `products` (
   `product_id` int(11) NOT NULL,
@@ -299,6 +336,8 @@ INSERT INTO `products` (`product_id`, `product_name`, `description`, `price`, `s
 --
 -- Cấu trúc bảng cho bảng `product_attribute_values`
 --
+
+DROP TABLE IF EXISTS `product_attribute_values`;
 
 CREATE TABLE `product_attribute_values` (
   `id` int(11) NOT NULL,
@@ -459,6 +498,8 @@ INSERT INTO `product_attribute_values` (`id`, `product_id`, `variant_id`, `value
 -- Cấu trúc bảng cho bảng `product_images`
 --
 
+DROP TABLE IF EXISTS `product_images`;
+
 CREATE TABLE `product_images` (
   `image_id` int(11) NOT NULL,
   `product_id` int(11) DEFAULT NULL,
@@ -522,6 +563,8 @@ INSERT INTO `product_images` (`image_id`, `product_id`, `image_url`, `is_primary
 --
 -- Cấu trúc bảng cho bảng `product_variants`
 --
+
+DROP TABLE IF EXISTS `product_variants`;
 
 CREATE TABLE `product_variants` (
   `variant_id` int(11) NOT NULL,
@@ -607,6 +650,8 @@ INSERT INTO `product_variants` (`variant_id`, `product_id`, `sku`, `additional_p
 -- Cấu trúc bảng cho bảng `return_requests`
 --
 
+DROP TABLE IF EXISTS `return_requests`;
+
 CREATE TABLE `return_requests` (
   `id` int(11) NOT NULL,
   `order_id` int(11) NOT NULL,
@@ -641,6 +686,8 @@ INSERT INTO `return_requests` (`id`, `order_id`, `user_id`, `reason`, `note`, `i
 -- Cấu trúc bảng cho bảng `reviews`
 --
 
+DROP TABLE IF EXISTS `reviews`;
+
 CREATE TABLE `reviews` (
   `review_id` int(11) NOT NULL,
   `order_id` int(11) DEFAULT NULL,
@@ -674,6 +721,8 @@ INSERT INTO `reviews` (`review_id`, `order_id`, `order_item_id`, `user_id`, `pro
 --
 -- Cấu trúc bảng cho bảng `users`
 --
+
+DROP TABLE IF EXISTS `users`;
 
 CREATE TABLE `users` (
   `user_id` int(11) NOT NULL,
@@ -710,6 +759,8 @@ INSERT INTO `users` (`user_id`, `full_name`, `email`, `password`, `phone`, `addr
 -- Cấu trúc bảng cho bảng `user_addresses`
 --
 
+DROP TABLE IF EXISTS `user_addresses`;
+
 CREATE TABLE `user_addresses` (
   `address_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
@@ -724,6 +775,61 @@ CREATE TABLE `user_addresses` (
   `created_at` datetime DEFAULT current_timestamp(),
   `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `attributes`
+--
+
+DROP TABLE IF EXISTS `attributes`;
+
+CREATE TABLE `attributes` (
+  `attribute_id` int(11) NOT NULL,
+  `attribute_name` varchar(100) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `attributes`
+--
+
+INSERT INTO `attributes` (`attribute_id`, `attribute_name`) VALUES
+(1, 'Size'),
+(2, 'Color');
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `attribute_values`
+--
+
+DROP TABLE IF EXISTS `attribute_values`;
+
+CREATE TABLE `attribute_values` (
+  `value_id` int(11) NOT NULL,
+  `attribute_id` int(11) NOT NULL,
+  `value_name` varchar(100) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `attribute_values`
+--
+
+INSERT INTO `attribute_values` (`value_id`, `attribute_id`, `value_name`) VALUES
+(1, 1, 'S'),
+(2, 1, 'M'),
+(3, 1, 'L'),
+(4, 1, 'XL'),
+(5, 2, 'Black'),
+(6, 2, 'White'),
+(7, 2, 'Red'),
+(8, 2, 'Blue'),
+(9, 2, 'Green'),
+(10, 2, 'Navy'),
+(11, 2, 'Beige'),
+(12, 2, 'Gray');
+
+-- --------------------------------------------------------
 
 --
 -- Chỉ mục cho các bảng đã đổ
@@ -741,6 +847,91 @@ ALTER TABLE `attributes`
 ALTER TABLE `attribute_values`
   ADD PRIMARY KEY (`value_id`),
   ADD KEY `attribute_id` (`attribute_id`);
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `categories`
+--
+
+DROP TABLE IF EXISTS `categories`;
+
+CREATE TABLE `categories` (
+  `category_id` int(11) NOT NULL,
+  `category_name` varchar(100) NOT NULL,
+  `description` text DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `categories`
+--
+
+INSERT INTO `categories` (`category_id`, `category_name`, `description`, `created_at`) VALUES
+(1, 'Áo', 'Các loại áo', NULL),
+(2, 'Áo Polo', 'Áo polo nam nữ', NULL),
+(3, 'Áo Khoác', 'Áo khoác thời trang', NULL),
+(4, 'Hoodie', 'Áo hoodie', NULL),
+(5, 'Quần', 'Các loại quần', NULL),
+(6, 'Áo Sơ Mi', 'Áo sơ mi công sở', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `coupons`
+--
+
+DROP TABLE IF EXISTS `coupons`;
+
+CREATE TABLE `coupons` (
+  `coupon_id` int(11) NOT NULL,
+  `code` varchar(50) NOT NULL,
+  `name` varchar(255) DEFAULT NULL,
+  `discount_type` enum('fixed','percent') DEFAULT 'fixed',
+  `discount_value` decimal(10,2) DEFAULT NULL,
+  `min_order_amount` decimal(10,2) DEFAULT NULL,
+  `max_discount_amount` decimal(10,2) DEFAULT NULL,
+  `start_date` datetime DEFAULT NULL,
+  `end_date` datetime DEFAULT NULL,
+  `status` enum('active','inactive','expired') DEFAULT 'active',
+  `usage_limit` int(11) DEFAULT NULL,
+  `used_count` int(11) DEFAULT 0,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `carts`
+--
+
+DROP TABLE IF EXISTS `carts`;
+
+CREATE TABLE `carts` (
+  `cart_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `cart_items`
+--
+
+DROP TABLE IF EXISTS `cart_items`;
+
+CREATE TABLE `cart_items` (
+  `cart_item_id` int(11) NOT NULL,
+  `cart_id` int(11) NOT NULL,
+  `product_id` int(11) NOT NULL,
+  `variant_id` int(11) DEFAULT NULL,
+  `quantity` int(11) NOT NULL DEFAULT 1,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Chỉ mục cho bảng `carts`
@@ -1039,8 +1230,3 @@ ALTER TABLE `products`
 ALTER TABLE `user_addresses`
   ADD CONSTRAINT `user_addresses_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
 COMMIT;
-
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-c
