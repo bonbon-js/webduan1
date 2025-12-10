@@ -1,10 +1,176 @@
+-- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
+--
+-- Máy chủ: 127.0.0.1
+-- Thời gian đã tạo: Th12 10, 2025 lúc 05:32 PM
+-- Phiên bản máy phục vụ: 10.4.32-MariaDB
+-- Phiên bản PHP: 8.0.30
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+--
+-- Cơ sở dữ liệu: `bonbon_shop`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `attributes`
+--
+
+CREATE TABLE `attributes` (
+  `attribute_id` int(11) NOT NULL,
+  `attribute_name` varchar(100) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `attributes`
+--
+
+INSERT INTO `attributes` (`attribute_id`, `attribute_name`) VALUES
+(1, 'Size'),
+(2, 'Color');
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `attribute_values`
+--
+
+CREATE TABLE `attribute_values` (
+  `value_id` int(11) NOT NULL,
+  `attribute_id` int(11) NOT NULL,
+  `value_name` varchar(100) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `attribute_values`
+--
+
+INSERT INTO `attribute_values` (`value_id`, `attribute_id`, `value_name`) VALUES
+(1, 1, 'S'),
+(2, 1, 'M'),
+(3, 1, 'L'),
+(4, 1, 'XL'),
+(5, 2, 'Black'),
+(6, 2, 'White'),
+(7, 2, 'Red'),
+(8, 2, 'Blue'),
+(9, 2, 'Green'),
+(10, 2, 'Navy'),
+(11, 2, 'Beige'),
+(12, 2, 'Gray');
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `carts`
+--
+
+CREATE TABLE `carts` (
+  `cart_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `carts`
+--
+
+INSERT INTO `carts` (`cart_id`, `user_id`, `created_at`, `updated_at`) VALUES
+(5, 4, '2025-12-10 11:22:04', NULL),
+(6, 1, '2025-12-10 14:46:01', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `cart_items`
+--
+
+CREATE TABLE `cart_items` (
+  `cart_item_id` int(11) NOT NULL,
+  `cart_id` int(11) NOT NULL,
+  `product_id` int(11) NOT NULL,
+  `variant_id` int(11) DEFAULT NULL,
+  `quantity` int(11) NOT NULL DEFAULT 1,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `cart_items`
+--
+
+INSERT INTO `cart_items` (`cart_item_id`, `cart_id`, `product_id`, `variant_id`, `quantity`, `created_at`, `updated_at`) VALUES
+(57, 5, 19, 65, 2, NULL, NULL),
+(76, 5, 1, 5, 1, NULL, NULL),
+(77, 5, 3, 12, 2, NULL, NULL),
+(78, 5, 14, 56, 2, NULL, NULL),
+(79, 5, 10, 41, 1, NULL, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `categories`
+--
+
+CREATE TABLE `categories` (
+  `category_id` int(11) NOT NULL,
+  `category_name` varchar(100) NOT NULL,
+  `description` text DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Đang đổ dữ liệu cho bảng `categories`
+--
+
+INSERT INTO `categories` (`category_id`, `category_name`, `description`, `created_at`) VALUES
+(1, 'Áo', 'Các loại áo', NULL),
+(2, 'Áo Polo', 'Áo polo nam nữ', NULL),
+(3, 'Áo Khoác', 'Áo khoác thời trang', NULL),
+(4, 'Hoodie', 'Áo hoodie', NULL),
+(5, 'Quần', 'Các loại quần', NULL),
+(6, 'Áo Sơ Mi', 'Áo sơ mi công sở', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `coupons`
+--
+
+CREATE TABLE `coupons` (
+  `coupon_id` int(11) NOT NULL,
+  `code` varchar(50) NOT NULL,
+  `name` varchar(255) DEFAULT NULL,
+  `discount_type` enum('fixed','percent') DEFAULT 'fixed',
+  `discount_value` decimal(10,2) DEFAULT NULL,
+  `min_order_amount` decimal(10,2) DEFAULT NULL,
+  `max_discount_amount` decimal(10,2) DEFAULT NULL,
+  `start_date` datetime DEFAULT NULL,
+  `end_date` datetime DEFAULT NULL,
+  `status` enum('active','inactive','expired') DEFAULT 'active',
+  `usage_limit` int(11) DEFAULT NULL,
+  `used_count` int(11) DEFAULT 0,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 -- --------------------------------------------------------
 
 --
 -- Cấu trúc bảng cho bảng `coupon_usage`
 --
-
-DROP TABLE IF EXISTS `coupon_usage`;
 
 CREATE TABLE `coupon_usage` (
   `id` int(11) NOT NULL,
@@ -38,8 +204,6 @@ INSERT INTO `coupon_usage` (`id`, `coupon_id`, `user_id`, `order_id`, `discount_
 -- Cấu trúc bảng cho bảng `notifications`
 --
 
-DROP TABLE IF EXISTS `notifications`;
-
 CREATE TABLE `notifications` (
   `id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
@@ -57,28 +221,37 @@ CREATE TABLE `notifications` (
 --
 
 INSERT INTO `notifications` (`id`, `user_id`, `type`, `title`, `content`, `action_url`, `meta`, `is_read`, `created_at`) VALUES
-(5, 4, 'product', 'Sản phẩm mới: ggghh', 'Khám phá ngay sản phẩm vừa ra mắt.', 'http://localhost/webduan1/?action=product-detail&id=16', '{\"product_id\":16,\"name\":\"ggghh\",\"price\":100000,\"image_url\":null}', 0, '2025-12-07 16:04:45'),
-(7, 2, 'product', 'Sản phẩm mới: ggghh', 'Khám phá ngay sản phẩm vừa ra mắt.', 'http://localhost/webduan1/?action=product-detail&id=16', '{\"product_id\":16,\"name\":\"ggghh\",\"price\":100000,\"image_url\":null}', 0, '2025-12-07 16:04:45'),
-(10, 3, 'review_reply', 'Shop đã phản hồi đánh giá của bạn', 'okeeeeee', 'http://localhost/webduan1/?action=product-detail&id=9#reviews', '{\"order_id\":20,\"order_item_id\":38,\"product_id\":9,\"review_id\":6}', 0, '2025-12-07 16:14:41'),
-(11, 4, 'coupon', 'Mã giảm giá mới: G9', 'mã khuya', NULL, '{\"coupon_id\":6,\"code\":\"G9\",\"name\":\"mã khuya\",\"discount_type\":\"fixed\",\"discount_value\":\"50000.00\",\"min_order_amount\":\"400000.00\",\"max_discount_amount\":null,\"start_date\":\"2025-12-07 23:15:00\",\"end_date\":\"2026-01-06 23:15:00\",\"status\":\"active\"}', 0, '2025-12-07 16:16:30'),
-(12, 3, 'coupon', 'Mã giảm giá mới: G9', 'mã khuya', NULL, '{\"coupon_id\":6,\"code\":\"G9\",\"name\":\"mã khuya\",\"discount_type\":\"fixed\",\"discount_value\":\"50000.00\",\"min_order_amount\":\"400000.00\",\"max_discount_amount\":null,\"start_date\":\"2025-12-07 23:15:00\",\"end_date\":\"2026-01-06 23:15:00\",\"status\":\"active\"}', 1, '2025-12-07 16:16:30'),
-(13, 2, 'coupon', 'Mã giảm giá mới: G9', 'mã khuya', NULL, '{\"coupon_id\":6,\"code\":\"G9\",\"name\":\"mã khuya\",\"discount_type\":\"fixed\",\"discount_value\":\"50000.00\",\"min_order_amount\":\"400000.00\",\"max_discount_amount\":null,\"start_date\":\"2025-12-07 23:15:00\",\"end_date\":\"2026-01-06 23:15:00\",\"status\":\"active\"}', 0, '2025-12-07 16:16:30'),
-(14, 3, 'order_status', 'Đơn BB693648356649 cập nhật trạng thái', 'Trạng thái mới: Đang Giao', 'http://localhost/webduan1/?action=order-detail&id=25', '{\"order_id\":25,\"order_code\":\"BB693648356649\",\"status\":\"to_ship\",\"status_label\":\"Đang Giao\",\"payment_method\":\"cod\"}', 1, '2025-12-08 03:40:40'),
-(15, 3, 'order_status', 'Đơn BB693648356649 cập nhật trạng thái', 'Trạng thái mới: Đã Giao', 'http://localhost/webduan1/?action=order-detail&id=25', '{\"order_id\":25,\"order_code\":\"BB693648356649\",\"status\":\"delivered\",\"status_label\":\"Đã Giao\",\"payment_method\":\"cod\"}', 0, '2025-12-08 03:41:35'),
-(16, 3, 'order_status', 'Đơn BB6938576C5525 cập nhật trạng thái', 'Trạng thái mới: Đang Giao', 'http://localhost/webduan1/?action=order-detail&id=26', '{\"order_id\":26,\"order_code\":\"BB6938576C5525\",\"status\":\"to_ship\",\"status_label\":\"Đang Giao\",\"payment_method\":\"cod\"}', 0, '2025-12-09 17:08:14'),
-(17, 3, 'order_status', 'Đơn BB6938576C5525 cập nhật trạng thái', 'Trạng thái mới: Đã Giao', 'http://localhost/webduan1/?action=order-detail&id=26', '{\"order_id\":26,\"order_code\":\"BB6938576C5525\",\"status\":\"delivered\",\"status_label\":\"Đã Giao\",\"payment_method\":\"cod\"}', 0, '2025-12-09 17:08:16'),
-(18, 3, 'order_status', 'Đơn BB6938576C5525 cập nhật trạng thái', 'Trạng thái mới: Hoàn Thành', 'http://localhost/webduan1/?action=order-detail&id=26', '{\"order_id\":26,\"order_code\":\"BB6938576C5525\",\"status\":\"completed\",\"status_label\":\"Hoàn Thành\",\"payment_method\":\"cod\"}', 0, '2025-12-09 17:08:26'),
-(19, 3, 'order_status', 'Đơn BB693858753324 cập nhật trạng thái', 'Trạng thái mới: Đang Giao', 'http://localhost/webduan1/?action=order-detail&id=27', '{\"order_id\":27,\"order_code\":\"BB693858753324\",\"status\":\"to_ship\",\"status_label\":\"Đang Giao\",\"payment_method\":\"cod\"}', 0, '2025-12-09 17:12:30'),
-(20, 3, 'order_status', 'Đơn BB693858753324 cập nhật trạng thái', 'Trạng thái mới: Đã Giao', 'http://localhost/webduan1/?action=order-detail&id=27', '{\"order_id\":27,\"order_code\":\"BB693858753324\",\"status\":\"delivered\",\"status_label\":\"Đã Giao\",\"payment_method\":\"cod\"}', 1, '2025-12-09 17:12:33'),
-(21, 3, 'order_status', 'Đơn BB693858753324 cập nhật trạng thái', 'Trạng thái mới: Hoàn Thành', 'http://localhost/webduan1/?action=order-detail&id=27', '{\"order_id\":27,\"order_code\":\"BB693858753324\",\"status\":\"completed\",\"status_label\":\"Hoàn Thành\",\"payment_method\":\"cod\"}', 0, '2025-12-10 02:11:26');
+(7, 2, 'product', 'Sản phẩm mới: ggghh', 'Khám phá ngay sản phẩm vừa ra mắt.', 'http://localhost/webduan1/?action=product-detail&id=16', '{\"product_id\":16,\"name\":\"ggghh\",\"price\":100000,\"image_url\":null}', 0, '2025-12-07 09:04:45'),
+(10, 3, 'review_reply', 'Shop đã phản hồi đánh giá của bạn', 'okeeeeee', 'http://localhost/webduan1/?action=product-detail&id=9#reviews', '{\"order_id\":20,\"order_item_id\":38,\"product_id\":9,\"review_id\":6}', 0, '2025-12-07 09:14:41'),
+(12, 3, 'coupon', 'Mã giảm giá mới: G9', 'mã khuya', NULL, '{\"coupon_id\":6,\"code\":\"G9\",\"name\":\"mã khuya\",\"discount_type\":\"fixed\",\"discount_value\":\"50000.00\",\"min_order_amount\":\"400000.00\",\"max_discount_amount\":null,\"start_date\":\"2025-12-07 23:15:00\",\"end_date\":\"2026-01-06 23:15:00\",\"status\":\"active\"}', 1, '2025-12-07 09:16:30'),
+(13, 2, 'coupon', 'Mã giảm giá mới: G9', 'mã khuya', NULL, '{\"coupon_id\":6,\"code\":\"G9\",\"name\":\"mã khuya\",\"discount_type\":\"fixed\",\"discount_value\":\"50000.00\",\"min_order_amount\":\"400000.00\",\"max_discount_amount\":null,\"start_date\":\"2025-12-07 23:15:00\",\"end_date\":\"2026-01-06 23:15:00\",\"status\":\"active\"}', 0, '2025-12-07 09:16:30'),
+(14, 3, 'order_status', 'Đơn BB693648356649 cập nhật trạng thái', 'Trạng thái mới: Đang Giao', 'http://localhost/webduan1/?action=order-detail&id=25', '{\"order_id\":25,\"order_code\":\"BB693648356649\",\"status\":\"to_ship\",\"status_label\":\"Đang Giao\",\"payment_method\":\"cod\"}', 1, '2025-12-07 20:40:40'),
+(15, 3, 'order_status', 'Đơn BB693648356649 cập nhật trạng thái', 'Trạng thái mới: Đã Giao', 'http://localhost/webduan1/?action=order-detail&id=25', '{\"order_id\":25,\"order_code\":\"BB693648356649\",\"status\":\"delivered\",\"status_label\":\"Đã Giao\",\"payment_method\":\"cod\"}', 0, '2025-12-07 20:41:35'),
+(16, 3, 'order_status', 'Đơn BB6938576C5525 cập nhật trạng thái', 'Trạng thái mới: Đang Giao', 'http://localhost/webduan1/?action=order-detail&id=26', '{\"order_id\":26,\"order_code\":\"BB6938576C5525\",\"status\":\"to_ship\",\"status_label\":\"Đang Giao\",\"payment_method\":\"cod\"}', 0, '2025-12-09 10:08:14'),
+(17, 3, 'order_status', 'Đơn BB6938576C5525 cập nhật trạng thái', 'Trạng thái mới: Đã Giao', 'http://localhost/webduan1/?action=order-detail&id=26', '{\"order_id\":26,\"order_code\":\"BB6938576C5525\",\"status\":\"delivered\",\"status_label\":\"Đã Giao\",\"payment_method\":\"cod\"}', 0, '2025-12-09 10:08:16'),
+(18, 3, 'order_status', 'Đơn BB6938576C5525 cập nhật trạng thái', 'Trạng thái mới: Hoàn Thành', 'http://localhost/webduan1/?action=order-detail&id=26', '{\"order_id\":26,\"order_code\":\"BB6938576C5525\",\"status\":\"completed\",\"status_label\":\"Hoàn Thành\",\"payment_method\":\"cod\"}', 0, '2025-12-09 10:08:26'),
+(19, 3, 'order_status', 'Đơn BB693858753324 cập nhật trạng thái', 'Trạng thái mới: Đang Giao', 'http://localhost/webduan1/?action=order-detail&id=27', '{\"order_id\":27,\"order_code\":\"BB693858753324\",\"status\":\"to_ship\",\"status_label\":\"Đang Giao\",\"payment_method\":\"cod\"}', 0, '2025-12-09 10:12:30'),
+(20, 3, 'order_status', 'Đơn BB693858753324 cập nhật trạng thái', 'Trạng thái mới: Đã Giao', 'http://localhost/webduan1/?action=order-detail&id=27', '{\"order_id\":27,\"order_code\":\"BB693858753324\",\"status\":\"delivered\",\"status_label\":\"Đã Giao\",\"payment_method\":\"cod\"}', 1, '2025-12-09 10:12:33'),
+(21, 3, 'order_status', 'Đơn BB693858753324 cập nhật trạng thái', 'Trạng thái mới: Hoàn Thành', 'http://localhost/webduan1/?action=order-detail&id=27', '{\"order_id\":27,\"order_code\":\"BB693858753324\",\"status\":\"completed\",\"status_label\":\"Hoàn Thành\",\"payment_method\":\"cod\"}', 0, '2025-12-09 19:11:26'),
+(23, 3, 'product', 'Sản phẩm mới: h', 'Khám phá ngay sản phẩm vừa ra mắt.', 'http://localhost/webduan1/?action=product-detail&id=17', '{\"product_id\":17,\"name\":\"h\",\"price\":200000,\"image_url\":\"http:\\/\\/localhost\\/webduan1\\/assets\\/uploads\\/products\\/product_1765340249_6938f4597c802.jpg\"}', 0, '2025-12-10 04:17:29'),
+(24, 2, 'product', 'Sản phẩm mới: h', 'Khám phá ngay sản phẩm vừa ra mắt.', 'http://localhost/webduan1/?action=product-detail&id=17', '{\"product_id\":17,\"name\":\"h\",\"price\":200000,\"image_url\":\"http:\\/\\/localhost\\/webduan1\\/assets\\/uploads\\/products\\/product_1765340249_6938f4597c802.jpg\"}', 0, '2025-12-10 04:17:29'),
+(26, 3, 'product', 'Sản phẩm mới: áo thun đen', 'Khám phá ngay sản phẩm vừa ra mắt.', 'http://localhost/webduan1/?action=product-detail&id=18', '{\"product_id\":18,\"name\":\"áo thun đen\",\"price\":100000,\"image_url\":\"http:\\/\\/localhost\\/webduan1\\/assets\\/uploads\\/products\\/product_1765353148_693926bccbd43.jpg\"}', 0, '2025-12-10 07:52:28'),
+(27, 2, 'product', 'Sản phẩm mới: áo thun đen', 'Khám phá ngay sản phẩm vừa ra mắt.', 'http://localhost/webduan1/?action=product-detail&id=18', '{\"product_id\":18,\"name\":\"áo thun đen\",\"price\":100000,\"image_url\":\"http:\\/\\/localhost\\/webduan1\\/assets\\/uploads\\/products\\/product_1765353148_693926bccbd43.jpg\"}', 0, '2025-12-10 07:52:28'),
+(29, 3, 'product', 'Sản phẩm mới: áo thun đen', 'Khám phá ngay sản phẩm vừa ra mắt.', 'http://localhost/webduan1/?action=product-detail&id=19', '{\"product_id\":19,\"name\":\"áo thun đen\",\"price\":100000,\"image_url\":\"http:\\/\\/localhost\\/webduan1\\/assets\\/uploads\\/products\\/product_1765353475_693928033140b.jpg\"}', 0, '2025-12-10 07:57:55'),
+(30, 2, 'product', 'Sản phẩm mới: áo thun đen', 'Khám phá ngay sản phẩm vừa ra mắt.', 'http://localhost/webduan1/?action=product-detail&id=19', '{\"product_id\":19,\"name\":\"áo thun đen\",\"price\":100000,\"image_url\":\"http:\\/\\/localhost\\/webduan1\\/assets\\/uploads\\/products\\/product_1765353475_693928033140b.jpg\"}', 0, '2025-12-10 07:57:55'),
+(32, 3, 'product', 'Sản phẩm mới: áo thun', 'Khám phá ngay sản phẩm vừa ra mắt.', 'http://localhost/webduan1/?action=product-detail&id=20', '{\"product_id\":20,\"name\":\"áo thun\",\"price\":100000,\"image_url\":\"http:\\/\\/localhost\\/webduan1\\/assets\\/uploads\\/products\\/product_1765354855_69392d67aa4f9.jpg\"}', 0, '2025-12-10 08:20:55'),
+(33, 2, 'product', 'Sản phẩm mới: áo thun', 'Khám phá ngay sản phẩm vừa ra mắt.', 'http://localhost/webduan1/?action=product-detail&id=20', '{\"product_id\":20,\"name\":\"áo thun\",\"price\":100000,\"image_url\":\"http:\\/\\/localhost\\/webduan1\\/assets\\/uploads\\/products\\/product_1765354855_69392d67aa4f9.jpg\"}', 0, '2025-12-10 08:20:55'),
+(35, 3, 'product', 'Sản phẩm mới: quân', 'Khám phá ngay sản phẩm vừa ra mắt.', 'http://localhost/webduan1/?action=product-detail&id=21', '{\"product_id\":21,\"name\":\"quân\",\"price\":10000,\"image_url\":\"http:\\/\\/localhost\\/webduan1\\/assets\\/uploads\\/products\\/product_1765356266_693932ea62dad.jpg\"}', 0, '2025-12-10 08:44:26'),
+(36, 2, 'product', 'Sản phẩm mới: quân', 'Khám phá ngay sản phẩm vừa ra mắt.', 'http://localhost/webduan1/?action=product-detail&id=21', '{\"product_id\":21,\"name\":\"quân\",\"price\":10000,\"image_url\":\"http:\\/\\/localhost\\/webduan1\\/assets\\/uploads\\/products\\/product_1765356266_693932ea62dad.jpg\"}', 0, '2025-12-10 08:44:26'),
+(70, 4, 'order_status', 'Đơn BB6939934E3991 cập nhật trạng thái', 'Trạng thái mới: Thanh toán thất bại', 'http://localhost/webduan1/?action=order-detail&id=41', '{\"order_id\":41,\"order_code\":\"BB6939934E3991\",\"status\":\"payment_failed\",\"status_label\":\"Thanh toán thất bại\",\"payment_method\":\"banking\"}', 0, '2025-12-10 15:46:28'),
+(71, 4, 'order_status', 'Đơn BB6939969A5598 cập nhật trạng thái', 'Trạng thái mới: Đã Thanh Toán', 'http://localhost/webduan1/?action=order-detail&id=44', '{\"order_id\":44,\"order_code\":\"BB6939969A5598\",\"status\":\"paid\",\"status_label\":\"Đã Thanh Toán\",\"payment_method\":\"banking\"}', 0, '2025-12-10 15:50:17'),
+(72, 4, 'order_status', 'Đơn BB6939969A5598 cập nhật trạng thái', 'Trạng thái mới: Chờ Xác Nhận', 'http://localhost/webduan1/?action=order-detail&id=44', '{\"order_id\":44,\"order_code\":\"BB6939969A5598\",\"status\":\"pending\",\"status_label\":\"Chờ Xác Nhận\",\"payment_method\":\"banking\"}', 0, '2025-12-10 15:50:17');
 
 -- --------------------------------------------------------
 
 --
 -- Cấu trúc bảng cho bảng `orders`
 --
-
-DROP TABLE IF EXISTS `orders`;
 
 CREATE TABLE `orders` (
   `order_id` int(11) NOT NULL,
@@ -95,8 +268,6 @@ CREATE TABLE `orders` (
 --
 -- Cấu trúc bảng cho bảng `orders_new`
 --
-
-DROP TABLE IF EXISTS `orders_new`;
 
 CREATE TABLE `orders_new` (
   `id` int(11) NOT NULL,
@@ -127,21 +298,39 @@ CREATE TABLE `orders_new` (
 --
 
 INSERT INTO `orders_new` (`id`, `order_code`, `user_id`, `fullname`, `email`, `phone`, `address`, `city`, `district`, `ward`, `note`, `payment_method`, `status`, `total_amount`, `coupon_id`, `discount_amount`, `coupon_code`, `coupon_name`, `cancel_reason`, `created_at`, `updated_at`) VALUES
-(20, 'BB69352DDB7207', NULL, 'Lê Phương Hà', 'phuongha9112006@gmail.com', '0343748764', 'Thanh Hóa', '', '', '', '', 'cod', 'delivered', 1357000.00, NULL, 100000.00, 'SUMMER20', 'mã chào hè', NULL, '2025-12-07 07:33:47', '2025-12-07 07:37:18'),
-(21, 'BB69352E494527', NULL, 'Lê Phương Hà', 'phuongha9112006@gmail.com', '0343748764', 'Thanh Hóa', '', '', '', '', 'banking', 'completed', 1449000.00, NULL, 100000.00, 'SUMMER20', 'mã chào hè', NULL, '2025-12-07 07:35:37', '2025-12-07 14:29:23'),
-(23, 'BB693589DB4981', NULL, 'Lê Phương Hà', 'phuongha9112006@gmail.com', '0343748764', 'Thanh Hóa', '', '', '', '', 'cod', 'cancelled', 2155000.00, NULL, 100000.00, 'SUMMER20', 'mã chào hè', 'Thay đổi phương thức thanh toán', '2025-12-07 14:06:19', '2025-12-07 14:09:41'),
-(24, 'BB6935A2755959', NULL, 'Lê Phương Hà', 'phuongha9112006@gmail.com', '0343748764', 'Thanh Hóa', '', '', '', '', 'cod', 'delivered', 880200.00, NULL, 97800.00, 'SUMMER20', 'mã chào hè', NULL, '2025-12-07 15:51:17', '2025-12-07 15:56:00'),
-(25, 'BB693648356649', NULL, 'Lê Phương Hà', 'phuongha9112006@gmail.com', '0343748764', 'Thanh Hóa', '', '', '', '', 'cod', 'delivered', 1428000.00, NULL, 100000.00, 'SUMMER20', 'mã chào hè', NULL, '2025-12-08 03:38:29', '2025-12-08 03:41:35'),
-(26, 'BB6938576C5525', NULL, 'Lê Phương Hà', 'phuongha9112006@gmail.com', '0343748764', 'Thanh Hóa', '', '', '', '', 'cod', 'completed', 200000.00, NULL, 0.00, NULL, NULL, NULL, '2025-12-09 17:07:56', '2025-12-09 17:08:25'),
-(27, 'BB693858753324', NULL, 'Lê Phương Hà', 'phuongha9112006@gmail.com', '0343748764', 'Thanh Hóa', '', '', '', '', 'cod', 'completed', 900000.00, NULL, 100000.00, 'SUMMER20', 'mã chào hè', NULL, '2025-12-09 17:12:21', '2025-12-10 02:11:26');
+(20, 'BB69352DDB7207', NULL, 'Lê Phương Hà', 'phuongha9112006@gmail.com', '0343748764', 'Thanh Hóa', '', '', '', '', 'cod', 'delivered', 1357000.00, NULL, 100000.00, 'SUMMER20', 'mã chào hè', NULL, '2025-12-07 00:33:47', '2025-12-07 00:37:18'),
+(21, 'BB69352E494527', NULL, 'Lê Phương Hà', 'phuongha9112006@gmail.com', '0343748764', 'Thanh Hóa', '', '', '', '', 'banking', 'completed', 1449000.00, NULL, 100000.00, 'SUMMER20', 'mã chào hè', NULL, '2025-12-07 00:35:37', '2025-12-07 07:29:23'),
+(23, 'BB693589DB4981', NULL, 'Lê Phương Hà', 'phuongha9112006@gmail.com', '0343748764', 'Thanh Hóa', '', '', '', '', 'cod', 'cancelled', 2155000.00, NULL, 100000.00, 'SUMMER20', 'mã chào hè', 'Thay đổi phương thức thanh toán', '2025-12-07 07:06:19', '2025-12-07 07:09:41'),
+(24, 'BB6935A2755959', NULL, 'Lê Phương Hà', 'phuongha9112006@gmail.com', '0343748764', 'Thanh Hóa', '', '', '', '', 'cod', 'delivered', 880200.00, NULL, 97800.00, 'SUMMER20', 'mã chào hè', NULL, '2025-12-07 08:51:17', '2025-12-07 08:56:00'),
+(25, 'BB693648356649', NULL, 'Lê Phương Hà', 'phuongha9112006@gmail.com', '0343748764', 'Thanh Hóa', '', '', '', '', 'cod', 'delivered', 1428000.00, NULL, 100000.00, 'SUMMER20', 'mã chào hè', NULL, '2025-12-07 20:38:29', '2025-12-07 20:41:35'),
+(26, 'BB6938576C5525', NULL, 'Lê Phương Hà', 'phuongha9112006@gmail.com', '0343748764', 'Thanh Hóa', '', '', '', '', 'cod', 'completed', 200000.00, NULL, 0.00, NULL, NULL, NULL, '2025-12-09 10:07:56', '2025-12-09 10:08:25'),
+(27, 'BB693858753324', NULL, 'Lê Phương Hà', 'phuongha9112006@gmail.com', '0343748764', 'Thanh Hóa', '', '', '', '', 'cod', 'completed', 900000.00, NULL, 100000.00, 'SUMMER20', 'mã chào hè', NULL, '2025-12-09 10:12:21', '2025-12-09 19:11:26'),
+(28, 'BB693938D58466', NULL, 'Phạm Văn Hiệp', 'phamvanhiep210306@gmail.com', '9749264441', 'sn:245 đường thanh chương phố tân trọng phường quảng phú', '', '', '', '', 'cod', 'delivered', 2000000.00, NULL, 0.00, NULL, NULL, NULL, '2025-12-10 09:09:41', '2025-12-10 14:53:18'),
+(29, 'BB693938FA6332', NULL, 'Phạm Văn Hiệp', 'phamvanhiep210306@gmail.com', '9749264441', 'sn:245 đường thanh chương phố tân trọng phường quảng phú', '', '', '', '', 'cod', 'completed', 51000000.00, NULL, 0.00, NULL, NULL, NULL, '2025-12-10 09:10:18', '2025-12-10 14:23:28'),
+(30, 'BB6939393C5948', NULL, 'Phạm Văn Hiệp', 'phamvanhiep210306@gmail.com', '9749264441', 'sn:245 đường thanh chương phố tân trọng phường quảng phú', '', '', '', '', 'banking', 'unpaid', 99999999.99, NULL, 0.00, NULL, NULL, NULL, '2025-12-10 09:11:24', '2025-12-10 09:11:24'),
+(31, 'BB693939634436', NULL, 'Phạm Văn Hiệp', 'phamvanhiep210306@gmail.com', '9749264441', 'sn:245 đường thanh chương phố tân trọng phường quảng phú', '', '', '', '', 'banking', 'unpaid', 729000.00, NULL, 0.00, NULL, NULL, NULL, '2025-12-10 09:12:03', '2025-12-10 09:12:03'),
+(32, 'BB693939936156', NULL, 'Phạm Văn Hiệp', 'phamvanhiep210306@gmail.com', '9749264441', 'sn:245 đường thanh chương phố tân trọng phường quảng phú', '', '', '', '', 'banking', 'unpaid', 729000.00, NULL, 0.00, NULL, NULL, NULL, '2025-12-10 09:12:51', '2025-12-10 09:12:51'),
+(33, 'BB6939399B4918', NULL, 'Phạm Văn Hiệp', 'phamvanhiep210306@gmail.com', '9749264441', 'sn:245 đường thanh chương phố tân trọng phường quảng phú', '', '', '', '', 'banking', 'unpaid', 729000.00, NULL, 0.00, NULL, NULL, NULL, '2025-12-10 09:12:59', '2025-12-10 09:12:59'),
+(34, 'BB69393A249278', NULL, 'Phạm Văn Hiệp', 'phamvanhiep210306@gmail.com', '9749264441', 'sn:245 đường thanh chương phố tân trọng phường quảng phú', '', '', '', '', 'cod', 'completed', 1000000.00, NULL, 0.00, NULL, NULL, NULL, '2025-12-10 09:15:16', '2025-12-10 09:16:57'),
+(35, 'BB6939872C8058', NULL, 'Phạm Văn Hiệp', 'phamvanhiep210306@gmail.com', '9749264441', 'sn:245 đường thanh chương phố tân trọng phường quảng phú', '', '', '', '', 'cod', 'completed', 729000.00, NULL, 0.00, NULL, NULL, NULL, '2025-12-10 14:43:56', '2025-12-10 15:03:27'),
+(36, 'BB69398BC91542', NULL, 'Phạm Văn Hiệp', 'phamvanhiep210306@gmail.com', '9749264441', 'sn:245 đường thanh chương phố tân trọng phường quảng phú', '', '', '', '', 'cod', 'completed', 729000.00, NULL, 0.00, NULL, NULL, NULL, '2025-12-10 15:03:37', '2025-12-10 15:04:57'),
+(37, 'BB69398C232136', NULL, 'Phạm Văn Hiệp', 'phamvanhiep210306@gmail.com', '9749264441', 'sn:245 đường thanh chương phố tân trọng phường quảng phú', '', '', '', '', 'cod', 'cancelled', 729000.00, NULL, 0.00, NULL, NULL, 'k thích', '2025-12-10 15:05:07', '2025-12-10 15:06:02'),
+(38, 'BB69398D457492', NULL, 'Phạm Văn Hiệp', 'phamvanhiep210306@gmail.com', '9749264441', 'sn:245 đường thanh chương phố tân trọng phường quảng phú', '', '', '', '', 'cod', 'completed', 2916000.00, NULL, 0.00, NULL, NULL, NULL, '2025-12-10 15:09:57', '2025-12-10 15:10:26'),
+(39, 'BB69398D6D2716', NULL, 'Phạm Văn Hiệp', 'phamvanhiep210306@gmail.com', '9749264441', 'sn:245 đường thanh chương phố tân trọng phường quảng phú', '', '', '', '', 'cod', 'completed', 729000.00, NULL, 0.00, NULL, NULL, NULL, '2025-12-10 15:10:37', '2025-12-10 15:34:14'),
+(40, 'BB693993090252', NULL, 'Phạm Văn Hiệp', 'phamvanhiep210306@gmail.com', '9749264441', 'sn:245 đường thanh chương phố tân trọng phường quảng phú', '', '', '', '', 'cod', 'pending', 729000.00, NULL, 0.00, NULL, NULL, NULL, '2025-12-10 15:34:33', '2025-12-10 15:34:33'),
+(41, 'BB6939934E3991', NULL, 'Phạm Văn Hiệp', 'phamvanhiep210306@gmail.com', '9749264441', 'sn:245 đường thanh chương phố tân trọng phường quảng phú', '', '', '', '', 'banking', 'payment_failed', 1458000.00, NULL, 0.00, NULL, NULL, NULL, '2025-12-10 15:35:42', '2025-12-10 15:46:28'),
+(42, 'BB6939962A7279', NULL, 'Phạm Văn Hiệp', 'phamvanhiep210306@gmail.com', '9749264441', 'sn:245 đường thanh chương phố tân trọng phường quảng phú', '', '', '', '', 'cod', 'pending', 1000000.00, NULL, 0.00, NULL, NULL, NULL, '2025-12-10 15:47:54', '2025-12-10 15:47:54'),
+(43, 'BB6939968D8027', NULL, 'Phạm Văn Hiệp', 'phamvanhiep210306@gmail.com', '9749264441', 'sn:245 đường thanh chương phố tân trọng phường quảng phú', '', '', '', '', 'cod', 'pending', 549000.00, NULL, 0.00, NULL, NULL, NULL, '2025-12-10 15:49:33', '2025-12-10 15:49:33'),
+(44, 'BB6939969A5598', NULL, 'Phạm Văn Hiệp', 'phamvanhiep210306@gmail.com', '9749264441', 'sn:245 đường thanh chương phố tân trọng phường quảng phú', '', '', '', '', 'banking', 'pending', 549000.00, NULL, 0.00, NULL, NULL, NULL, '2025-12-10 15:49:46', '2025-12-10 15:50:17'),
+(45, 'BB693997A82809', NULL, 'Phạm Văn Hiệp', 'phamvanhiep210306@gmail.com', '9749264441', 'sn:245 đường thanh chương phố tân trọng phường quảng phú', '', '', '', '', 'cod', 'pending', 1278000.00, NULL, 0.00, NULL, NULL, NULL, '2025-12-10 15:54:16', '2025-12-10 15:54:16'),
+(46, 'BB693997B48222', NULL, 'Phạm Văn Hiệp', 'phamvanhiep210306@gmail.com', '9749264441', 'sn:245 đường thanh chương phố tân trọng phường quảng phú', '', '', '', '', 'cod', 'pending', 729000.00, NULL, 0.00, NULL, NULL, NULL, '2025-12-10 15:54:28', '2025-12-10 15:54:28'),
+(47, 'BB693999494166', NULL, 'Phạm Văn Hiệp', 'phamvanhiep210306@gmail.com', '9749264441', 'sn:245 đường thanh chương phố tân trọng phường quảng phú', '', '', '', '', 'cod', 'pending', 799000.00, NULL, 0.00, NULL, NULL, NULL, '2025-12-10 16:01:13', '2025-12-10 16:01:13');
 
 -- --------------------------------------------------------
 
 --
 -- Cấu trúc bảng cho bảng `order_details`
 --
-
-DROP TABLE IF EXISTS `order_details`;
 
 CREATE TABLE `order_details` (
   `detail_id` int(11) NOT NULL,
@@ -157,8 +346,6 @@ CREATE TABLE `order_details` (
 --
 -- Cấu trúc bảng cho bảng `order_items`
 --
-
-DROP TABLE IF EXISTS `order_items`;
 
 CREATE TABLE `order_items` (
   `id` int(11) NOT NULL,
@@ -228,15 +415,34 @@ INSERT INTO `order_items` (`id`, `order_id`, `product_id`, `product_name`, `vari
 (49, 25, 14, 'Áo Khoác Denim', 'L', 'Black', 1, 729000.00, 'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?auto=format&fit=crop&w=600&q=80'),
 (50, 25, 10, 'Áo Khoác Bomber', NULL, NULL, 1, 799000.00, 'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=600&q=80'),
 (51, 26, 15, 'Quần Short Kakoo', '30', 'Navy', 1, 200000.00, 'http://localhost/webduan1/assets/uploads/products/product_1765032266_6934414a9e609.webp'),
-(52, 27, 1, 'Áo Polo Essential', 'L', 'Black', 1, 1000000.00, 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=600&q=80');
+(52, 27, 1, 'Áo Polo Essential', 'L', 'Black', 1, 1000000.00, 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=600&q=80'),
+(53, 28, 20, 'áo thun', 'L', 'Black', 20, 100000.00, 'http://localhost/webduan1/assets/uploads/products/product_1765354873_69392d7959528.jpg'),
+(54, 29, 2, 'Áo Khoác Dệt Kim', 'M', 'Beige', 51, 1000000.00, 'https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?auto=format&fit=crop&w=600&q=80'),
+(55, 30, 2, 'Áo Khoác Dệt Kim', 'M', 'Green', 100, 1000000.00, 'https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?auto=format&fit=crop&w=600&q=80'),
+(56, 31, 14, 'Áo Khoác Denim', 'L', 'Gray', 1, 729000.00, 'http://localhost/webduan1/assets/uploads/products/product_1765353078_693926760883d.jpg'),
+(57, 32, 14, 'Áo Khoác Denim', 'L', 'Gray', 1, 729000.00, 'http://localhost/webduan1/assets/uploads/products/product_1765353078_693926760883d.jpg'),
+(58, 33, 14, 'Áo Khoác Denim', 'L', 'Gray', 1, 729000.00, 'http://localhost/webduan1/assets/uploads/products/product_1765353078_693926760883d.jpg'),
+(59, 34, 1, 'Áo Polo Essential', 'L', 'Red', 1, 1000000.00, 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=600&q=80'),
+(60, 35, 14, 'Áo Khoác Denim', 'L', 'Gray', 1, 729000.00, 'http://localhost/webduan1/assets/uploads/products/product_1765353078_693926760883d.jpg'),
+(61, 36, 14, 'Áo Khoác Denim', 'L', 'Gray', 1, 729000.00, 'http://localhost/webduan1/assets/uploads/products/product_1765353078_693926760883d.jpg'),
+(62, 37, 14, 'Áo Khoác Denim', 'L', 'Gray', 1, 729000.00, 'http://localhost/webduan1/assets/uploads/products/product_1765353078_693926760883d.jpg'),
+(63, 38, 14, 'Áo Khoác Denim', 'L', 'Gray', 4, 729000.00, 'http://localhost/webduan1/assets/uploads/products/product_1765353078_693926760883d.jpg'),
+(64, 39, 14, 'Áo Khoác Denim', 'L', 'Gray', 1, 729000.00, 'http://localhost/webduan1/assets/uploads/products/product_1765353078_693926760883d.jpg'),
+(65, 40, 14, 'Áo Khoác Denim', 'L', 'Gray', 1, 729000.00, 'http://localhost/webduan1/assets/uploads/products/product_1765353078_693926760883d.jpg'),
+(66, 41, 14, 'Áo Khoác Denim', 'L', 'Gray', 2, 729000.00, 'http://localhost/webduan1/assets/uploads/products/product_1765353078_693926760883d.jpg'),
+(67, 42, 1, 'Áo Polo Essential', 'L', 'Red', 1, 1000000.00, 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=600&q=80'),
+(68, 43, 3, 'Áo Hoodie Urban', 'L', 'Green', 1, 549000.00, 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=600&q=80'),
+(69, 44, 3, 'Áo Hoodie Urban', 'L', 'Green', 1, 549000.00, 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=600&q=80'),
+(70, 45, 3, 'Áo Hoodie Urban', 'L', 'Green', 1, 549000.00, 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=600&q=80'),
+(71, 45, 14, 'Áo Khoác Denim', 'L', 'Gray', 1, 729000.00, 'http://localhost/webduan1/assets/uploads/products/product_1765353078_693926760883d.jpg'),
+(72, 46, 14, 'Áo Khoác Denim', 'L', 'Gray', 1, 729000.00, 'http://localhost/webduan1/assets/uploads/products/product_1765353078_693926760883d.jpg'),
+(73, 47, 10, 'Áo Khoác Bomber', 'L', 'Blue', 1, 799000.00, 'https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=600&q=80');
 
 -- --------------------------------------------------------
 
 --
 -- Cấu trúc bảng cho bảng `password_resets`
 --
-
-DROP TABLE IF EXISTS `password_resets`;
 
 CREATE TABLE `password_resets` (
   `reset_id` int(11) NOT NULL,
@@ -262,8 +468,6 @@ INSERT INTO `password_resets` (`reset_id`, `user_id`, `token`, `otp_code`, `expi
 --
 -- Cấu trúc bảng cho bảng `posts`
 --
-
-DROP TABLE IF EXISTS `posts`;
 
 CREATE TABLE `posts` (
   `post_id` int(11) NOT NULL,
@@ -296,13 +500,13 @@ INSERT INTO `posts` (`post_id`, `user_id`, `title`, `excerpt`, `slug`, `content`
 -- Cấu trúc bảng cho bảng `products`
 --
 
-DROP TABLE IF EXISTS `products`;
-
 CREATE TABLE `products` (
   `product_id` int(11) NOT NULL,
   `product_name` varchar(150) DEFAULT NULL,
   `description` text DEFAULT NULL,
   `price` decimal(10,2) DEFAULT NULL,
+  `original_price` decimal(10,2) DEFAULT NULL,
+  `sale_price` decimal(10,2) DEFAULT NULL,
   `stock` int(11) DEFAULT NULL,
   `category_id` int(11) DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
@@ -314,30 +518,29 @@ CREATE TABLE `products` (
 -- Đang đổ dữ liệu cho bảng `products`
 --
 
-INSERT INTO `products` (`product_id`, `product_name`, `description`, `price`, `stock`, `category_id`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 'Áo Polo Essential', 'Áo polo nam thiết kế tối giản, chất liệu cotton cao cấp, thoáng mát', 1000000.00, 100, 2, '2025-11-26 18:07:33', '2025-12-06 21:25:24', NULL),
-(2, 'Áo Khoác Dệt Kim', 'Áo khoác dệt kim ấm áp, phù hợp mùa thu đông', 1000000.00, 50, 3, '2025-11-26 18:07:33', '2025-12-06 21:25:24', NULL),
-(3, 'Áo Hoodie Urban', 'Hoodie phong cách đường phố, chất liệu nỉ mềm mại', 549000.00, 80, 4, '2025-11-26 18:07:33', '2025-12-06 21:25:24', NULL),
-(4, 'Quần Kaki Slimfit', 'Quần kaki ôm vừa phải, form dáng hiện đại', 489000.00, 120, 5, '2025-11-26 18:07:33', '2025-12-06 21:25:24', NULL),
-(5, 'Áo Sơ Mi Cotton', 'Áo sơ mi cotton 100%, phù hợp công sở', 429000.00, 90, 6, '2025-11-26 18:07:33', '2025-12-06 21:25:24', NULL),
-(6, 'Áo Polo Stripe', 'Áo polo họa tiết sọc ngang, trẻ trung năng động', 419000.00, 70, 2, '2025-11-26 18:07:33', '2025-12-06 21:25:24', NULL),
-(7, 'Áo Khoác Utility', 'Áo khoác nhiều túi tiện dụng, phong cách quân đội', 699000.00, 40, 3, '2025-11-26 18:07:33', '2025-12-06 21:25:24', NULL),
-(8, 'Quần Jean Darkwash', 'Quần jean màu tối, bền đẹp theo thời gian', 559000.00, 60, 5, '2025-11-26 18:07:33', '2025-12-06 21:25:24', NULL),
-(9, 'Áo Polo Premium', 'Áo polo cao cấp, chất liệu pique cotton, logo thêu tinh tế', 499000.00, 55, 2, '2025-11-26 18:07:33', '2025-12-06 21:25:24', NULL),
-(10, 'Áo Khoác Bomber', 'Áo khoác bomber phong cách pilot, chống gió tốt', 799000.00, 35, 3, '2025-11-26 18:07:33', '2025-12-06 21:25:24', NULL),
-(11, 'Áo Hoodie Zip', 'Hoodie có khóa kéo, tiện lợi và năng động', 589000.00, 65, 4, '2025-11-26 18:07:33', '2025-12-06 21:25:24', NULL),
-(12, 'Quần Jogger', 'Quần jogger thể thao, co giãn thoải mái', 449000.00, 85, 5, '2025-11-26 18:07:33', '2025-12-06 21:25:24', NULL),
-(13, 'Áo Sơ Mi Oxford', 'Áo sơ mi vải oxford cao cấp, form regular fit', 479000.00, 70, 6, '2025-11-26 18:07:33', '2025-12-06 21:25:24', NULL),
-(14, 'Áo Khoác Denim', 'Áo khoác jean classic, phong cách bất hủ', 729000.00, 45, 3, '2025-11-26 18:07:33', '2025-12-06 21:25:24', NULL),
-(15, 'Quần Short Kakoo', 'Quần short kaki mùa hè, thoáng mát', 200000.00, 0, 5, '2025-11-26 18:07:33', '2025-12-06 21:45:57', NULL);
+INSERT INTO `products` (`product_id`, `product_name`, `description`, `price`, `original_price`, `sale_price`, `stock`, `category_id`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'Áo Polo Essential', 'Áo polo nam thiết kế tối giản, chất liệu cotton cao cấp, thoáng mát', 1000000.00, 1000000.00, NULL, 100, 2, '2025-11-26 18:07:33', '2025-12-10 16:00:56', NULL),
+(3, 'Áo Hoodie Urban', 'Hoodie phong cách đường phố, chất liệu nỉ mềm mại', 549000.00, 549000.00, NULL, 80, 4, '2025-11-26 18:07:33', '2025-12-10 16:00:56', NULL),
+(4, 'Quần Kaki Slimfit', 'Quần kaki ôm vừa phải, form dáng hiện đại', 489000.00, 489000.00, NULL, 120, 5, '2025-11-26 18:07:33', '2025-12-10 16:00:56', NULL),
+(5, 'Áo Sơ Mi Cotton', 'Áo sơ mi cotton 100%, phù hợp công sở', 429000.00, 429000.00, NULL, 90, 6, '2025-11-26 18:07:33', '2025-12-10 16:00:56', NULL),
+(6, 'Áo Polo Stripe', 'Áo polo họa tiết sọc ngang, trẻ trung năng động', 419000.00, 419000.00, NULL, 70, 2, '2025-11-26 18:07:33', '2025-12-10 16:00:56', NULL),
+(7, 'Áo Khoác Utility', 'Áo khoác nhiều túi tiện dụng, phong cách quân đội', 699000.00, 699000.00, NULL, 40, 3, '2025-11-26 18:07:33', '2025-12-10 16:00:56', NULL),
+(8, 'Quần Jean Darkwash', 'Quần jean màu tối, bền đẹp theo thời gian', 559000.00, 559000.00, NULL, 60, 5, '2025-11-26 18:07:33', '2025-12-10 16:00:56', NULL),
+(9, 'Áo Polo Premium', 'Áo polo cao cấp, chất liệu pique cotton, logo thêu tinh tế', 499000.00, 499000.00, NULL, 55, 2, '2025-11-26 18:07:33', '2025-12-10 16:00:56', NULL),
+(10, 'Áo Khoác Bomber', 'Áo khoác bomber phong cách pilot, chống gió tốt', 799000.00, 799000.00, NULL, 35, 3, '2025-11-26 18:07:33', '2025-12-10 16:00:56', NULL),
+(11, 'Áo Hoodie Zip', 'Hoodie có khóa kéo, tiện lợi và năng động', 589000.00, 589000.00, NULL, 65, 4, '2025-11-26 18:07:33', '2025-12-10 16:00:56', NULL),
+(12, 'Quần Jogger', 'Quần jogger thể thao, co giãn thoải mái', 449000.00, 449000.00, NULL, 85, 5, '2025-11-26 18:07:33', '2025-12-10 16:00:56', NULL),
+(13, 'Áo Sơ Mi Oxford', 'Áo sơ mi vải oxford cao cấp, form regular fit', 479000.00, 479000.00, NULL, 70, 6, '2025-11-26 18:07:33', '2025-12-10 16:00:56', NULL),
+(14, 'Áo Khoác Denim', 'Áo khoác jean classic, phong cách bất hủ', 729000.00, 729000.00, NULL, 0, 3, '2025-11-26 18:07:33', '2025-12-10 16:00:56', NULL),
+(15, 'Quần Short Kakoo', 'Quần short kaki mùa hè, thoáng mát', 200000.00, 200000.00, NULL, 0, 5, '2025-11-26 18:07:33', '2025-12-10 16:00:56', NULL),
+(20, 'áo thun', 'eee', 100000.00, 100000.00, NULL, 0, 1, NULL, '2025-12-10 16:00:56', NULL),
+(21, 'quân', 'lọ', 10000.00, 100000.00, 10000.00, 0, 5, NULL, '2025-12-10 16:01:16', NULL);
 
 -- --------------------------------------------------------
 
 --
 -- Cấu trúc bảng cho bảng `product_attribute_values`
 --
-
-DROP TABLE IF EXISTS `product_attribute_values`;
 
 CREATE TABLE `product_attribute_values` (
   `id` int(11) NOT NULL,
@@ -361,14 +564,6 @@ INSERT INTO `product_attribute_values` (`id`, `product_id`, `variant_id`, `value
 (8, 1, 4, 8),
 (9, 1, 5, 3),
 (10, 1, 5, 7),
-(11, 2, 6, 2),
-(12, 2, 6, 9),
-(13, 2, 7, 3),
-(14, 2, 7, 9),
-(15, 2, 8, 4),
-(16, 2, 8, 11),
-(17, 2, 9, 2),
-(18, 2, 9, 11),
 (19, 3, 10, 1),
 (20, 3, 10, 6),
 (21, 3, 11, 2),
@@ -467,10 +662,6 @@ INSERT INTO `product_attribute_values` (`id`, `product_id`, `variant_id`, `value
 (114, 14, 57, 6),
 (115, 14, 58, 3),
 (116, 14, 58, 6),
-(119, 15, 60, 14),
-(120, 15, 60, 8),
-(121, 15, 61, 15),
-(122, 15, 61, 11),
 (125, NULL, NULL, NULL),
 (126, NULL, NULL, NULL),
 (127, NULL, NULL, NULL),
@@ -490,15 +681,15 @@ INSERT INTO `product_attribute_values` (`id`, `product_id`, `variant_id`, `value
 (141, NULL, NULL, NULL),
 (142, NULL, NULL, NULL),
 (143, NULL, NULL, NULL),
-(144, NULL, NULL, NULL);
+(144, NULL, NULL, NULL),
+(149, 20, 66, 3),
+(150, 20, 66, 5);
 
 -- --------------------------------------------------------
 
 --
 -- Cấu trúc bảng cho bảng `product_images`
 --
-
-DROP TABLE IF EXISTS `product_images`;
 
 CREATE TABLE `product_images` (
   `image_id` int(11) NOT NULL,
@@ -513,7 +704,6 @@ CREATE TABLE `product_images` (
 
 INSERT INTO `product_images` (`image_id`, `product_id`, `image_url`, `is_primary`) VALUES
 (1, 1, 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=600&q=80', 1),
-(2, 2, 'https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?auto=format&fit=crop&w=600&q=80', 1),
 (3, 3, 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=600&q=80', 1),
 (4, 4, 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=600&q=80', 1),
 (5, 5, 'https://images.unsplash.com/photo-1475180098004-ca77a66827be?auto=format&fit=crop&w=600&q=80', 1),
@@ -525,12 +715,10 @@ INSERT INTO `product_images` (`image_id`, `product_id`, `image_url`, `is_primary
 (11, 11, 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=600&q=80', 1),
 (12, 12, 'https://images.unsplash.com/photo-1555689502-c4b22d76c56f?auto=format&fit=crop&w=600&q=80', 1),
 (13, 13, 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=600&q=80', 1),
-(14, 14, 'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?auto=format&fit=crop&w=600&q=80', 1),
-(15, 15, 'http://localhost/webduan1/assets/uploads/products/product_1765032266_6934414a9e609.webp', 1),
+(14, 14, 'http://localhost/webduan1/assets/uploads/products/product_1765353078_693926760883d.jpg', 1),
+(15, 15, 'http://localhost/webduan1/assets/uploads/products/product_1765340080_6938f3b0d9f8e.jpg', 1),
 (16, 1, 'https://images.unsplash.com/photo-1460353581641-37baddab0fa2?auto=format&fit=crop&w=600&q=80', 0),
 (17, 1, 'https://images.unsplash.com/photo-1537832816519-689ad163238b?auto=format&fit=crop&w=600&q=80', 0),
-(18, 2, 'https://images.unsplash.com/photo-1460353581641-37baddab0fa2?auto=format&fit=crop&w=600&q=80', 0),
-(19, 2, 'https://images.unsplash.com/photo-1537832816519-689ad163238b?auto=format&fit=crop&w=600&q=80', 0),
 (20, 3, 'https://images.unsplash.com/photo-1460353581641-37baddab0fa2?auto=format&fit=crop&w=600&q=80', 0),
 (21, 3, 'https://images.unsplash.com/photo-1537832816519-689ad163238b?auto=format&fit=crop&w=600&q=80', 0),
 (22, 4, 'https://images.unsplash.com/photo-1460353581641-37baddab0fa2?auto=format&fit=crop&w=600&q=80', 0),
@@ -556,15 +744,24 @@ INSERT INTO `product_images` (`image_id`, `product_id`, `image_url`, `is_primary
 (42, 14, 'https://images.unsplash.com/photo-1460353581641-37baddab0fa2?auto=format&fit=crop&w=600&q=80', 0),
 (43, 14, 'https://images.unsplash.com/photo-1537832816519-689ad163238b?auto=format&fit=crop&w=600&q=80', 0),
 (44, 15, 'https://images.unsplash.com/photo-1460353581641-37baddab0fa2?auto=format&fit=crop&w=600&q=80', 0),
-(45, 15, 'https://images.unsplash.com/photo-1537832816519-689ad163238b?auto=format&fit=crop&w=600&q=80', 0);
+(45, 15, 'https://images.unsplash.com/photo-1537832816519-689ad163238b?auto=format&fit=crop&w=600&q=80', 0),
+(46, NULL, 'http://localhost/webduan1/assets/uploads/products/product_1765340249_6938f4597c802.jpg', 1),
+(47, NULL, 'http://localhost/webduan1/assets/uploads/products/product_1765352781_6939254de175f.jpg', 1),
+(48, NULL, 'http://localhost/webduan1/assets/uploads/products/product_1765352838_693925866fb81.jpg', 1),
+(49, NULL, 'http://localhost/webduan1/assets/uploads/products/product_1765353034_6939264a3901c.jpg', 1),
+(50, NULL, 'http://localhost/webduan1/assets/uploads/products/product_1765353148_693926bccbd43.jpg', 1),
+(51, NULL, 'http://localhost/webduan1/assets/uploads/products/product_1765353475_693928033140b.jpg', 1),
+(52, NULL, 'http://localhost/webduan1/assets/uploads/products/product_1765353764_69392924dd441.jpg', 1),
+(53, NULL, 'http://localhost/webduan1/assets/uploads/products/product_1765354855_69392d67aa4f9.jpg', 1),
+(54, NULL, 'http://localhost/webduan1/assets/uploads/products/product_1765355107_69392e638eee1.jpg', 1),
+(55, 20, 'http://localhost/webduan1/assets/uploads/products/product_1765355565_6939302d8b91f.jpg', 1),
+(56, 21, 'http://localhost/webduan1/assets/uploads/products/product_1765356266_693932ea62dad.jpg', 1);
 
 -- --------------------------------------------------------
 
 --
 -- Cấu trúc bảng cho bảng `product_variants`
 --
-
-DROP TABLE IF EXISTS `product_variants`;
 
 CREATE TABLE `product_variants` (
   `variant_id` int(11) NOT NULL,
@@ -584,14 +781,10 @@ INSERT INTO `product_variants` (`variant_id`, `product_id`, `sku`, `additional_p
 (2, 1, 'POLO-ESS-L-BLK', 0.00, 15, NULL),
 (3, 1, 'POLO-ESS-XL-BLK', 0.00, 10, NULL),
 (4, 1, 'POLO-ESS-M-NAV', 0.00, 18, NULL),
-(5, 1, 'POLO-ESS-L-WHT', 0.00, 12, NULL),
-(6, 2, 'JACKET-KNT-M-GRY', 0.00, 8, NULL),
-(7, 2, 'JACKET-KNT-L-GRY', 0.00, 10, NULL),
-(8, 2, 'JACKET-KNT-XL-BEI', 0.00, 5, NULL),
-(9, 2, 'JACKET-KNT-M-BEI', 0.00, 7, NULL),
+(5, 1, 'POLO-ESS-L-WHT', 0.00, 10, NULL),
 (10, 3, 'HOODIE-URB-S-BLK', 0.00, 15, NULL),
 (11, 3, 'HOODIE-URB-M-BLK', 0.00, 20, NULL),
-(12, 3, 'HOODIE-URB-L-GRY', 0.00, 18, NULL),
+(12, 3, 'HOODIE-URB-L-GRY', 0.00, 16, NULL),
 (13, 3, 'HOODIE-URB-XL-NAV', 0.00, 10, NULL),
 (14, 4, 'PANT-KAKI-30-BEI', 0.00, 25, NULL),
 (15, 4, 'PANT-KAKI-31-BEI', 0.00, 20, NULL),
@@ -635,22 +828,16 @@ INSERT INTO `product_variants` (`variant_id`, `product_id`, `sku`, `additional_p
 (53, 13, 'SHIRT-OXF-XL-BLU', 0.00, 12, NULL),
 (54, 13, 'SHIRT-OXF-L-WHT', 0.00, 14, NULL),
 (55, 14, 'DENIM-M-BLU', 0.00, 12, NULL),
-(56, 14, 'DENIM-L-BLU', 0.00, 10, NULL),
+(56, 14, 'DENIM-L-BLU', 0.00, 1, NULL),
 (57, 14, 'DENIM-XL-BLK', 0.00, 9, NULL),
 (58, 14, 'DENIM-L-BLK', 0.00, 8, NULL),
-(59, 15, 'SHORT-KAKI-29-BEI', 0.00, 22, 'http://localhost/webduan1/assets/uploads/products/product_1765084560_69350d90e3e28.webp'),
-(60, 15, 'SHORT-KAKI-30-NAV', 0.00, 20, NULL),
-(61, 15, 'SHORT-KAKI-31-BEI', 0.00, 18, NULL),
-(62, 15, 'SHORT-KAKI-32-BLACK', 0.00, 16, 'http://localhost/webduan1/assets/uploads/products/product_1765041891_693466e34d854.webp'),
-(63, 15, 'SHORT-KAKI-29-NAVY', 0.00, 10, 'http://localhost/webduan1/assets/uploads/products/product_1765299418_693854da0855c.webp');
+(66, 20, 'BB001', 0.00, 0, 'http://localhost/webduan1/assets/uploads/products/product_1765354873_69392d7959528.jpg');
 
 -- --------------------------------------------------------
 
 --
 -- Cấu trúc bảng cho bảng `return_requests`
 --
-
-DROP TABLE IF EXISTS `return_requests`;
 
 CREATE TABLE `return_requests` (
   `id` int(11) NOT NULL,
@@ -675,18 +862,16 @@ CREATE TABLE `return_requests` (
 --
 
 INSERT INTO `return_requests` (`id`, `order_id`, `user_id`, `reason`, `note`, `images`, `status`, `shipping_code`, `created_at`, `updated_at`, `approved_at`, `rejected_at`, `reject_reason`, `received_at`, `refunded_at`) VALUES
-(1, 21, 3, 'Sản phẩm giao sai', NULL, NULL, 'rejected', NULL, '2025-12-07 14:37:22', '2025-12-07 15:32:46', NULL, '2025-12-07 15:32:46', NULL, NULL, NULL),
-(2, 21, 3, 'Thiếu phụ kiện', NULL, '[\"http:\\/\\/localhost\\/webduan1\\/assets\\/uploads\\/returns\\/return_1765121608_69359e484eaa1.webp\"]', 'rejected', NULL, '2025-12-07 15:33:28', '2025-12-07 15:36:13', NULL, '2025-12-07 15:36:13', NULL, NULL, NULL),
-(3, 21, 3, 'Sản phẩm bị lỗi', NULL, '[\"http:\\/\\/localhost\\/webduan1\\/assets\\/uploads\\/returns\\/return_1765121799_69359f0760a8a.webp\"]', 'rejected', NULL, '2025-12-07 15:36:39', '2025-12-07 15:41:01', NULL, '2025-12-07 15:41:01', 'hhhhhh', NULL, NULL),
-(4, 24, 3, 'Sản phẩm giao sai', 'yh', '[\"http:\\/\\/localhost\\/webduan1\\/assets\\/uploads\\/returns\\/return_1765123004_6935a3bc4fa4e.webp\"]', 'received', 'BB6935A2755959', '2025-12-07 15:56:44', '2025-12-07 15:58:51', '2025-12-07 15:57:10', NULL, NULL, '2025-12-07 15:58:51', NULL);
+(1, 21, 3, 'Sản phẩm giao sai', NULL, NULL, 'rejected', NULL, '2025-12-07 07:37:22', '2025-12-07 08:32:46', NULL, '2025-12-07 08:32:46', NULL, NULL, NULL),
+(2, 21, 3, 'Thiếu phụ kiện', NULL, '[\"http:\\/\\/localhost\\/webduan1\\/assets\\/uploads\\/returns\\/return_1765121608_69359e484eaa1.webp\"]', 'rejected', NULL, '2025-12-07 08:33:28', '2025-12-07 08:36:13', NULL, '2025-12-07 08:36:13', NULL, NULL, NULL),
+(3, 21, 3, 'Sản phẩm bị lỗi', NULL, '[\"http:\\/\\/localhost\\/webduan1\\/assets\\/uploads\\/returns\\/return_1765121799_69359f0760a8a.webp\"]', 'rejected', NULL, '2025-12-07 08:36:39', '2025-12-07 08:41:01', NULL, '2025-12-07 08:41:01', 'hhhhhh', NULL, NULL),
+(4, 24, 3, 'Sản phẩm giao sai', 'yh', '[\"http:\\/\\/localhost\\/webduan1\\/assets\\/uploads\\/returns\\/return_1765123004_6935a3bc4fa4e.webp\"]', 'received', 'BB6935A2755959', '2025-12-07 08:56:44', '2025-12-07 08:58:51', '2025-12-07 08:57:10', NULL, NULL, '2025-12-07 08:58:51', NULL);
 
 -- --------------------------------------------------------
 
 --
 -- Cấu trúc bảng cho bảng `reviews`
 --
-
-DROP TABLE IF EXISTS `reviews`;
 
 CREATE TABLE `reviews` (
   `review_id` int(11) NOT NULL,
@@ -714,15 +899,14 @@ INSERT INTO `reviews` (`review_id`, `order_id`, `order_item_id`, `user_id`, `pro
 (5, 17, 34, 3, 2, 4, 'đssss', NULL, '[\"http:\\/\\/localhost\\/webduan1\\/assets\\/uploads\\/reviews\\/review_1765090576_693525102b1d5.webp\"]', NULL, 0, NULL, NULL),
 (6, 20, 38, 3, 9, 5, 'vggg', NULL, '[\"http:\\/\\/localhost\\/webduan1\\/assets\\/uploads\\/reviews\\/review_1765095098_693536ba52918.webp\"]', 'okeeeeee', 0, NULL, '2025-12-07 23:14:41'),
 (7, 21, 40, 3, 3, 3, 'tốttttt', '[{\"comment\":\"t\\u1ed1ttttt\",\"rating\":4,\"edited_at\":\"2025-12-07 21:14:37\",\"user_id\":3}]', NULL, NULL, 0, NULL, '2025-12-07 21:14:37'),
-(8, 24, 48, 3, 3, 4, 'tuyệt', NULL, NULL, 'cảm ơn', 0, NULL, '2025-12-07 23:13:53');
+(8, 24, 48, 3, 3, 4, 'tuyệt', NULL, NULL, 'cảm ơn', 0, NULL, '2025-12-07 23:13:53'),
+(9, 34, 59, 4, 1, 2, 'nhu cac', '[{\"comment\":\"ok\",\"rating\":5,\"edited_at\":\"2025-12-10 16:26:39\",\"user_id\":4}]', '[\"http:\\/\\/localhost\\/webduan1\\/assets\\/uploads\\/reviews\\/review_1765358760_69393ca8d4b1f.JPG\"]', NULL, 0, NULL, '2025-12-10 16:26:39');
 
 -- --------------------------------------------------------
 
 --
 -- Cấu trúc bảng cho bảng `users`
 --
-
-DROP TABLE IF EXISTS `users`;
 
 CREATE TABLE `users` (
   `user_id` int(11) NOT NULL,
@@ -759,8 +943,6 @@ INSERT INTO `users` (`user_id`, `full_name`, `email`, `password`, `phone`, `addr
 -- Cấu trúc bảng cho bảng `user_addresses`
 --
 
-DROP TABLE IF EXISTS `user_addresses`;
-
 CREATE TABLE `user_addresses` (
   `address_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
@@ -775,61 +957,6 @@ CREATE TABLE `user_addresses` (
   `created_at` datetime DEFAULT current_timestamp(),
   `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
--- Cấu trúc bảng cho bảng `attributes`
---
-
-DROP TABLE IF EXISTS `attributes`;
-
-CREATE TABLE `attributes` (
-  `attribute_id` int(11) NOT NULL,
-  `attribute_name` varchar(100) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Đang đổ dữ liệu cho bảng `attributes`
---
-
-INSERT INTO `attributes` (`attribute_id`, `attribute_name`) VALUES
-(1, 'Size'),
-(2, 'Color');
-
--- --------------------------------------------------------
-
---
--- Cấu trúc bảng cho bảng `attribute_values`
---
-
-DROP TABLE IF EXISTS `attribute_values`;
-
-CREATE TABLE `attribute_values` (
-  `value_id` int(11) NOT NULL,
-  `attribute_id` int(11) NOT NULL,
-  `value_name` varchar(100) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Đang đổ dữ liệu cho bảng `attribute_values`
---
-
-INSERT INTO `attribute_values` (`value_id`, `attribute_id`, `value_name`) VALUES
-(1, 1, 'S'),
-(2, 1, 'M'),
-(3, 1, 'L'),
-(4, 1, 'XL'),
-(5, 2, 'Black'),
-(6, 2, 'White'),
-(7, 2, 'Red'),
-(8, 2, 'Blue'),
-(9, 2, 'Green'),
-(10, 2, 'Navy'),
-(11, 2, 'Beige'),
-(12, 2, 'Gray');
-
--- --------------------------------------------------------
 
 --
 -- Chỉ mục cho các bảng đã đổ
@@ -847,91 +974,6 @@ ALTER TABLE `attributes`
 ALTER TABLE `attribute_values`
   ADD PRIMARY KEY (`value_id`),
   ADD KEY `attribute_id` (`attribute_id`);
-
--- --------------------------------------------------------
-
---
--- Cấu trúc bảng cho bảng `categories`
---
-
-DROP TABLE IF EXISTS `categories`;
-
-CREATE TABLE `categories` (
-  `category_id` int(11) NOT NULL,
-  `category_name` varchar(100) NOT NULL,
-  `description` text DEFAULT NULL,
-  `created_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Đang đổ dữ liệu cho bảng `categories`
---
-
-INSERT INTO `categories` (`category_id`, `category_name`, `description`, `created_at`) VALUES
-(1, 'Áo', 'Các loại áo', NULL),
-(2, 'Áo Polo', 'Áo polo nam nữ', NULL),
-(3, 'Áo Khoác', 'Áo khoác thời trang', NULL),
-(4, 'Hoodie', 'Áo hoodie', NULL),
-(5, 'Quần', 'Các loại quần', NULL),
-(6, 'Áo Sơ Mi', 'Áo sơ mi công sở', NULL);
-
--- --------------------------------------------------------
-
---
--- Cấu trúc bảng cho bảng `coupons`
---
-
-DROP TABLE IF EXISTS `coupons`;
-
-CREATE TABLE `coupons` (
-  `coupon_id` int(11) NOT NULL,
-  `code` varchar(50) NOT NULL,
-  `name` varchar(255) DEFAULT NULL,
-  `discount_type` enum('fixed','percent') DEFAULT 'fixed',
-  `discount_value` decimal(10,2) DEFAULT NULL,
-  `min_order_amount` decimal(10,2) DEFAULT NULL,
-  `max_discount_amount` decimal(10,2) DEFAULT NULL,
-  `start_date` datetime DEFAULT NULL,
-  `end_date` datetime DEFAULT NULL,
-  `status` enum('active','inactive','expired') DEFAULT 'active',
-  `usage_limit` int(11) DEFAULT NULL,
-  `used_count` int(11) DEFAULT 0,
-  `created_at` datetime DEFAULT NULL,
-  `updated_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Cấu trúc bảng cho bảng `carts`
---
-
-DROP TABLE IF EXISTS `carts`;
-
-CREATE TABLE `carts` (
-  `cart_id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `created_at` datetime DEFAULT NULL,
-  `updated_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Cấu trúc bảng cho bảng `cart_items`
---
-
-DROP TABLE IF EXISTS `cart_items`;
-
-CREATE TABLE `cart_items` (
-  `cart_item_id` int(11) NOT NULL,
-  `cart_id` int(11) NOT NULL,
-  `product_id` int(11) NOT NULL,
-  `variant_id` int(11) DEFAULT NULL,
-  `quantity` int(11) NOT NULL DEFAULT 1,
-  `created_at` datetime DEFAULT NULL,
-  `updated_at` datetime DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Chỉ mục cho bảng `carts`
@@ -1098,13 +1140,13 @@ ALTER TABLE `attribute_values`
 -- AUTO_INCREMENT cho bảng `carts`
 --
 ALTER TABLE `carts`
-  MODIFY `cart_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `cart_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT cho bảng `cart_items`
 --
 ALTER TABLE `cart_items`
-  MODIFY `cart_item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
+  MODIFY `cart_item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=80;
 
 --
 -- AUTO_INCREMENT cho bảng `categories`
@@ -1128,7 +1170,7 @@ ALTER TABLE `coupon_usage`
 -- AUTO_INCREMENT cho bảng `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=73;
 
 --
 -- AUTO_INCREMENT cho bảng `orders`
@@ -1140,7 +1182,7 @@ ALTER TABLE `orders`
 -- AUTO_INCREMENT cho bảng `orders_new`
 --
 ALTER TABLE `orders_new`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
 
 --
 -- AUTO_INCREMENT cho bảng `order_details`
@@ -1152,7 +1194,7 @@ ALTER TABLE `order_details`
 -- AUTO_INCREMENT cho bảng `order_items`
 --
 ALTER TABLE `order_items`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=74;
 
 --
 -- AUTO_INCREMENT cho bảng `password_resets`
@@ -1170,25 +1212,25 @@ ALTER TABLE `posts`
 -- AUTO_INCREMENT cho bảng `products`
 --
 ALTER TABLE `products`
-  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT cho bảng `product_attribute_values`
 --
 ALTER TABLE `product_attribute_values`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=145;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=151;
 
 --
 -- AUTO_INCREMENT cho bảng `product_images`
 --
 ALTER TABLE `product_images`
-  MODIFY `image_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
+  MODIFY `image_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=57;
 
 --
 -- AUTO_INCREMENT cho bảng `product_variants`
 --
 ALTER TABLE `product_variants`
-  MODIFY `variant_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=64;
+  MODIFY `variant_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=67;
 
 --
 -- AUTO_INCREMENT cho bảng `return_requests`
@@ -1200,7 +1242,7 @@ ALTER TABLE `return_requests`
 -- AUTO_INCREMENT cho bảng `reviews`
 --
 ALTER TABLE `reviews`
-  MODIFY `review_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `review_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT cho bảng `users`
@@ -1230,3 +1272,7 @@ ALTER TABLE `products`
 ALTER TABLE `user_addresses`
   ADD CONSTRAINT `user_addresses_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
 COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
