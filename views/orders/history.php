@@ -32,6 +32,22 @@
                    class="status-tab <?= ($_GET['status'] ?? '') === OrderModel::STATUS_PENDING ? 'active' : '' ?>">
                     Chờ Xác Nhận
                 </a>
+                <a href="<?= BASE_URL ?>?action=order-history&status=<?= OrderModel::STATUS_CONFIRMED ?>" 
+                   class="status-tab <?= ($_GET['status'] ?? '') === OrderModel::STATUS_CONFIRMED ? 'active' : '' ?>">
+                    Xác Nhận Đơn Hàng
+                </a>
+                <a href="<?= BASE_URL ?>?action=order-history&status=<?= OrderModel::STATUS_PREPARING ?>" 
+                   class="status-tab <?= ($_GET['status'] ?? '') === OrderModel::STATUS_PREPARING ? 'active' : '' ?>">
+                    Đang Chuẩn Bị
+                </a>
+                <a href="<?= BASE_URL ?>?action=order-history&status=<?= OrderModel::STATUS_HANDED_TO_SHIPPER ?>" 
+                   class="status-tab <?= ($_GET['status'] ?? '') === OrderModel::STATUS_HANDED_TO_SHIPPER ? 'active' : '' ?>">
+                    Đã Giao Cho Đơn Vị Vận Chuyển
+                </a>
+                <a href="<?= BASE_URL ?>?action=order-history&status=<?= OrderModel::STATUS_SHIPPING ?>" 
+                   class="status-tab <?= ($_GET['status'] ?? '') === OrderModel::STATUS_SHIPPING ? 'active' : '' ?>">
+                    Đang Vận Chuyển
+                </a>
                 <a href="<?= BASE_URL ?>?action=order-history&status=<?= OrderModel::STATUS_TO_SHIP ?>" 
                    class="status-tab <?= ($_GET['status'] ?? '') === OrderModel::STATUS_TO_SHIP ? 'active' : '' ?>">
                     Đang Giao

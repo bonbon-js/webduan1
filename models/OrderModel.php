@@ -7,7 +7,11 @@ class OrderModel extends BaseModel
     public const STATUS_PAID           = 'paid';            // Đã thanh toán
     public const STATUS_PAYMENT_FAILED = 'payment_failed';  // Thanh toán thất bại
     public const STATUS_PENDING        = 'pending';         // Chờ shop xác nhận
-    public const STATUS_TO_SHIP        = 'to_ship';         // Đang giao (chuẩn bị/ giao)
+    public const STATUS_CONFIRMED      = 'confirmed';       // Xác nhận đơn hàng
+    public const STATUS_PREPARING      = 'preparing';       // Đang chuẩn bị đơn hàng
+    public const STATUS_HANDED_TO_SHIPPER = 'handed_to_shipper'; // Đã giao cho đơn vị vận chuyển
+    public const STATUS_SHIPPING       = 'shipping';        // Đang vận chuyển đơn hàng
+    public const STATUS_TO_SHIP        = 'to_ship';         // Đang giao (chuẩn bị/ giao) - giữ lại để tương thích
     public const STATUS_DELIVERED      = 'delivered';       // Đã giao
     public const STATUS_COMPLETED      = 'completed';       // Hoàn thành (user xác nhận đã nhận)
     public const STATUS_CANCELLED      = 'cancelled';       // Đã hủy
@@ -20,6 +24,10 @@ class OrderModel extends BaseModel
         self::STATUS_PAID           => 'Đã Thanh Toán',
         self::STATUS_PAYMENT_FAILED => 'Thanh toán thất bại',
         self::STATUS_PENDING        => 'Chờ Xác Nhận',
+        self::STATUS_CONFIRMED      => 'Xác Nhận Đơn Hàng',
+        self::STATUS_PREPARING      => 'Đang Chuẩn Bị Đơn Hàng',
+        self::STATUS_HANDED_TO_SHIPPER => 'Đã Giao Cho Đơn Vị Vận Chuyển',
+        self::STATUS_SHIPPING       => 'Đang Vận Chuyển',
         self::STATUS_TO_SHIP        => 'Đang Giao',
         self::STATUS_DELIVERED      => 'Đã Giao',
         self::STATUS_COMPLETED      => 'Hoàn Thành',
@@ -34,6 +42,10 @@ class OrderModel extends BaseModel
         self::STATUS_PAID           => 'primary',
         self::STATUS_PAYMENT_FAILED => 'danger',
         self::STATUS_PENDING        => 'secondary',
+        self::STATUS_CONFIRMED      => 'info',
+        self::STATUS_PREPARING      => 'info',
+        self::STATUS_HANDED_TO_SHIPPER => 'warning',
+        self::STATUS_SHIPPING       => 'info',
         self::STATUS_TO_SHIP        => 'info',
         self::STATUS_DELIVERED      => 'primary',
         self::STATUS_COMPLETED      => 'success',
@@ -80,9 +92,13 @@ class OrderModel extends BaseModel
             self::STATUS_UNPAID         => [self::STATUS_PAID, self::STATUS_PAYMENT_FAILED, self::STATUS_CANCELLED],
             self::STATUS_PAYMENT_FAILED => [self::STATUS_UNPAID, self::STATUS_CANCELLED],
             self::STATUS_PAID           => [self::STATUS_PENDING],
-            self::STATUS_PENDING        => [self::STATUS_TO_SHIP, self::STATUS_CANCEL_REQUEST],
+            self::STATUS_PENDING        => [self::STATUS_CONFIRMED, self::STATUS_CANCEL_REQUEST],
+            self::STATUS_CONFIRMED      => [self::STATUS_PREPARING],
+            self::STATUS_PREPARING      => [self::STATUS_HANDED_TO_SHIPPER],
+            self::STATUS_HANDED_TO_SHIPPER => [self::STATUS_SHIPPING, self::STATUS_CANCELLED], // Admin có thể hủy ở trạng thái này
+            self::STATUS_SHIPPING       => [self::STATUS_DELIVERED],
             self::STATUS_CANCEL_REQUEST => [self::STATUS_CANCELLED],
-            self::STATUS_TO_SHIP        => [self::STATUS_DELIVERED],
+            self::STATUS_TO_SHIP        => [self::STATUS_DELIVERED, self::STATUS_HANDED_TO_SHIPPER], // Tương thích với status cũ
             self::STATUS_DELIVERED      => [self::STATUS_COMPLETED, self::STATUS_RETURNED],
             self::STATUS_COMPLETED      => [self::STATUS_RETURNED],
             self::STATUS_CANCELLED      => [],
@@ -91,9 +107,13 @@ class OrderModel extends BaseModel
 
         // Map chuyển trạng thái cho đơn COD (bỏ qua unpaid/paid/payment_failed)
         $cod = [
-            self::STATUS_PENDING        => [self::STATUS_TO_SHIP, self::STATUS_CANCEL_REQUEST],
+            self::STATUS_PENDING        => [self::STATUS_CONFIRMED, self::STATUS_CANCEL_REQUEST],
+            self::STATUS_CONFIRMED      => [self::STATUS_PREPARING],
+            self::STATUS_PREPARING      => [self::STATUS_HANDED_TO_SHIPPER],
+            self::STATUS_HANDED_TO_SHIPPER => [self::STATUS_SHIPPING, self::STATUS_CANCELLED], // Admin có thể hủy ở trạng thái này
+            self::STATUS_SHIPPING       => [self::STATUS_DELIVERED],
             self::STATUS_CANCEL_REQUEST => [self::STATUS_CANCELLED],
-            self::STATUS_TO_SHIP        => [self::STATUS_DELIVERED],
+            self::STATUS_TO_SHIP        => [self::STATUS_DELIVERED, self::STATUS_HANDED_TO_SHIPPER], // Tương thích với status cũ
             self::STATUS_DELIVERED      => [self::STATUS_COMPLETED, self::STATUS_RETURNED],
             self::STATUS_COMPLETED      => [self::STATUS_RETURNED],
             self::STATUS_CANCELLED      => [],
@@ -547,7 +567,7 @@ class OrderModel extends BaseModel
         ]);
     }
 
-    // Điều kiện cho phép hủy đơn - chỉ được hủy khi đơn chưa được giao
+    // Điều kiện cho phép hủy đơn - chỉ được hủy khi đơn chưa được giao (cho user)
     public function canCancel(array $order): bool
     {
         // Cho phép hủy các trạng thái trước khi giao hàng
@@ -556,7 +576,20 @@ class OrderModel extends BaseModel
             self::STATUS_PAYMENT_FAILED,
             self::STATUS_PAID,
             self::STATUS_PENDING,
+            self::STATUS_CONFIRMED,
+            self::STATUS_PREPARING,
             self::STATUS_TO_SHIP
+        ], true);
+    }
+
+    // Điều kiện cho phép admin hủy đơn - chỉ được hủy TRƯỚC KHI giao cho đơn vị vận chuyển
+    public function canCancelByAdmin(array $order): bool
+    {
+        // Cho phép hủy ở các trạng thái trước khi giao cho đơn vị vận chuyển
+        return in_array($order['status'], [
+            self::STATUS_PENDING,
+            self::STATUS_CONFIRMED,
+            self::STATUS_PREPARING,
         ], true);
     }
 

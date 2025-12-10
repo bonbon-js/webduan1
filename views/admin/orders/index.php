@@ -130,9 +130,116 @@
                                                     </div>
                                                 <?php endif; ?>
                                             <?php elseif ($status === OrderModel::STATUS_PENDING): ?>
-                                                <form method="POST" action="<?= BASE_URL ?>?action=admin-order-confirm" class="mb-0">
+                                                <div class="d-flex flex-column gap-2">
+                                                    <form method="POST" action="<?= BASE_URL ?>?action=admin-order-confirm" class="mb-0">
+                                                        <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
+                                                        <button class="btn btn-dark" style="padding: 0.5rem 1rem; font-size: 0.875rem; line-height: 1.2; border-radius: 0.375rem;">Xác nhận đơn</button>
+                                                    </form>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" style="width: 125px; padding: 0.5rem 0.75rem; font-size: 0.875rem; line-height: 1.2; border-radius: 0.375rem;" data-bs-toggle="modal" data-bs-target="#cancelOrderModal<?= $order['id'] ?>">
+                                                        Hủy đơn
+                                                    </button>
+                                                </div>
+                                                <!-- Modal hủy đơn -->
+                                                <div class="modal fade" id="cancelOrderModal<?= $order['id'] ?>" tabindex="-1">
+                                                    <div class="modal-dialog">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title">Hủy đơn hàng</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                            </div>
+                                                            <form method="POST" action="<?= BASE_URL ?>?action=admin-order-cancel">
+                                                                <div class="modal-body">
+                                                                    <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label">Lý do hủy đơn <span class="text-danger">*</span></label>
+                                                                        <textarea name="cancel_reason" class="form-control" rows="4" placeholder="Nhập lý do hủy đơn hàng..." required></textarea>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="modal-footer">
+                                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                                                                    <button type="submit" class="btn btn-danger">Xác nhận hủy</button>
+                                                                </div>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            <?php elseif ($status === OrderModel::STATUS_CONFIRMED): ?>
+                                                <div class="d-flex flex-column gap-2">
+                                                    <form method="POST" action="<?= BASE_URL ?>?action=admin-order-preparing" class="mb-0">
+                                                        <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
+                                                        <button class="btn btn-sm btn-info" style="padding: 0.5rem 1rem; font-size: 0.875rem; line-height: 1.2; border-radius: 0.375rem;">Đang chuẩn bị</button>
+                                                    </form>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" style="width: 125px; padding: 0.5rem 0.75rem; font-size: 0.875rem; line-height: 1.2; border-radius: 0.375rem;" data-bs-toggle="modal" data-bs-target="#cancelOrderModal<?= $order['id'] ?>">
+                                                        Hủy đơn
+                                                    </button>
+                                                </div>
+                                                <!-- Modal hủy đơn -->
+                                                <div class="modal fade" id="cancelOrderModal<?= $order['id'] ?>" tabindex="-1">
+                                                    <div class="modal-dialog">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title">Hủy đơn hàng</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                            </div>
+                                                            <form method="POST" action="<?= BASE_URL ?>?action=admin-order-cancel">
+                                                                <div class="modal-body">
+                                                                    <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label">Lý do hủy đơn <span class="text-danger">*</span></label>
+                                                                        <textarea name="cancel_reason" class="form-control" rows="4" placeholder="Nhập lý do hủy đơn hàng..." required></textarea>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="modal-footer">
+                                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                                                                    <button type="submit" class="btn btn-danger">Xác nhận hủy</button>
+                                                                </div>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            <?php elseif ($status === OrderModel::STATUS_PREPARING): ?>
+                                                <div class="d-flex flex-column gap-2">
+                                                    <form method="POST" action="<?= BASE_URL ?>?action=admin-order-handed-to-shipper" class="mb-0">
+                                                        <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
+                                                        <button class="btn btn-sm btn-warning" style="padding: 0.5rem 1rem; font-size: 0.875rem; line-height: 1.2; border-radius: 0.375rem;">Giao cho đơn vị vận chuyển</button>
+                                                    </form>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" style="width: 125px; padding: 0.5rem 0.75rem; font-size: 0.875rem; line-height: 1.2; border-radius: 0.375rem;" data-bs-toggle="modal" data-bs-target="#cancelOrderModal<?= $order['id'] ?>">
+                                                        Hủy đơn
+                                                    </button>
+                                                </div>
+                                                <!-- Modal hủy đơn -->
+                                                <div class="modal fade" id="cancelOrderModal<?= $order['id'] ?>" tabindex="-1">
+                                                    <div class="modal-dialog">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title">Hủy đơn hàng</h5>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                            </div>
+                                                            <form method="POST" action="<?= BASE_URL ?>?action=admin-order-cancel">
+                                                                <div class="modal-body">
+                                                                    <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
+                                                                    <div class="mb-3">
+                                                                        <label class="form-label">Lý do hủy đơn <span class="text-danger">*</span></label>
+                                                                        <textarea name="cancel_reason" class="form-control" rows="4" placeholder="Nhập lý do hủy đơn hàng..." required></textarea>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="modal-footer">
+                                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                                                                    <button type="submit" class="btn btn-danger">Xác nhận hủy</button>
+                                                                </div>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            <?php elseif ($status === OrderModel::STATUS_HANDED_TO_SHIPPER): ?>
+                                                <form method="POST" action="<?= BASE_URL ?>?action=admin-order-shipping" class="mb-0">
                                                     <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
-                                                    <button class="btn btn-dark" style="padding: 0.5rem 1rem; font-size: 0.875rem; line-height: 1.2; border-radius: 0.375rem;">Xác nhận đơn</button>
+                                                    <button class="btn btn-sm btn-info" style="padding: 0.5rem 1rem; font-size: 0.875rem; line-height: 1.2; border-radius: 0.375rem;">Đang vận chuyển</button>
+                                                </form>
+                                            <?php elseif ($status === OrderModel::STATUS_SHIPPING): ?>
+                                                <form method="POST" action="<?= BASE_URL ?>?action=admin-order-delivered" class="mb-0">
+                                                    <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
+                                                    <button class="btn btn-sm btn-success" style="padding: 0.5rem 1rem; font-size: 0.875rem; line-height: 1.2; border-radius: 0.375rem;">Đã giao</button>
                                                 </form>
                                             <?php elseif ($status === OrderModel::STATUS_TO_SHIP): ?>
                                                 <form method="POST" action="<?= BASE_URL ?>?action=admin-order-delivered" class="mb-0">
@@ -142,7 +249,7 @@
                                             <?php elseif ($status === OrderModel::STATUS_CANCELLED && !empty($order['cancel_reason'])): ?>
                                                 <div class="mt-2 small text-danger">
                                                     <i class="bi bi-x-octagon"></i>
-                                                    <?= htmlspecialchars($order['cancel_reason']) ?>
+                                                    Lý do hủy: <?= htmlspecialchars($order['cancel_reason']) ?>
                                                 </div>
                                             <?php endif; ?>
                                         </div>

@@ -88,6 +88,10 @@ match ($action) {
     'admin-order-detail'      => (new AdminOrderController)->detail(),
     'admin-order-approve-cancel' => (new AdminOrderController)->approveCancel(),
     'admin-order-confirm'     => (new AdminOrderController)->confirmOrder(),
+    'admin-order-preparing'   => (new AdminOrderController)->markPreparing(),
+    'admin-order-handed-to-shipper' => (new AdminOrderController)->markHandedToShipper(),
+    'admin-order-shipping'    => (new AdminOrderController)->markShipping(),
+    'admin-order-cancel'      => (new AdminOrderController)->cancelOrder(),
     'admin-order-delivered'   => (new AdminOrderController)->confirmDelivered(),
     // Quản lý tài khoản
     'admin-users'        => (new AdminUserController)->index(),
