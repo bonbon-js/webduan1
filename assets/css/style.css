@@ -3824,7 +3824,7 @@ input[type="number"] {
    17. PRODUCT DETAIL PAGE STYLES (views/products/detail.php)
    ============================================ */
 .product-detail-section {
-    padding: 80px 0;
+    padding: 48px 0 60px;
 }
 
 .product-gallery {
@@ -3833,10 +3833,10 @@ input[type="number"] {
 
 .product-main-image {
     width: 100%;
-    height: 600px;
+    height: 560px;
     object-fit: cover;
     border-radius: 12px;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
 .product-thumbnails {
@@ -3864,43 +3864,66 @@ input[type="number"] {
     border-color: #000;
 }
 
+.product-detail-section .product-info {
+    text-align: left;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 0 0 0 8px;
+}
+
 .product-info h1 {
-    font-size: 2.5rem;
+    font-size: 2.3rem;
     font-weight: 700;
-    margin-bottom: 20px;
-    letter-spacing: 1px;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
 }
 
 .product-price {
     font-size: 2rem;
     font-weight: 700;
     color: #000;
-    margin-bottom: 30px;
+    margin-bottom: 12px;
 }
 
 .product-description {
     color: #666;
     line-height: 1.8;
-    margin-bottom: 30px;
+    margin-bottom: 14px;
+}
+
+.product-detail-section .product-header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    margin-bottom: 16px;
 }
 
 .attribute-selector {
-    margin-bottom: 25px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
 }
 
 .attribute-selector label {
-    display: block;
+    display: inline-flex;
+    align-items: center;
     font-weight: 600;
-    margin-bottom: 10px;
+    margin-bottom: 0;
     text-transform: uppercase;
-    font-size: 0.85rem;
-    letter-spacing: 1px;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+    min-width: 110px;
 }
 
 .size-options {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
+    align-items: center;
 }
 
 .size-option {
@@ -3911,6 +3934,8 @@ input[type="number"] {
     transition: all 0.3s;
     text-transform: uppercase;
     font-weight: 600;
+    min-width: 56px;
+    text-align: center;
 }
 
 .size-option:hover {
@@ -3927,6 +3952,7 @@ input[type="number"] {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
+    align-items: center;
 }
 
 .product-detail-section .color-option {
@@ -3956,9 +3982,9 @@ input[type="number"] {
 .quantity-selector {
     display: flex;
     align-items: center;
-    gap: 15px;
-    margin-bottom: 30px;
-    padding: 20px;
+    gap: 12px;
+    margin-bottom: 22px;
+    padding: 14px 16px;
     background: #f8f9fa;
     border-radius: 12px;
 }
@@ -8448,13 +8474,15 @@ input[type="number"] {
 
 /* Quick Add Modal - Fix overflow issue */
 #quickAddModal .modal-dialog {
-    max-width: 1000px;
-    max-height: 90vh;
-    margin: 1.75rem auto;
+    max-width: 1200px;
+    width: min(96vw, 1200px);
+    max-height: 92vh;
+    margin: 1.5rem auto;
 }
 
 #quickAddModal .modal-content {
-    max-height: 90vh;
+    max-height: 92vh;
+    height: 100%;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -8464,17 +8492,19 @@ input[type="number"] {
 #quickAddModal .modal-content .row {
     flex: 1;
     overflow: hidden;
+    height: 100%;
 }
 
 #quickAddModal .modal-content .col-md-6 {
     display: flex;
     flex-direction: column;
+    height: 100%;
 }
 
 /* Make the right side (form) scrollable */
 #quickAddModal .modal-content .col-md-6:last-child {
     overflow-y: auto;
-    max-height: 90vh;
+    max-height: 92vh;
 }
 
 /* Adjust padding for better fit */
@@ -8483,10 +8513,11 @@ input[type="number"] {
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 2rem;
 }
 
 #quickAddModal .modal-content .col-md-6:last-child > div {
-    padding: 2.5rem 3rem !important;
+    padding: 2.25rem 2.75rem !important;
     min-height: 400px;
     display: flex;
     flex-direction: column;
@@ -9797,8 +9828,9 @@ textarea.form-control {
 }
 
 .modal-product-image {
-    max-height: 500px;
+    max-height: 70vh;
     max-width: 100%;
+    width: 100%;
     object-fit: contain;
     border-radius: 8px;
 }
