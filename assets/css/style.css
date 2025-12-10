@@ -8487,10 +8487,11 @@ input[type="number"] {
 /* Quick Add Modal - Fix overflow issue */
 /* Product modal (new) */
 #productModal .modal-dialog {
-    max-width: 1360px;
-    width: min(99vw, 1360px);
+    max-width: 1400px;
+    width: min(100vw, 1400px);
     margin: 0 auto;
     min-height: calc(100vh - 2rem);
+    padding: 0 10px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -8511,8 +8512,8 @@ input[type="number"] {
     padding: 0.75rem;
     min-height: 500px;
     overflow: hidden;
-    flex: 0 0 45%;
-    max-width: 45%;
+    flex: 0 0 50%;
+    max-width: 50%;
 }
 
 .pm-image {
@@ -8530,8 +8531,8 @@ input[type="number"] {
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
-    flex: 0 0 55%;
-    max-width: 55%;
+    flex: 0 0 50%;
+    max-width: 50%;
 }
 
 .pm-close {
