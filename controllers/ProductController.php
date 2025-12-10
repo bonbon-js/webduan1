@@ -87,6 +87,56 @@ class ProductController
 		$images = $productModel->getProductImages($id);
 		$attributes = $productModel->getProductAttributes($id);
 		$variants   = $productModel->getVariantsDetailed($id);
+		
+		// Thu thập tất cả ảnh từ biến thể
+		$variantImages = [];
+		if (!empty($variants)) {
+			foreach ($variants as $variant) {
+				if (!empty($variant['image_url'])) {
+					$variantImages[] = [
+						'image_url' => $variant['image_url'],
+						'is_primary' => 0,
+						'variant_id' => $variant['variant_id'] ?? null
+					];
+				}
+				// Lấy thêm ảnh từ variant_images nếu có
+				if (!empty($variant['variant_id'])) {
+					$vImages = $productModel->getVariantImages((int)$variant['variant_id']);
+					foreach ($vImages as $vImg) {
+						if (!empty($vImg['image_url'])) {
+							$variantImages[] = [
+								'image_url' => $vImg['image_url'],
+								'is_primary' => $vImg['is_primary'] ?? 0,
+								'variant_id' => $variant['variant_id']
+							];
+						}
+					}
+				}
+			}
+		}
+		
+		// Gộp ảnh sản phẩm và ảnh biến thể, loại bỏ trùng lặp
+		$allImages = [];
+		$seenUrls = [];
+		
+		// Thêm ảnh sản phẩm trước
+		foreach ($images as $img) {
+			if (!empty($img['image_url']) && !in_array($img['image_url'], $seenUrls)) {
+				$allImages[] = $img;
+				$seenUrls[] = $img['image_url'];
+			}
+		}
+		
+		// Thêm ảnh biến thể (không trùng)
+		foreach ($variantImages as $vImg) {
+			if (!empty($vImg['image_url']) && !in_array($vImg['image_url'], $seenUrls)) {
+				$allImages[] = $vImg;
+				$seenUrls[] = $vImg['image_url'];
+			}
+		}
+		
+		$images = $allImages; // Gán lại để view sử dụng
+		
 		$similarProducts = $productModel->getSimilarProducts((int)$product['category_id'], (int)$product['id'], 8);
 
 		// Load đánh giá sản phẩm
@@ -137,27 +187,31 @@ class ProductController
 		if ($variant) {
 			// Ưu tiên ảnh ngay trên bảng product_variants nếu có
 			if (!empty($variant['image_url'])) {
-				$imagesUrls = [$variant['image_url']];
+				$imagesUrls = [getProductImageUrl($variant['image_url'], false)];
 			} else {
 				$images = $model->getVariantImages((int)$variant['variant_id']);
 				if (!empty($images)) {
-					$imagesUrls = array_map(fn($r) => $r['image_url'], $images);
+					$imagesUrls = array_map(fn($r) => getProductImageUrl($r['image_url'] ?? '', false), $images);
 				}
 			}
 		}
 
 		// 2) Nếu không có ảnh cho biến thể cụ thể, fallback theo Color (gom ảnh của mọi variant cùng màu)
 		if (empty($imagesUrls) && $color) {
-			$imagesUrls = $model->getVariantImagesByColor($productId, $color);
+			$colorImages = $model->getVariantImagesByColor($productId, $color);
+			$imagesUrls = array_map(fn($url) => getProductImageUrl($url, false), $colorImages);
 		}
 
 		// 3) Nếu vẫn trống, fallback cuối cùng: ảnh sản phẩm chung
 		if (empty($imagesUrls)) {
 			$common = $model->getProductImages($productId);
-			$imagesUrls = array_map(fn($r) => $r['image_url'], $common);
+			$imagesUrls = array_map(fn($r) => getProductImageUrl($r['image_url'] ?? '', false), $common);
 		}
+		
+		// Loại bỏ các URL rỗng
+		$imagesUrls = array_filter($imagesUrls, fn($url) => !empty($url));
 
-		echo json_encode(['success' => true, 'data' => $imagesUrls]);
+		echo json_encode(['success' => true, 'data' => array_values($imagesUrls)]);
 		exit;
 	}
 

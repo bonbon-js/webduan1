@@ -8,21 +8,106 @@
                     if (!empty($v['image_url'])) { $mainImage = $v['image_url']; break; }
                 }
             }
+            // Sử dụng helper function để xử lý ảnh
+            $mainImageUrl = getProductImageUrl($mainImage, false);
         ?>
         <div class="col-lg-6 product-gallery">
             <div class="product-main-image-wrapper mb-4">
-                <img id="mainProductImage" src="<?= htmlspecialchars($mainImage) ?>" alt="<?= htmlspecialchars($product['name'] ?? '') ?>" class="product-main-image rounded shadow-sm">
+                <img id="mainProductImage" src="<?= htmlspecialchars($mainImageUrl) ?>" alt="<?= htmlspecialchars($product['name'] ?? '') ?>" class="product-main-image rounded shadow-sm" onerror="this.src='<?= BASE_URL ?>assets/images/logo.png'; this.onerror=null;">
             </div>
             <div class="product-thumbnails" id="productThumbnails">
-                <?php if (!empty($images)): ?>
-                    <?php foreach ($images as $index => $img): ?>
-                        <img src="<?= $img['image_url'] ?>" alt="Thumbnail <?= $index + 1 ?>" 
+                <?php 
+                // Hiển thị tất cả ảnh: ảnh sản phẩm + ảnh biến thể với thông tin variant
+                $allThumbnails = [];
+                
+                // Thêm ảnh từ $images (ảnh sản phẩm)
+                if (!empty($images)) {
+                    foreach ($images as $img) {
+                        if (!empty($img['image_url'])) {
+                            $allThumbnails[] = [
+                                'url' => $img['image_url'],
+                                'variant_id' => null,
+                                'size' => null,
+                                'color' => null
+                            ];
+                        }
+                    }
+                }
+                
+                // Thêm ảnh từ biến thể với thông tin size/color
+                if (!empty($variants)) {
+                    foreach ($variants as $variant) {
+                        // Lấy size và color từ attributes
+                        $variantSize = null;
+                        $variantColor = null;
+                        if (!empty($variant['attributes'])) {
+                            foreach ($variant['attributes'] as $attr) {
+                                $attrName = mb_strtolower(trim($attr['attribute_name'] ?? ''));
+                                if (preg_match('/size|kích|kich/i', $attrName)) {
+                                    $variantSize = $attr['value_name'] ?? null;
+                                } elseif (preg_match('/color|màu|mau/i', $attrName)) {
+                                    $variantColor = $attr['value_name'] ?? null;
+                                }
+                            }
+                        }
+                        
+                        // Thêm ảnh variant
+                        if (!empty($variant['image_url'])) {
+                            $exists = false;
+                            foreach ($allThumbnails as $thumb) {
+                                if ($thumb['url'] === $variant['image_url']) {
+                                    $exists = true;
+                                    break;
+                                }
+                            }
+                            if (!$exists) {
+                                $allThumbnails[] = [
+                                    'url' => $variant['image_url'],
+                                    'variant_id' => $variant['variant_id'] ?? null,
+                                    'size' => $variantSize,
+                                    'color' => $variantColor
+                                ];
+                            }
+                        }
+                    }
+                }
+                
+                // Nếu không có ảnh nào, dùng ảnh chính
+                if (empty($allThumbnails) && !empty($mainImage)) {
+                    $allThumbnails[] = [
+                        'url' => $mainImage,
+                        'variant_id' => null,
+                        'size' => null,
+                        'color' => null
+                    ];
+                }
+                ?>
+                
+                <?php if (!empty($allThumbnails)): ?>
+                    <?php foreach ($allThumbnails as $index => $thumb): 
+                        $thumbUrlProcessed = getProductImageUrl($thumb['url'], false);
+                        $dataAttrs = '';
+                        if ($thumb['variant_id']) {
+                            $dataAttrs .= ' data-variant-id="' . htmlspecialchars($thumb['variant_id']) . '"';
+                        }
+                        if ($thumb['size']) {
+                            $dataAttrs .= ' data-size="' . htmlspecialchars($thumb['size']) . '"';
+                        }
+                        if ($thumb['color']) {
+                            $dataAttrs .= ' data-color="' . htmlspecialchars($thumb['color']) . '"';
+                        }
+                    ?>
+                        <img src="<?= htmlspecialchars($thumbUrlProcessed) ?>" alt="Thumbnail <?= $index + 1 ?>" 
                              class="product-thumbnail <?= $index === 0 ? 'active' : '' ?>"
-                             onclick="changeMainImage('<?= $img['image_url'] ?>', this)">
+                             onclick="changeMainImage('<?= htmlspecialchars($thumbUrlProcessed) ?>', this)"
+                             onerror="this.src='<?= BASE_URL ?>assets/images/logo.png'; this.onerror=null;"
+                             title="Ảnh <?= $index + 1 ?>"
+                             <?= $dataAttrs ?>>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <img src="<?= htmlspecialchars($mainImage) ?>" alt="Thumbnail" class="product-thumbnail active"
-                         onclick="changeMainImage('<?= htmlspecialchars($mainImage) ?>', this)">
+                    <img src="<?= htmlspecialchars($mainImageUrl) ?>" alt="Thumbnail" class="product-thumbnail active"
+                         onclick="changeMainImage('<?= htmlspecialchars($mainImageUrl) ?>', this)"
+                         onerror="this.src='<?= BASE_URL ?>assets/images/logo.png'; this.onerror=null;">
                 <?php endif; ?>
             </div>
         </div>
@@ -305,6 +390,12 @@
                     if (firstSize || firstColor) {
                         updateProductImages(productId, firstSize, firstColor);
                         updateProductStock(productId, firstSize, firstColor);
+                    } else {
+                        // Nếu không có thuộc tính, highlight thumbnail đầu tiên
+                        const firstThumb = document.querySelector('.product-thumbnail');
+                        if (firstThumb) {
+                            firstThumb.classList.add('active');
+                        }
                     }
                 }
             })
@@ -376,31 +467,104 @@
             .then(data => {
                 if (data.success && data.data && data.data.length > 0) {
                     // Update main image
-                    document.getElementById('mainProductImage').src = data.data[0];
+                    const mainImageUrl = data.data[0];
+                    document.getElementById('mainProductImage').src = mainImageUrl;
                     
-                    // Update thumbnails
-                    const thumbnailsContainer = document.getElementById('productThumbnails');
-                    thumbnailsContainer.innerHTML = '';
-                    data.data.forEach((imgUrl, index) => {
-                        const thumb = document.createElement('img');
-                        thumb.src = imgUrl;
-                        thumb.className = 'product-thumbnail' + (index === 0 ? ' active' : '');
-                        thumb.alt = `Thumbnail ${index + 1}`;
-                        thumb.onclick = function() {
-                            changeMainImage(imgUrl, this);
-                        };
-                        thumbnailsContainer.appendChild(thumb);
-                    });
+                    // Highlight thumbnail tương ứng với variant được chọn
+                    highlightVariantThumbnail(size, color, mainImageUrl);
+                } else {
+                    // Nếu không có ảnh variant, highlight ảnh sản phẩm chính
+                    highlightVariantThumbnail(size, color, null);
                 }
             })
             .catch(err => console.error('Error updating images:', err));
+    }
+    
+    // Highlight thumbnail tương ứng với variant được chọn
+    function highlightVariantThumbnail(size, color, imageUrl) {
+        const thumbnails = document.querySelectorAll('.product-thumbnail');
+        
+        // Xóa active từ tất cả thumbnails
+        thumbnails.forEach(thumb => {
+            thumb.classList.remove('active');
+        });
+        
+        // Tìm thumbnail phù hợp với size/color
+        let found = false;
+        let bestMatch = null;
+        let bestMatchScore = 0;
+        
+        thumbnails.forEach(thumb => {
+            const thumbSize = thumb.dataset.size || '';
+            const thumbColor = thumb.dataset.color || '';
+            const thumbSrc = thumb.src;
+            let matchScore = 0;
+            
+            // Tính điểm khớp
+            if (size && thumbSize === size) matchScore += 2;
+            if (color && thumbColor === color) matchScore += 2;
+            
+            // Nếu có imageUrl, kiểm tra xem có khớp không
+            if (imageUrl) {
+                try {
+                    const urlObj = new URL(imageUrl);
+                    const thumbUrlObj = new URL(thumbSrc);
+                    if (urlObj.pathname === thumbUrlObj.pathname) {
+                        matchScore += 5; // Ưu tiên cao nhất nếu URL khớp
+                    }
+                } catch (e) {
+                    // Nếu không phải URL đầy đủ, so sánh phần cuối
+                    const imageFileName = imageUrl.split('/').pop().split('?')[0];
+                    const thumbFileName = thumbSrc.split('/').pop().split('?')[0];
+                    if (imageFileName === thumbFileName) {
+                        matchScore += 5;
+                    }
+                }
+            }
+            
+            // Lưu match tốt nhất
+            if (matchScore > bestMatchScore) {
+                bestMatchScore = matchScore;
+                bestMatch = thumb;
+            }
+            
+            // Nếu khớp hoàn toàn (cả size và color)
+            if (size && color && thumbSize === size && thumbColor === color) {
+                thumb.classList.add('active');
+                found = true;
+                if (imageUrl) {
+                    document.getElementById('mainProductImage').src = imageUrl;
+                } else {
+                    document.getElementById('mainProductImage').src = thumbSrc;
+                }
+                return;
+            }
+        });
+        
+        // Nếu không tìm thấy khớp hoàn toàn, dùng match tốt nhất
+        if (!found && bestMatch && bestMatchScore > 0) {
+            bestMatch.classList.add('active');
+            if (imageUrl) {
+                document.getElementById('mainProductImage').src = imageUrl;
+            } else {
+                document.getElementById('mainProductImage').src = bestMatch.src;
+            }
+            found = true;
+        }
+        
+        // Nếu vẫn không tìm thấy, active thumbnail đầu tiên
+        if (!found && thumbnails.length > 0) {
+            thumbnails[0].classList.add('active');
+        }
     }
 
     // Change main image
     function changeMainImage(src, element) {
         document.getElementById('mainProductImage').src = src;
         document.querySelectorAll('.product-thumbnail').forEach(el => el.classList.remove('active'));
-        element.classList.add('active');
+        if (element) {
+            element.classList.add('active');
+        }
     }
 
     // Update product stock based on selected variant
