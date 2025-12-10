@@ -388,34 +388,63 @@ class AdminProductController
     {
         $name = trim($_POST['name'] ?? '');
         $description = trim($_POST['description'] ?? '') ?: null;
-        $price = $this->toFloat($_POST['price'] ?? 0);
+        $originalPrice = $this->toFloat($_POST['original_price'] ?? 0);
+        // Xử lý sale_price: nếu rỗng hoặc 0 thì set null
+        $salePriceInput = trim($_POST['sale_price'] ?? '');
+        $salePrice = null;
+        if ($salePriceInput !== '' && $salePriceInput !== '0') {
+            $salePriceFloat = $this->toFloat($salePriceInput);
+            if ($salePriceFloat > 0) {
+                $salePrice = $salePriceFloat;
+            }
+        }
         $stock = (int)($_POST['stock'] ?? 0);
         $categoryId = isset($_POST['category_id']) ? (int)$_POST['category_id'] : null;
+        $productId = isset($_POST['product_id']) ? (int)$_POST['product_id'] : 0;
         
         // Xử lý upload ảnh
         $imageUrl = null;
         if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+            // Có upload ảnh mới
             $imageUrl = $this->handleImageUpload($_FILES['image']);
             if (!$imageUrl) {
                 set_flash('danger', 'Không thể upload ảnh. Vui lòng thử lại.');
                 return null;
             }
+        } elseif ($productId > 0) {
+            // Không có upload mới, nhưng đang cập nhật → lấy ảnh cũ từ database
+            $existingProduct = $this->productModel->getProductById($productId);
+            if ($existingProduct && !empty($existingProduct['image'])) {
+                $imageUrl = $existingProduct['image'];
+            }
         }
 
-        if ($name === '' || $price < 0) {
-            set_flash('danger', 'Vui lòng nhập ít nhất tên và giá hợp lệ.');
+        // Validation: giá gốc là bắt buộc
+        if ($name === '' || $originalPrice < 0) {
+            set_flash('danger', 'Vui lòng nhập ít nhất tên và giá gốc hợp lệ.');
             return null;
         }
+
+        // Validation: giá giảm giá phải nhỏ hơn giá gốc
+        if ($salePrice !== null && $salePrice >= $originalPrice) {
+            set_flash('danger', 'Giá giảm giá phải nhỏ hơn giá gốc.');
+            return null;
+        }
+
+        // Giá hiển thị: nếu có sale_price thì dùng sale_price, nếu không thì dùng original_price
+        $displayPrice = $salePrice !== null && $salePrice > 0 ? $salePrice : $originalPrice;
 
         $payload = [
             'name' => $name,
             'description' => $description,
-            'price' => $price,
+            'price' => $displayPrice, // Giá hiển thị
+            'original_price' => $originalPrice,
+            'sale_price' => $salePrice,
             'stock' => max(0, $stock),
             'category_id' => $categoryId,
         ];
         
-        // Chỉ thêm image_url nếu có upload mới
+        // Thêm image_url nếu có (ảnh mới hoặc ảnh cũ)
         if ($imageUrl) {
             $payload['image_url'] = $imageUrl;
         }
@@ -427,6 +456,7 @@ class AdminProductController
     {
         // Kiểm tra file có hợp lệ không
         if (!isset($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
+            error_log("AdminProductController::handleImageUpload - Invalid file upload");
             return null;
         }
         
@@ -450,24 +480,39 @@ class AdminProductController
         
         // Tạo tên file unique
         $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-        $fileName = 'product_' . time() . '_' . uniqid() . '.' . $extension;
+        $fileName = 'product_' . time() . '_' . uniqid() . '.' . strtolower($extension);
         
-        // Đường dẫn lưu file
-        $uploadDir = 'assets/uploads/products/';
+        // Đường dẫn lưu file (sử dụng PATH_ROOT để có đường dẫn tuyệt đối)
+        $uploadDir = PATH_ROOT . 'assets/uploads/products/';
         
         // Tạo thư mục nếu chưa tồn tại
         if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
+            if (!mkdir($uploadDir, 0755, true)) {
+                error_log("AdminProductController::handleImageUpload - Cannot create directory: " . $uploadDir);
+                set_flash('danger', 'Không thể tạo thư mục lưu ảnh.');
+                return null;
+            }
+        }
+        
+        // Kiểm tra quyền ghi
+        if (!is_writable($uploadDir)) {
+            error_log("AdminProductController::handleImageUpload - Directory not writable: " . $uploadDir);
+            set_flash('danger', 'Thư mục lưu ảnh không có quyền ghi.');
+            return null;
         }
         
         $uploadPath = $uploadDir . $fileName;
         
         // Di chuyển file
         if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
-            return BASE_URL . $uploadPath;
+            $imageUrl = BASE_URL . 'assets/uploads/products/' . $fileName;
+            error_log("AdminProductController::handleImageUpload - Successfully uploaded: " . $imageUrl);
+            return $imageUrl;
+        } else {
+            error_log("AdminProductController::handleImageUpload - Failed to move uploaded file to: " . $uploadPath);
+            set_flash('danger', 'Không thể lưu file ảnh. Vui lòng kiểm tra quyền ghi file.');
+            return null;
         }
-        
-        return null;
     }
 
     private function collectAttributeValues(array $rawValues): array

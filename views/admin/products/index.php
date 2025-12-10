@@ -93,10 +93,16 @@
                 </tr>
             <?php else: ?>
                 <?php foreach ($products as $product): 
-                    $originalPrice = (float)($product['price'] ?? 0);
-                    // For now, use the same price as promotional price
-                    // In the future, you can add discount logic here
-                    $promotionalPrice = $originalPrice;
+                    // Lấy giá gốc: ưu tiên original_price, nếu không có thì dùng price
+                    $originalPrice = (float)($product['original_price'] ?? $product['price'] ?? 0);
+                    // Lấy giá khuyến mãi: sale_price nếu có và hợp lệ
+                    $salePrice = null;
+                    if (isset($product['sale_price']) && $product['sale_price'] !== null && $product['sale_price'] !== '') {
+                        $salePriceFloat = (float)$product['sale_price'];
+                        if ($salePriceFloat > 0 && $salePriceFloat < $originalPrice) {
+                            $salePrice = $salePriceFloat;
+                        }
+                    }
                 ?>
                     <tr>
                         <td><strong><?= htmlspecialchars($product['product_id']) ?></strong></td>
@@ -119,7 +125,15 @@
                             <span class="price-original"><?= number_format($originalPrice, 0, ',', '.') ?> VNĐ</span>
                         </td>
                         <td>
-                            <span class="price-promotional"><?= number_format($promotionalPrice, 0, ',', '.') ?> VNĐ</span>
+                            <?php 
+                            // Hiển thị giá khuyến mãi nếu có và hợp lệ
+                            if ($salePrice !== null && $salePrice > 0 && $salePrice < $originalPrice): 
+                            ?>
+                                <span class="price-promotional text-danger fw-bold"><?= number_format($salePrice, 0, ',', '.') ?> VNĐ</span>
+                                <small class="text-success d-block">Giảm <?= round((($originalPrice - $salePrice) / $originalPrice) * 100) ?>%</small>
+                            <?php else: ?>
+                                <span class="text-muted">—</span>
+                            <?php endif; ?>
                         </td>
                         <td>
                             <span class="stock-amount"><?= htmlspecialchars($product['stock'] ?? 0) ?></span>

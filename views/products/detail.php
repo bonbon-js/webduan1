@@ -2,14 +2,14 @@
     <div class="row g-5">
         <?php
             // Fallback ảnh chính: ưu tiên ảnh sản phẩm, nếu trống dùng ảnh biến thể đầu tiên (nếu có)
-            $mainImage = $product['image'] ?? '';
+            $mainImage = $product['image'] ?? $product['image_url'] ?? '';
             if (empty($mainImage) && !empty($variants ?? [])) {
                 foreach ($variants as $v) {
                     if (!empty($v['image_url'])) { $mainImage = $v['image_url']; break; }
                 }
             }
             // Sử dụng helper function để xử lý ảnh
-            $mainImageUrl = getProductImageUrl($mainImage, false);
+            $mainImageUrl = !empty($mainImage) ? getProductImageUrl($mainImage, false) : (BASE_URL . 'assets/images/logo.png');
         ?>
         <div class="col-lg-6 product-gallery">
             <div class="product-main-image-wrapper mb-4">
@@ -115,7 +115,18 @@
             <div class="product-header mb-4">
                 <h1 class="product-title mb-3"><?= htmlspecialchars($product['name'] ?? '') ?></h1>
                 <div class="product-price-wrapper mb-4">
-                    <span class="product-price"><?= number_format($product['price'] ?? 0, 0, ',', '.') ?> đ</span>
+                    <?php 
+                    $salePrice = $product['sale_price'] ?? null;
+                    $originalPrice = $product['original_price'] ?? $product['price'] ?? 0;
+                    $displayPrice = $salePrice && $salePrice > 0 && $salePrice < $originalPrice ? $salePrice : $originalPrice;
+                    ?>
+                    <span class="product-price text-success fw-bold fs-4"><?= number_format($displayPrice, 0, ',', '.') ?> đ</span>
+                    <?php if ($salePrice && $salePrice > 0 && $salePrice < $originalPrice): ?>
+                        <div class="mt-2">
+                            <span class="text-muted text-decoration-line-through"><?= number_format($originalPrice, 0, ',', '.') ?> đ</span>
+                            <span class="badge bg-danger ms-2">Giảm <?= round((($originalPrice - $salePrice) / $originalPrice) * 100) ?>%</span>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
             <div class="product-description-wrapper mb-4">

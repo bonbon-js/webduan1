@@ -78,13 +78,17 @@
                             <span class="product-badge">New</span>
                         <?php endif; ?>
                         <div class="product-card-image-wrapper">
-                            <img src="<?= $product['image'] ?>" alt="<?= $product['name'] ?>">
+                            <?php 
+                            $productImage = $product['image'] ?? $product['image_url'] ?? '';
+                            $productImageUrl = !empty($productImage) ? getProductImageUrl($productImage, false) : (BASE_URL . 'assets/images/logo.png');
+                            ?>
+                            <img src="<?= htmlspecialchars($productImageUrl) ?>" alt="<?= htmlspecialchars($product['name']) ?>" onerror="this.src='<?= BASE_URL ?>assets/images/logo.png'; this.onerror=null;">
                             <div class="product-card-overlay">
                                 <a href="<?= BASE_URL ?>?action=product-detail&id=<?= $product['id'] ?>" class="product-card-icon" title="Xem chi tiết">
                                     <i class="bi bi-eye"></i>
                                 </a>
                                 <?php if (!isset($_SESSION['user']['role']) || $_SESSION['user']['role'] !== 'admin'): ?>
-                                <button type="button" class="product-card-icon" title="Thêm vào giỏ" onclick="openProductModal(<?= $product['id'] ?? 0 ?>, '<?= htmlspecialchars($product['name']) ?>', <?= $product['price'] ?>, '<?= $product['image'] ?>', <?= (int)($product['category_id'] ?? 0) ?>)">
+                                <button type="button" class="product-card-icon" title="Thêm vào giỏ" onclick="openProductModal(<?= $product['id'] ?? 0 ?>, '<?= htmlspecialchars($product['name']) ?>', <?= $product['price'] ?>, '<?= htmlspecialchars($productImageUrl) ?>', <?= (int)($product['category_id'] ?? 0) ?>)">
                                     <i class="bi bi-bag-plus"></i>
                                 </button>
                                 <?php endif; ?>
@@ -92,7 +96,18 @@
                         </div>
                         <p class="text-uppercase small text-muted mb-1"><?= $product['category'] ?></p>
                         <h3 class="h6"><?= $product['name'] ?></h3>
-                        <p class="fw-semibold"><?= number_format($product['price'], 0, ',', '.') ?> đ</p>
+                        <div class="product-price">
+                            <?php 
+                            $salePrice = $product['sale_price'] ?? null;
+                            $originalPrice = $product['original_price'] ?? $product['price'] ?? 0;
+                            $displayPrice = $salePrice && $salePrice > 0 && $salePrice < $originalPrice ? $salePrice : $originalPrice;
+                            ?>
+                            <span class="fw-semibold text-success"><?= number_format($displayPrice, 0, ',', '.') ?> đ</span>
+                            <?php if ($salePrice && $salePrice > 0 && $salePrice < $originalPrice): ?>
+                                <span class="text-muted text-decoration-line-through small ms-2"><?= number_format($originalPrice, 0, ',', '.') ?> đ</span>
+                                <span class="badge bg-danger ms-2">-<?= round((($originalPrice - $salePrice) / $originalPrice) * 100) ?>%</span>
+                            <?php endif; ?>
+                        </div>
                     </article>
                 </div>
             <?php endforeach; ?>

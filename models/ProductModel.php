@@ -28,6 +28,25 @@ class ProductModel extends BaseModel
     }
 
     /**
+     * Kiểm tra xem cột có tồn tại trong bảng không
+     */
+    private function hasColumn(string $columnName): bool
+    {
+        static $columnCache = [];
+        if (isset($columnCache[$columnName])) {
+            return $columnCache[$columnName];
+        }
+        
+        try {
+            $stmt = $this->pdo->query("SHOW COLUMNS FROM {$this->table} LIKE '{$columnName}'");
+            $columnCache[$columnName] = $stmt->rowCount() > 0;
+            return $columnCache[$columnName];
+        } catch (Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
      * Kiểm tra xem bảng product_images có tồn tại không
      */
     private function hasProductImagesTable(): bool
@@ -75,6 +94,20 @@ class ProductModel extends BaseModel
     }
 
     /**
+     * Helper để thêm price fields (original_price, sale_price) vào SELECT
+     */
+    private function addPriceFields(string $sql): string
+    {
+        if ($this->hasColumn('original_price')) {
+            $sql .= ", CAST(p.original_price AS DECIMAL(10,2)) as original_price";
+        }
+        if ($this->hasColumn('sale_price')) {
+            $sql .= ", CAST(p.sale_price AS DECIMAL(10,2)) as sale_price";
+        }
+        return $sql;
+    }
+
+    /**
      * Lấy danh sách sản phẩm cho trang quản trị
      */
     public function getAdminProducts(?string $keyword = null, ?int $categoryId = null, bool $includeDeleted = false): array
@@ -90,6 +123,7 @@ class ProductModel extends BaseModel
                     c.category_name,
                     c.category_id";
         
+        $sql = $this->addPriceFields($sql); // Thêm original_price và sale_price
         $sql = $this->addImageField($sql, 'pi');
         $sql = str_replace('as image', 'as image_url', $sql); // Đổi tên field cho admin
         
@@ -146,11 +180,12 @@ class ProductModel extends BaseModel
         $this->pdo->beginTransaction();
 
         try {
-            $sql = "
-                INSERT INTO {$this->table} (product_name, description, price, stock, category_id)
-                VALUES (:name, :description, :price, :stock, :category_id)";
+            // Kiểm tra xem có cột original_price và sale_price không
+            $hasOriginalPrice = $this->hasColumn('original_price');
+            $hasSalePrice = $this->hasColumn('sale_price');
             
-            $stmt = $this->pdo->prepare($sql);
+            $fields = ['product_name', 'description', 'price', 'stock', 'category_id'];
+            $values = [':name', ':description', ':price', ':stock', ':category_id'];
             $params = [
                 ':name'        => $data['name'],
                 ':description' => $data['description'] ?? null,
@@ -159,6 +194,23 @@ class ProductModel extends BaseModel
                 ':category_id' => $data['category_id'] ?: null,
             ];
             
+            if ($hasOriginalPrice) {
+                $fields[] = 'original_price';
+                $values[] = ':original_price';
+                $params[':original_price'] = $data['original_price'] ?? $data['price'];
+            }
+            
+            if ($hasSalePrice) {
+                $fields[] = 'sale_price';
+                $values[] = ':sale_price';
+                $params[':sale_price'] = $data['sale_price'] ?? null;
+            }
+            
+            $sql = "
+                INSERT INTO {$this->table} (" . implode(', ', $fields) . ")
+                VALUES (" . implode(', ', $values) . ")";
+            
+            $stmt = $this->pdo->prepare($sql);
             $stmt->execute($params);
 
             $productId = (int)$this->pdo->lastInsertId();
@@ -202,6 +254,10 @@ class ProductModel extends BaseModel
                 error_log("ProductModel::updateProduct - Cannot check updated_at column: " . $e->getMessage());
             }
             
+            // Kiểm tra xem có cột original_price và sale_price không
+            $hasOriginalPrice = $this->hasColumn('original_price');
+            $hasSalePrice = $this->hasColumn('sale_price');
+            
             $sql = "
                 UPDATE {$this->table}
                 SET product_name = :name,
@@ -209,6 +265,14 @@ class ProductModel extends BaseModel
                     price = :price,
                     stock = :stock,
                     category_id = :category_id";
+            
+            if ($hasOriginalPrice) {
+                $sql .= ", original_price = :original_price";
+            }
+            
+            if ($hasSalePrice) {
+                $sql .= ", sale_price = :sale_price";
+            }
             
             if ($hasUpdatedAt) {
                 $sql .= ", updated_at = CURRENT_TIMESTAMP";
@@ -226,6 +290,19 @@ class ProductModel extends BaseModel
                 ':id'          => $productId,
             ];
             
+            if ($hasOriginalPrice) {
+                $params[':original_price'] = $data['original_price'] ?? $data['price'];
+            }
+            
+            if ($hasSalePrice) {
+                // Lưu sale_price, nếu null hoặc rỗng thì set NULL vào database
+                $salePriceValue = isset($data['sale_price']) && $data['sale_price'] !== null && $data['sale_price'] !== '' && $data['sale_price'] > 0
+                    ? $data['sale_price']
+                    : null;
+                $params[':sale_price'] = $salePriceValue;
+                error_log("ProductModel::updateProduct - sale_price value: " . var_export($salePriceValue, true));
+            }
+            
             $stmt->execute($params);
             
             // Kiểm tra xem có dòng nào được cập nhật không
@@ -236,8 +313,10 @@ class ProductModel extends BaseModel
             }
 
             // Cập nhật ảnh trong bảng product_images nếu có
-            if (isset($data['image_url'])) {
+            // Luôn cập nhật ảnh nếu có trong data (kể cả khi là ảnh cũ được giữ lại)
+            if (isset($data['image_url']) && $data['image_url'] !== null && $data['image_url'] !== '') {
                 $this->upsertPrimaryImage($productId, $data['image_url']);
+                error_log("ProductModel::updateProduct - Updated image for product_id: " . $productId . ", image_url: " . $data['image_url']);
             }
 
             $this->pdo->commit();
@@ -606,6 +685,7 @@ class ProductModel extends BaseModel
     {
         // Nếu bảng product_images không tồn tại, bỏ qua
         if (!$this->hasProductImagesTable()) {
+            error_log("ProductModel::upsertPrimaryImage - product_images table does not exist");
             return;
         }
 
@@ -614,40 +694,42 @@ class ProductModel extends BaseModel
                 $stmt = $this->pdo->prepare("DELETE FROM product_images WHERE product_id = :pid AND is_primary = 1");
                 $stmt->bindValue(':pid', $productId, PDO::PARAM_INT);
                 $stmt->execute();
+                error_log("ProductModel::upsertPrimaryImage - Deleted primary image for product_id: " . $productId);
             } catch (PDOException $e) {
-                // Bỏ qua lỗi nếu bảng không tồn tại
+                error_log("ProductModel::upsertPrimaryImage - Error deleting image: " . $e->getMessage());
             }
             return;
         }
 
         try {
             // Kiểm tra xem có ảnh primary nào chưa
-            $stmt = $this->pdo->prepare("SELECT * FROM product_images WHERE product_id = :pid AND is_primary = 1 LIMIT 1");
+            $stmt = $this->pdo->prepare("SELECT image_id FROM product_images WHERE product_id = :pid AND is_primary = 1 LIMIT 1");
             $stmt->bindValue(':pid', $productId, PDO::PARAM_INT);
             $stmt->execute();
             $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($existing) {
-                // Cập nhật ảnh hiện có - sử dụng product_id thay vì product_image_id
+                // Cập nhật ảnh hiện có
                 $stmt = $this->pdo->prepare("UPDATE product_images SET image_url = :image_url WHERE product_id = :pid AND is_primary = 1");
                 $stmt->bindValue(':image_url', $imageUrl, PDO::PARAM_STR);
                 $stmt->bindValue(':pid', $productId, PDO::PARAM_INT);
                 $stmt->execute();
+                error_log("ProductModel::upsertPrimaryImage - Updated existing image for product_id: " . $productId);
             } else {
-                // Đảm bảo không có id trong data
-                $data = ['product_id' => $productId, 'image_url' => $imageUrl, 'is_primary' => 1];
-                $data = $this->removePrimaryKeyFromData($data, 'product_images');
-                
+                // Tạo mới ảnh primary
                 $stmt = $this->pdo->prepare("
                     INSERT INTO product_images (product_id, image_url, is_primary)
                     VALUES (:product_id, :image_url, 1)
                 ");
-                $stmt->bindValue(':product_id', $data['product_id'], PDO::PARAM_INT);
-                $stmt->bindValue(':image_url', $data['image_url'], PDO::PARAM_STR);
+                $stmt->bindValue(':product_id', $productId, PDO::PARAM_INT);
+                $stmt->bindValue(':image_url', $imageUrl, PDO::PARAM_STR);
                 $stmt->execute();
+                error_log("ProductModel::upsertPrimaryImage - Inserted new primary image for product_id: " . $productId);
             }
         } catch (PDOException $e) {
-            // Bỏ qua lỗi nếu bảng không tồn tại
+            error_log("ProductModel::upsertPrimaryImage - Error: " . $e->getMessage());
+            error_log("ProductModel::upsertPrimaryImage - Stack trace: " . $e->getTraceAsString());
+            // Không throw exception để không làm gián đoạn quá trình cập nhật sản phẩm
         }
     }
 
@@ -760,6 +842,7 @@ class ProductModel extends BaseModel
                     p.category_id,
                     c.category_name as category";
         
+        $sql = $this->addPriceFields($sql);
         $sql = $this->addImageField($sql);
         
         $sql .= " FROM {$this->table} p
@@ -869,10 +952,12 @@ class ProductModel extends BaseModel
 						p.description,
 						p.price,
 						p.stock,
-
 						c.category_name as category,
-						pi.image_url as image
-					FROM {$this->table} p
+						pi.image_url as image";
+			
+			$sql = $this->addPriceFields($sql);
+			
+			$sql .= " FROM {$this->table} p
 					LEFT JOIN categories c ON p.category_id = c.category_id
 					LEFT JOIN product_images pi ON p.product_id = pi.product_id AND pi.is_primary = 1
 					{$whereSql}
@@ -905,6 +990,9 @@ class ProductModel extends BaseModel
      */
     public function getProductById($id)
     {
+        $hasOriginalPrice = $this->hasColumn('original_price');
+        $hasSalePrice = $this->hasColumn('sale_price');
+        
         $sql = "SELECT 
                     p.product_id as id,
                     p.product_name as name,
@@ -913,6 +1001,14 @@ class ProductModel extends BaseModel
                     p.stock,
                     c.category_name as category,
                     c.category_id";
+        
+        if ($hasOriginalPrice) {
+            $sql .= ", CAST(p.original_price AS DECIMAL(10,2)) as original_price";
+        }
+        
+        if ($hasSalePrice) {
+            $sql .= ", CAST(p.sale_price AS DECIMAL(10,2)) as sale_price";
+        }
         
         $sql = $this->addImageField($sql);
         
@@ -930,8 +1026,16 @@ class ProductModel extends BaseModel
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         
         // Đảm bảo giá được trả về đúng định dạng
-        if ($result && isset($result['price'])) {
-            $result['price'] = (float)$result['price'];
+        if ($result) {
+            if (isset($result['price'])) {
+                $result['price'] = (float)$result['price'];
+            }
+            if (isset($result['original_price'])) {
+                $result['original_price'] = (float)$result['original_price'];
+            }
+            if (isset($result['sale_price'])) {
+                $result['sale_price'] = $result['sale_price'] !== null ? (float)$result['sale_price'] : null;
+            }
         }
         
         return $result;
@@ -953,6 +1057,7 @@ class ProductModel extends BaseModel
                     p.stock,
                     c.category_name as category";
         
+        $sql = $this->addPriceFields($sql);
         $sql = $this->addImageField($sql);
         
         $sql .= " FROM {$this->table} p
@@ -1191,6 +1296,7 @@ class ProductModel extends BaseModel
                     p.stock,
                     c.category_name as category";
         
+        $sql = $this->addPriceFields($sql);
         $sql = $this->addImageField($sql);
         
         $sql .= " FROM {$this->table} p
@@ -1225,10 +1331,12 @@ class ProductModel extends BaseModel
                     p.description,
                     p.price,
                     p.stock,
-
                     c.category_name as category,
-                    pi.image_url as image
-                FROM {$this->table} p
+                    pi.image_url as image";
+        
+        $sql = $this->addPriceFields($sql);
+        
+        $sql .= " FROM {$this->table} p
                 LEFT JOIN categories c ON p.category_id = c.category_id
                 LEFT JOIN product_images pi ON p.product_id = pi.product_id AND pi.is_primary = 1
                 WHERE p.product_name LIKE :keyword
