@@ -47,7 +47,7 @@ $productId = $isEditing ? (int)$product['id'] : null;
             <div>
                 <label class="form-label" for="price">Giá bán (VNĐ) <span class="text-danger">*</span></label>
                 <input type="number" id="price" name="price" min="0" step="1000" class="form-control" required
-                       value="<?= htmlspecialchars($product['price'] ?? '') ?>" placeholder="0">
+                       value="<?= htmlspecialchars((string)(int)(float)($product['price'] ?? 0)) ?>" placeholder="0">
             </div>
             <div>
                 <?php if ($hasVariants): ?>

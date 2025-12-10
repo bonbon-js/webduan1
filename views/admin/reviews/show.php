@@ -76,9 +76,15 @@
                             <span class="text-muted">-</span>
                         <?php else: ?>
                             <?php foreach ($images as $idx => $img): ?>
-                                <?php if ($idx >= 5) break; ?>
-                                <a href="<?= htmlspecialchars($img) ?>" target="_blank">
-                                    <img src="<?= htmlspecialchars($img) ?>" class="img-thumbnail review-thumb-sm" alt="img">
+                                <?php if ($idx >= 5) break; 
+                                $imgUrl = getProductImageUrl($img, false);
+                                $imgUrlOriginal = $img; // Giữ URL gốc cho link
+                                ?>
+                                <a href="<?= htmlspecialchars($imgUrlOriginal) ?>" target="_blank">
+                                    <img src="<?= htmlspecialchars($imgUrl) ?>" 
+                                         class="img-thumbnail review-thumb-sm" 
+                                         alt="Review image <?= $idx + 1 ?>"
+                                         onerror="this.src='<?= BASE_URL ?>assets/images/logo.png'; this.onerror=null;">
                                 </a>
                             <?php endforeach; ?>
                             <?php if (count($images) > 5): ?>

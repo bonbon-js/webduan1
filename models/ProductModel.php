@@ -175,15 +175,30 @@ class ProductModel extends BaseModel
         $this->pdo->beginTransaction();
 
         try {
-            $stmt = $this->pdo->prepare("
+            // Kiểm tra xem có cột updated_at không
+            $hasUpdatedAt = false;
+            try {
+                $stmt = $this->pdo->query("SHOW COLUMNS FROM {$this->table} LIKE 'updated_at'");
+                $hasUpdatedAt = $stmt->rowCount() > 0;
+            } catch (PDOException $e) {
+                // Bỏ qua nếu không có quyền
+            }
+            
+            $sql = "
                 UPDATE {$this->table}
                 SET product_name = :name,
                     description = :description,
                     price = :price,
                     stock = :stock,
-                    category_id = :category_id
-                WHERE product_id = :id
-            ");
+                    category_id = :category_id";
+            
+            if ($hasUpdatedAt) {
+                $sql .= ", updated_at = NOW()";
+            }
+            
+            $sql .= " WHERE product_id = :id";
+            
+            $stmt = $this->pdo->prepare($sql);
             $stmt->execute([
                 ':name'        => $data['name'],
                 ':description' => $data['description'] ?? null,
@@ -193,12 +208,16 @@ class ProductModel extends BaseModel
                 ':id'          => $productId,
             ]);
 
-            $this->upsertPrimaryImage($productId, $data['image_url'] ?? null);
+            // Cập nhật ảnh nếu có
+            if (isset($data['image_url'])) {
+                $this->upsertPrimaryImage($productId, $data['image_url']);
+            }
 
             $this->pdo->commit();
             return true;
         } catch (Throwable $exception) {
             $this->pdo->rollBack();
+            error_log("ProductModel::updateProduct error: " . $exception->getMessage());
             throw $exception;
         }
     }
@@ -492,25 +511,44 @@ class ProductModel extends BaseModel
             return;
         }
 
+        // Xóa các giá trị cũ của variant này trước (nếu có)
+        $deleteStmt = $this->pdo->prepare("
+            DELETE FROM product_attribute_values 
+            WHERE variant_id = :variant_id
+        ");
+        $deleteStmt->execute([':variant_id' => $variantId]);
+
+        // Insert các giá trị mới
         $stmt = $this->pdo->prepare("
             INSERT INTO product_attribute_values (product_id, variant_id, value_id)
             VALUES (:product_id, :variant_id, :value_id)
         ");
 
         foreach ($valueIds as $valueId) {
-            if (!$valueId) {
+            $valueId = (int)$valueId;
+            if ($valueId <= 0) {
                 continue;
             }
 
-            // Đảm bảo không có id trong data
-            $data = ['product_id' => $productId, 'variant_id' => $variantId, 'value_id' => $valueId];
-            $data = $this->removePrimaryKeyFromData($data, 'product_attribute_values');
-
-            $stmt->execute([
-                ':product_id' => $data['product_id'],
-                ':variant_id' => $data['variant_id'],
-                ':value_id' => $data['value_id'],
+            // Kiểm tra xem đã tồn tại chưa (tránh duplicate)
+            $checkStmt = $this->pdo->prepare("
+                SELECT COUNT(*) as cnt 
+                FROM product_attribute_values 
+                WHERE variant_id = :variant_id AND value_id = :value_id
+            ");
+            $checkStmt->execute([
+                ':variant_id' => $variantId,
+                ':value_id' => $valueId
             ]);
+            $exists = (int)$checkStmt->fetch(PDO::FETCH_ASSOC)['cnt'] > 0;
+
+            if (!$exists) {
+                $stmt->execute([
+                    ':product_id' => $productId,
+                    ':variant_id' => $variantId,
+                    ':value_id' => $valueId,
+                ]);
+            }
         }
     }
 
@@ -588,12 +626,16 @@ class ProductModel extends BaseModel
      */
     public function getProductAttributes(int $productId): array
     {
-        // Lấy tất cả cặp (attribute_name, value_name) của sản phẩm, tránh phụ thuộc tên chuẩn hóa cứng
+        // Lấy tất cả cặp (attribute_name, value_name) từ variants của sản phẩm
+        // Chỉ lấy từ product_variants (biến thể) - không lấy từ product_attribute_values trực tiếp
         $sql = "SELECT DISTINCT a.attribute_name, av.value_name
-                FROM product_attribute_values pav
+                FROM product_variants pv
+                JOIN product_attribute_values pav ON pv.variant_id = pav.variant_id
                 JOIN attribute_values av ON pav.value_id = av.value_id
                 JOIN attributes a ON av.attribute_id = a.attribute_id
-                WHERE pav.product_id = :pid";
+                WHERE pv.product_id = :pid
+                  AND pav.variant_id IS NOT NULL
+                  AND pv.stock >= 0";
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':pid', $productId, PDO::PARAM_INT);
         $stmt->execute();
@@ -604,7 +646,11 @@ class ProductModel extends BaseModel
 
         foreach ($rows as $row) {
             $attrName = mb_strtolower(trim($row['attribute_name'] ?? ''));
-            $value    = $row['value_name'] ?? '';
+            $value    = trim($row['value_name'] ?? '');
+
+            if (empty($value)) {
+                continue;
+            }
 
             // Nhận diện size: chứa "size", "kích", "kich"
             if (preg_match('/size|kích|kich/i', $attrName)) {
@@ -832,7 +878,7 @@ class ProductModel extends BaseModel
                     p.product_id as id,
                     p.product_name as name,
                     p.description,
-                    p.price,
+                    CAST(p.price AS DECIMAL(10,2)) as price,
                     p.stock,
                     c.category_name as category,
                     c.category_id";
@@ -850,7 +896,14 @@ class ProductModel extends BaseModel
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
         
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // Đảm bảo giá được trả về đúng định dạng
+        if ($result && isset($result['price'])) {
+            $result['price'] = (float)$result['price'];
+        }
+        
+        return $result;
     }
 
     /**

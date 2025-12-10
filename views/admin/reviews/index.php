@@ -156,11 +156,15 @@
                                 <td>
                                     <?php if (!empty($reviewImages)): ?>
                                         <div class="d-flex flex-wrap gap-1">
-                                            <?php foreach (array_slice($reviewImages, 0, 3) as $img): ?>
-                                                <a href="<?= htmlspecialchars($img) ?>" target="_blank" class="review-image-thumbnail">
-                                                    <img src="<?= htmlspecialchars($img) ?>" 
+                                            <?php foreach (array_slice($reviewImages, 0, 3) as $img): 
+                                                $imgUrl = getProductImageUrl($img, false);
+                                                $imgUrlOriginal = $img; // Giữ URL gốc cho link
+                                            ?>
+                                                <a href="<?= htmlspecialchars($imgUrlOriginal) ?>" target="_blank" class="review-image-thumbnail">
+                                                    <img src="<?= htmlspecialchars($imgUrl) ?>" 
                                                          alt="Review image" 
-                                                         class="img-thumbnail review-thumb-sm">
+                                                         class="img-thumbnail review-thumb-sm"
+                                                         onerror="this.src='<?= BASE_URL ?>assets/images/logo.png'; this.onerror=null;">
                                                 </a>
                                             <?php endforeach; ?>
                                             <?php if (count($reviewImages) > 3): ?>

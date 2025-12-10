@@ -227,7 +227,7 @@ class ReviewModel extends BaseModel
             INNER JOIN products p ON r.product_id = p.product_id
             LEFT JOIN order_items oi ON r.order_item_id = oi.id
             WHERE {$whereClause}
-            ORDER BY r.created_at DESC
+            ORDER BY r.created_at DESC, r.review_id DESC
         ");
 
         $stmt->execute($params);
