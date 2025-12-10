@@ -37,11 +37,12 @@ header {
 .header-container {
     padding: 1rem 2rem;
     flex-wrap: nowrap !important;
+    position: relative;
 }
 
 .navbar-brand {
     flex-shrink: 0;
-    margin-right: 2rem;
+    margin-right: auto;
 }
 
 /* Logo Styling - Đẹp và nổi bật */
@@ -78,8 +79,12 @@ header {
 
 /* Navigation Menu */
 .nav {
-    gap: 1.2rem !important;
+    gap: 2rem !important;
     flex-wrap: nowrap;
+    justify-content: center;
+    flex: 1;
+    display: flex;
+    align-items: center;
 }
 
 .nav a {
@@ -115,6 +120,7 @@ header {
     gap: 1rem !important;
     flex-wrap: nowrap;
     flex-shrink: 0;
+    margin-left: auto;
 }
 
 .header-icons a,

@@ -43,9 +43,6 @@
                 <a class="text-decoration-none text-dark" href="<?= BASE_URL ?>?action=products">Sản phẩm</a>
                 <a class="text-decoration-none text-dark" href="<?= BASE_URL ?>?action=collection">Bộ sưu tập</a>
                 <a class="text-decoration-none text-dark" href="<?= BASE_URL ?>?action=posts">Tin tức</a>
-                <?php if (isset($_SESSION['user']) && (!isset($_SESSION['user']['role']) || $_SESSION['user']['role'] !== 'admin')): ?>
-                    <a class="text-decoration-none text-dark" href="<?= BASE_URL ?>?action=order-history">Đơn hàng của tôi</a>
-                <?php endif; ?>
                 <a class="text-decoration-none text-dark" href="<?= BASE_URL ?>?action=contact">Liên hệ</a>
             </nav>
 
@@ -110,6 +107,9 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="<?= BASE_URL ?>?action=profile">Thông tin cá nhân</a></li>
+                            <?php if (!isset($_SESSION['user']['role']) || $_SESSION['user']['role'] !== 'admin'): ?>
+                                <li><a class="dropdown-item" href="<?= BASE_URL ?>?action=order-history">Đơn hàng của tôi</a></li>
+                            <?php endif; ?>
                             <?php if (($_SESSION['user']['role'] ?? null) === 'admin'): ?>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="<?= BASE_URL ?>?action=admin-dashboard">Quản lý</a></li>
