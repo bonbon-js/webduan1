@@ -105,14 +105,14 @@ class VnPayController
                         'RspCode' => '00',
                         'Message' => 'Confirm Success'
                     ];
-                } else {
-                    // Thanh toán thất bại: giữ trạng thái UNPAID để khách thanh toán lại
-                    $this->orderModel->updateStatus($orderId, OrderModel::STATUS_UNPAID);
-                    $returnData = [
-                        'RspCode' => '00',
-                        'Message' => 'Payment failed'
-                    ];
-                }
+            } else {
+                // Thanh toán thất bại: cập nhật trạng thái PAYMENT_FAILED để khách thanh toán lại
+                $this->orderModel->updateStatus($orderId, OrderModel::STATUS_PAYMENT_FAILED);
+                $returnData = [
+                    'RspCode' => '00',
+                    'Message' => 'Payment failed'
+                ];
+            }
             } else {
                 // Đơn hàng đã được xác nhận trước đó
                 $returnData = [
@@ -215,6 +215,12 @@ class VnPayController
             
             // Lấy thông báo lỗi chi tiết từ VNPay
             $responseCode = $result['response_code'] ?? '';
+            
+            // Cập nhật trạng thái đơn hàng thành PAYMENT_FAILED nếu đơn đang ở trạng thái UNPAID
+            if ($order['status'] === OrderModel::STATUS_UNPAID) {
+                $this->orderModel->updateStatus($orderId, OrderModel::STATUS_PAYMENT_FAILED);
+            }
+            
             $message = $this->getVnPayErrorMessage($responseCode);
             
             set_flash('warning', $message);
@@ -236,6 +242,7 @@ class VnPayController
             '11' => 'Đã hết hạn chờ thanh toán. Vui lòng thực hiện lại giao dịch.',
             '12' => 'Thẻ/Tài khoản bị khóa.',
             '13' => 'Nhập sai mật khẩu xác thực giao dịch (OTP). Quá số lần quy định.',
+            '24' => 'Khách hàng hủy giao dịch thanh toán.',
             '51' => 'Tài khoản không đủ số dư để thực hiện giao dịch.',
             '65' => 'Tài khoản đã vượt quá hạn mức giao dịch trong ngày.',
             '75' => 'Ngân hàng thanh toán đang bảo trì.',
