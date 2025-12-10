@@ -787,24 +787,38 @@ class OrderModel extends BaseModel
     // Thống kê đơn và doanh thu theo khoảng ngày (chỉ đơn đã giao thành công)
     public function getStatsByRange(string $fromDate, string $toDate): array
     {
-        $sql = "
-            SELECT 
-                COUNT(*) AS orders,
-                COALESCE(SUM(total_amount), 0) AS revenue
+        // Đếm tất cả đơn hàng (không phân biệt status)
+        $sqlOrders = "
+            SELECT COUNT(*) AS orders
             FROM orders_new
-            WHERE status = :status
-              AND DATE(created_at) BETWEEN :from_date AND :to_date
+            WHERE DATE(created_at) BETWEEN :from_date AND :to_date
         ";
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute([
-            ':status' => self::STATUS_DELIVERED,
+        $stmtOrders = $this->pdo->prepare($sqlOrders);
+        $stmtOrders->execute([
             ':from_date' => $fromDate,
             ':to_date' => $toDate,
         ]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $ordersRow = $stmtOrders->fetch(PDO::FETCH_ASSOC);
+        
+        // Tính doanh thu từ đơn đã giao và đã hoàn thành
+        $sqlRevenue = "
+            SELECT COALESCE(SUM(total_amount), 0) AS revenue
+            FROM orders_new
+            WHERE status IN (:status_delivered, :status_completed)
+              AND DATE(created_at) BETWEEN :from_date AND :to_date
+        ";
+        $stmtRevenue = $this->pdo->prepare($sqlRevenue);
+        $stmtRevenue->execute([
+            ':status_delivered' => self::STATUS_DELIVERED,
+            ':status_completed' => self::STATUS_COMPLETED,
+            ':from_date' => $fromDate,
+            ':to_date' => $toDate,
+        ]);
+        $revenueRow = $stmtRevenue->fetch(PDO::FETCH_ASSOC);
+        
         return [
-            'orders' => (int)($row['orders'] ?? 0),
-            'revenue' => (float)($row['revenue'] ?? 0),
+            'orders' => (int)($ordersRow['orders'] ?? 0),
+            'revenue' => (float)($revenueRow['revenue'] ?? 0),
         ];
     }
 
@@ -815,18 +829,19 @@ class OrderModel extends BaseModel
     public function getDailyRevenue(string $fromDate, string $toDate): array
     {
         try {
-            // Lấy doanh thu theo ngày từ database
+            // Lấy doanh thu theo ngày từ database (từ đơn delivered và completed)
             $sql = "
                 SELECT DATE(created_at) AS d, COALESCE(SUM(total_amount), 0) AS revenue
                 FROM orders_new
-                WHERE status = :status
+                WHERE status IN (:status_delivered, :status_completed)
                   AND DATE(created_at) BETWEEN :from_date AND :to_date
                 GROUP BY DATE(created_at)
                 ORDER BY d
             ";
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute([
-                ':status' => self::STATUS_DELIVERED,
+                ':status_delivered' => self::STATUS_DELIVERED,
+                ':status_completed' => self::STATUS_COMPLETED,
                 ':from_date' => $fromDate,
                 ':to_date' => $toDate,
             ]);
@@ -889,13 +904,14 @@ class OrderModel extends BaseModel
         $sql = "
             SELECT payment_method, COUNT(*) AS orders, COALESCE(SUM(total_amount), 0) AS revenue
             FROM orders_new
-            WHERE status = :status
+            WHERE status IN (:status_delivered, :status_completed)
               AND DATE(created_at) BETWEEN :from_date AND :to_date
             GROUP BY payment_method
         ";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
-            ':status' => self::STATUS_DELIVERED,
+            ':status_delivered' => self::STATUS_DELIVERED,
+            ':status_completed' => self::STATUS_COMPLETED,
             ':from_date' => $fromDate,
             ':to_date' => $toDate,
         ]);
@@ -1040,13 +1056,19 @@ class OrderModel extends BaseModel
                 SELECT COALESCE(SUM(oi.quantity), 0) AS total
                 FROM order_items oi
                 JOIN orders_new o ON o.id = oi.order_id
-                WHERE o.status = 'delivered'
+                WHERE o.status IN (:status_delivered, :status_completed)
                 AND DATE(o.created_at) BETWEEN :from_date AND :to_date
             ");
-            $stmt->execute([':from_date' => $fromDate, ':to_date' => $toDate]);
+            $stmt->execute([
+                ':status_delivered' => self::STATUS_DELIVERED,
+                ':status_completed' => self::STATUS_COMPLETED,
+                ':from_date' => $fromDate, 
+                ':to_date' => $toDate
+            ]);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             return (int)($result['total'] ?? 0);
         } catch (Exception $e) {
+            error_log("OrderModel::getTotalProductsSold error: " . $e->getMessage());
             return 0;
         }
     }
@@ -1061,13 +1083,19 @@ class OrderModel extends BaseModel
                     COUNT(*) AS order_count,
                     COALESCE(SUM(total_amount), 0) AS revenue
                 FROM orders_new
-                WHERE status = 'delivered'
+                WHERE status IN (:status_delivered, :status_completed)
                 AND DATE(created_at) BETWEEN :from_date AND :to_date
                 GROUP BY payment_method
             ");
-            $stmt->execute([':from_date' => $fromDate, ':to_date' => $toDate]);
+            $stmt->execute([
+                ':status_delivered' => self::STATUS_DELIVERED,
+                ':status_completed' => self::STATUS_COMPLETED,
+                ':from_date' => $fromDate, 
+                ':to_date' => $toDate
+            ]);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
+            error_log("OrderModel::getRevenueByPaymentMethod error: " . $e->getMessage());
             return [];
         }
     }

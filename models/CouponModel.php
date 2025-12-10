@@ -726,13 +726,13 @@ class CouponModel extends BaseModel
                 $stmt->execute([':from_date' => $fromDate, ':to_date' => $toDate]);
                 $result = $stmt->fetch(PDO::FETCH_ASSOC);
             } else {
-                // Fallback: lấy từ orders_new
+                // Fallback: lấy từ orders_new (bao gồm cả đơn có coupon_code hoặc discount_amount > 0)
                 $stmt = $this->pdo->prepare("
                     SELECT 
                         COUNT(*) AS usage_count,
                         COALESCE(SUM(discount_amount), 0) AS total_discount
                     FROM orders_new
-                    WHERE coupon_id IS NOT NULL
+                    WHERE (coupon_id IS NOT NULL OR coupon_code IS NOT NULL OR discount_amount > 0)
                     AND DATE(created_at) BETWEEN :from_date AND :to_date
                 ");
                 $stmt->execute([':from_date' => $fromDate, ':to_date' => $toDate]);
@@ -783,15 +783,15 @@ class CouponModel extends BaseModel
                     LIMIT :limit
                 ");
             } else {
-                // Fallback: lấy từ orders_new
+                // Fallback: lấy từ orders_new (bao gồm cả đơn có coupon_code hoặc discount_amount > 0)
                 $stmt = $this->pdo->prepare("
                     SELECT 
-                        coupon_code AS code,
-                        coupon_name AS name,
+                        COALESCE(coupon_code, 'N/A') AS code,
+                        COALESCE(coupon_name, 'Mã giảm giá') AS name,
                         COUNT(*) AS usage_count,
                         COALESCE(SUM(discount_amount), 0) AS total_discount
                     FROM orders_new
-                    WHERE coupon_id IS NOT NULL
+                    WHERE (coupon_id IS NOT NULL OR coupon_code IS NOT NULL OR discount_amount > 0)
                     AND DATE(created_at) BETWEEN :from_date AND :to_date
                     GROUP BY coupon_code, coupon_name
                     ORDER BY usage_count DESC

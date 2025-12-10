@@ -44,11 +44,11 @@
                     $logoData = base64_encode(file_get_contents($logoPath));
                     $logoSrc = 'data:image/png;base64,' . $logoData;
                 ?>
-                    <a href="<?= BASE_URL ?>?action=admin-dashboard">
+                    <a href="<?= BASE_URL ?>?action=admin-statistics">
                         <img class="logo-image admin-logo" src="<?= $logoSrc ?>" alt="BonBonwear">
                     </a>
                 <?php else: ?>
-                    <a href="<?= BASE_URL ?>?action=admin-dashboard" class="text-decoration-none text-white">
+                    <a href="<?= BASE_URL ?>?action=admin-statistics" class="text-decoration-none text-white">
                         <span class="logo-text">BONBONWEAR</span>
                     </a>
                 <?php endif; ?>
@@ -61,6 +61,10 @@
                     return in_array($currentAction, $actions, true) ? 'active' : '';
                 };
                 ?>
+                <a href="<?= BASE_URL ?>?action=admin-statistics" class="nav-item <?= $isActive('admin-statistics') ?>">
+                    <i class="bi bi-bar-chart"></i>
+                    <span>Thống kê</span>
+                </a>
                 <a href="<?= BASE_URL ?>?action=admin-dashboard" class="nav-item <?= $isActive('admin-dashboard') ?>">
                     <i class="bi bi-speedometer2"></i>
                     <span>Bảng điều khiển</span>
@@ -91,10 +95,6 @@
                 <a href="<?= BASE_URL ?>?action=admin-coupons" class="nav-item <?= $isActive('admin-coupons') ?>">
                     <i class="bi bi-ticket-perforated"></i>
                     <span>Quản lý mã giảm giá</span>
-                </a>
-                <a href="<?= BASE_URL ?>?action=admin-statistics" class="nav-item <?= $isActive('admin-statistics') ?>">
-                    <i class="bi bi-bar-chart"></i>
-                    <span>Thống kê</span>
                 </a>
             <div class="mt-4 pt-4 border-top">
                     <a href="<?= BASE_URL ?>" class="nav-item">

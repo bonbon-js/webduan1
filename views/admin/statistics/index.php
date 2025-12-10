@@ -82,14 +82,14 @@ require_once PATH_MODEL . 'OrderModel.php';
             </div>
         </div>
 
-        <!-- Đơn thành công -->
+                        <!-- Đơn thành công -->
         <div class="col-md-3">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <p class="text-muted mb-1 small">Đơn Thành Công</p>
-                            <h3 class="mb-0 fw-bold text-info"><?= number_format($statusCounts['delivered'] ?? 0) ?></h3>
+                            <h3 class="mb-0 fw-bold text-info"><?= number_format(($statusCounts['delivered'] ?? 0) + ($statusCounts['completed'] ?? 0)) ?></h3>
                         </div>
                         <div class="bg-info bg-opacity-10 p-2 rounded">
                             <i class="bi bi-check-circle text-info fs-4"></i>
@@ -264,7 +264,7 @@ require_once PATH_MODEL . 'OrderModel.php';
                         </tr>
                         <tr>
                             <td>Đơn hoàn tất:</td>
-                            <td class="fw-bold text-end text-success"><?= number_format($statusCounts['delivered'] ?? 0) ?></td>
+                            <td class="fw-bold text-end text-success"><?= number_format(($statusCounts['delivered'] ?? 0) + ($statusCounts['completed'] ?? 0)) ?></td>
                         </tr>
                         <tr>
                             <td>Đơn hủy:</td>
@@ -629,9 +629,15 @@ require_once PATH_MODEL . 'OrderModel.php';
     const revenueCtx = document.getElementById('revenueChart');
     if (revenueCtx) {
         const dailyRevenueData = <?= json_encode($dailyRevenue ?? []) ?>;
+        
+        // Xử lý labels và data
         const revenueLabels = dailyRevenueData.map(item => {
-            const date = new Date(item.d);
-            return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+            try {
+                const date = new Date(item.d + 'T00:00:00'); // Thêm time để tránh timezone issues
+                return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+            } catch (e) {
+                return item.d;
+            }
         });
         const revenueData = dailyRevenueData.map(item => parseFloat(item.revenue) || 0);
         
@@ -643,34 +649,41 @@ require_once PATH_MODEL . 'OrderModel.php';
                     label: 'Doanh thu (₫)',
                     data: revenueData,
                     borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.15)',
                     borderWidth: 3,
                     fill: true,
                     tension: 0.4,
-                    pointRadius: 5,
-                    pointHoverRadius: 7,
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
                     pointBackgroundColor: '#3b82f6',
                     pointBorderColor: '#ffffff',
                     pointBorderWidth: 2,
                     pointHoverBackgroundColor: '#2563eb',
                     pointHoverBorderColor: '#ffffff',
-                    pointHoverBorderWidth: 3
+                    pointHoverBorderWidth: 3,
+                    stepped: false,
+                    spanGaps: false
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
-                },
-                plugins: { 
-                    legend: { 
+                plugins: {
+                    legend: {
                         display: true,
-                        position: 'top'
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 15,
+                            font: {
+                                size: 12,
+                                weight: 'bold'
+                            }
+                        }
                     },
                     tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        enabled: true,
+                        backgroundColor: 'rgba(0, 0, 0, 0.85)',
                         padding: 12,
                         titleFont: {
                             size: 14,
@@ -679,21 +692,29 @@ require_once PATH_MODEL . 'OrderModel.php';
                         bodyFont: {
                             size: 13
                         },
+                        borderColor: '#3b82f6',
+                        borderWidth: 1,
                         callbacks: {
                             title: function(context) {
                                 return 'Ngày: ' + context[0].label;
                             },
                             label: function(context) {
-                                return 'Doanh thu: ' + new Intl.NumberFormat('vi-VN').format(context.parsed.y) + ' ₫';
+                                const value = context.parsed.y;
+                                return 'Doanh thu: ' + new Intl.NumberFormat('vi-VN').format(value) + ' ₫';
                             }
                         }
                     }
                 },
-                scales: { 
-                    y: { 
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                scales: {
+                    y: {
                         beginAtZero: true,
                         grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
+                            color: 'rgba(0, 0, 0, 0.05)',
+                            drawBorder: false
                         },
                         ticks: {
                             callback: function(value) {
@@ -705,21 +726,35 @@ require_once PATH_MODEL . 'OrderModel.php';
                                 return new Intl.NumberFormat('vi-VN').format(value) + ' ₫';
                             },
                             font: {
-                                size: 11
-                            }
+                                size: 11,
+                                family: 'Inter, sans-serif'
+                            },
+                            padding: 8
                         }
                     },
                     x: {
                         grid: {
-                            display: false
+                            display: false,
+                            drawBorder: false
                         },
                         ticks: {
                             maxRotation: 45,
                             minRotation: 45,
                             font: {
-                                size: 11
-                            }
+                                size: 11,
+                                family: 'Inter, sans-serif'
+                            },
+                            padding: 10
                         }
+                    }
+                },
+                elements: {
+                    line: {
+                        borderJoinStyle: 'round',
+                        borderCapStyle: 'round'
+                    },
+                    point: {
+                        hoverRadius: 8
                     }
                 }
             }

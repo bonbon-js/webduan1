@@ -132,12 +132,12 @@
                                             <?php elseif ($status === OrderModel::STATUS_PENDING): ?>
                                                 <form method="POST" action="<?= BASE_URL ?>?action=admin-order-confirm" class="mb-0">
                                                     <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
-                                                    <button class="btn btn-sm btn-dark w-100">Xác nhận đơn</button>
+                                                    <button class="btn btn-dark" style="padding: 0.5rem 1rem; font-size: 0.875rem; line-height: 1.2; border-radius: 0.375rem;">Xác nhận đơn</button>
                                                 </form>
                                             <?php elseif ($status === OrderModel::STATUS_TO_SHIP): ?>
                                                 <form method="POST" action="<?= BASE_URL ?>?action=admin-order-delivered" class="mb-0">
                                                     <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
-                                                    <button class="btn btn-sm btn-outline-primary w-100">Xác nhận đã giao</button>
+                                                    <button class="btn btn-sm btn-outline-primary">Xác nhận đã giao</button>
                                                 </form>
                                             <?php elseif ($status === OrderModel::STATUS_CANCELLED && !empty($order['cancel_reason'])): ?>
                                                 <div class="mt-2 small text-danger">
