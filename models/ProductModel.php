@@ -236,8 +236,10 @@ class ProductModel extends BaseModel
             }
 
             // Cập nhật ảnh trong bảng product_images nếu có
-            if (isset($data['image_url'])) {
+            // Luôn cập nhật ảnh nếu có trong data (kể cả khi là ảnh cũ được giữ lại)
+            if (isset($data['image_url']) && $data['image_url'] !== null && $data['image_url'] !== '') {
                 $this->upsertPrimaryImage($productId, $data['image_url']);
+                error_log("ProductModel::updateProduct - Updated image for product_id: " . $productId . ", image_url: " . $data['image_url']);
             }
 
             $this->pdo->commit();
@@ -606,6 +608,7 @@ class ProductModel extends BaseModel
     {
         // Nếu bảng product_images không tồn tại, bỏ qua
         if (!$this->hasProductImagesTable()) {
+            error_log("ProductModel::upsertPrimaryImage - product_images table does not exist");
             return;
         }
 
@@ -614,40 +617,42 @@ class ProductModel extends BaseModel
                 $stmt = $this->pdo->prepare("DELETE FROM product_images WHERE product_id = :pid AND is_primary = 1");
                 $stmt->bindValue(':pid', $productId, PDO::PARAM_INT);
                 $stmt->execute();
+                error_log("ProductModel::upsertPrimaryImage - Deleted primary image for product_id: " . $productId);
             } catch (PDOException $e) {
-                // Bỏ qua lỗi nếu bảng không tồn tại
+                error_log("ProductModel::upsertPrimaryImage - Error deleting image: " . $e->getMessage());
             }
             return;
         }
 
         try {
             // Kiểm tra xem có ảnh primary nào chưa
-            $stmt = $this->pdo->prepare("SELECT * FROM product_images WHERE product_id = :pid AND is_primary = 1 LIMIT 1");
+            $stmt = $this->pdo->prepare("SELECT image_id FROM product_images WHERE product_id = :pid AND is_primary = 1 LIMIT 1");
             $stmt->bindValue(':pid', $productId, PDO::PARAM_INT);
             $stmt->execute();
             $existing = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($existing) {
-                // Cập nhật ảnh hiện có - sử dụng product_id thay vì product_image_id
+                // Cập nhật ảnh hiện có
                 $stmt = $this->pdo->prepare("UPDATE product_images SET image_url = :image_url WHERE product_id = :pid AND is_primary = 1");
                 $stmt->bindValue(':image_url', $imageUrl, PDO::PARAM_STR);
                 $stmt->bindValue(':pid', $productId, PDO::PARAM_INT);
                 $stmt->execute();
+                error_log("ProductModel::upsertPrimaryImage - Updated existing image for product_id: " . $productId);
             } else {
-                // Đảm bảo không có id trong data
-                $data = ['product_id' => $productId, 'image_url' => $imageUrl, 'is_primary' => 1];
-                $data = $this->removePrimaryKeyFromData($data, 'product_images');
-                
+                // Tạo mới ảnh primary
                 $stmt = $this->pdo->prepare("
                     INSERT INTO product_images (product_id, image_url, is_primary)
                     VALUES (:product_id, :image_url, 1)
                 ");
-                $stmt->bindValue(':product_id', $data['product_id'], PDO::PARAM_INT);
-                $stmt->bindValue(':image_url', $data['image_url'], PDO::PARAM_STR);
+                $stmt->bindValue(':product_id', $productId, PDO::PARAM_INT);
+                $stmt->bindValue(':image_url', $imageUrl, PDO::PARAM_STR);
                 $stmt->execute();
+                error_log("ProductModel::upsertPrimaryImage - Inserted new primary image for product_id: " . $productId);
             }
         } catch (PDOException $e) {
-            // Bỏ qua lỗi nếu bảng không tồn tại
+            error_log("ProductModel::upsertPrimaryImage - Error: " . $e->getMessage());
+            error_log("ProductModel::upsertPrimaryImage - Stack trace: " . $e->getTraceAsString());
+            // Không throw exception để không làm gián đoạn quá trình cập nhật sản phẩm
         }
     }
 

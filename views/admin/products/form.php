@@ -65,9 +65,13 @@ $productId = $isEditing ? (int)$product['id'] : null;
         <div style="margin-bottom: 1.5rem;">
             <label class="form-label" for="image">Ảnh đại diện sản phẩm</label>
             <div class="image-upload-wrapper">
-                <?php if ($isEditing && !empty($product['image'])): ?>
+                <?php 
+                // Lấy ảnh hiện tại (ưu tiên 'image', sau đó 'image_url')
+                $currentImage = $product['image'] ?? $product['image_url'] ?? null;
+                if ($isEditing && !empty($currentImage)): 
+                ?>
                     <div class="current-image-preview">
-                        <img src="<?= htmlspecialchars($product['image']) ?>" alt="Current image" style="max-width: 200px; max-height: 200px; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #e2e8f0;">
+                        <img src="<?= htmlspecialchars($currentImage) ?>" alt="Current image" style="max-width: 200px; max-height: 200px; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #e2e8f0;" onerror="this.style.display='none';">
                         <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 0.5rem;">Ảnh hiện tại</div>
                     </div>
                 <?php endif; ?>
@@ -75,7 +79,7 @@ $productId = $isEditing ? (int)$product['id'] : null;
                        onchange="previewImage(this)" style="padding: 0.5rem;">
                 <div id="imagePreview" style="margin-top: 1rem;"></div>
                 <small style="color: #64748b; display: block; margin-top: 0.5rem;">
-                    <i class="bi bi-info-circle"></i> Chọn file ảnh từ máy tính (JPG, PNG, GIF). Kích thước tối đa: 5MB
+                    <i class="bi bi-info-circle"></i> Chọn file ảnh từ máy tính (JPG, PNG, GIF, WEBP). Kích thước tối đa: 5MB
                 </small>
             </div>
         </div>

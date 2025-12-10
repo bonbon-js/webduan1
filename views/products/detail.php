@@ -2,14 +2,14 @@
     <div class="row g-5">
         <?php
             // Fallback ảnh chính: ưu tiên ảnh sản phẩm, nếu trống dùng ảnh biến thể đầu tiên (nếu có)
-            $mainImage = $product['image'] ?? '';
+            $mainImage = $product['image'] ?? $product['image_url'] ?? '';
             if (empty($mainImage) && !empty($variants ?? [])) {
                 foreach ($variants as $v) {
                     if (!empty($v['image_url'])) { $mainImage = $v['image_url']; break; }
                 }
             }
             // Sử dụng helper function để xử lý ảnh
-            $mainImageUrl = getProductImageUrl($mainImage, false);
+            $mainImageUrl = !empty($mainImage) ? getProductImageUrl($mainImage, false) : (BASE_URL . 'assets/images/logo.png');
         ?>
         <div class="col-lg-6 product-gallery">
             <div class="product-main-image-wrapper mb-4">
