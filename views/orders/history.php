@@ -125,10 +125,14 @@
                                 <?php foreach ($orderItems as $item): ?>
                                     <div class="col-md-6 col-lg-4">
                                         <div class="d-flex align-items-center border rounded p-2 bg-light">
-                                            <?php if (!empty($item['image_url'])): ?>
-                                                <img src="<?= htmlspecialchars($item['image_url']) ?>" 
+                                            <?php 
+                                            $itemImage = getProductImageUrl($item['image_url'] ?? '');
+                                            if (!empty($itemImage)): 
+                                            ?>
+                                                <img src="<?= htmlspecialchars($itemImage) ?>" 
                                                      alt="<?= htmlspecialchars($item['product_name']) ?>" 
-                                                     class="me-2 thumb-60">
+                                                     class="me-2 thumb-60"
+                                                     onerror="this.src='<?= BASE_URL ?>assets/images/logo.png'">
                                             <?php else: ?>
                                                 <div class="me-2 placeholder-60-box bg-white text-muted">
                                                     <i class="bi bi-image"></i>

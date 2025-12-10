@@ -36,6 +36,9 @@ class AdminOrderController
             exit;
         }
 
+        // Khôi phục tồn kho trước khi hủy đơn
+        $this->orderModel->restoreStock($orderId);
+
         $this->orderModel->updateStatus($orderId, OrderModel::STATUS_CANCELLED);
         set_flash('success', 'Đã xác nhận hủy đơn.');
         header('Location: ' . BASE_URL . '?action=admin-orders');
@@ -180,6 +183,11 @@ class AdminOrderController
             }
 
             error_log("AdminOrderController::updateStatus - Old status: $oldStatus, New status: $status");
+
+            // Nếu chuyển sang trạng thái CANCELLED, khôi phục tồn kho trước
+            if ($status === OrderModel::STATUS_CANCELLED && $oldStatus !== OrderModel::STATUS_CANCELLED) {
+                $this->orderModel->restoreStock($orderId);
+            }
 
             // Cập nhật trạng thái (sẽ tự notify trong OrderModel)
             $success = $this->orderModel->updateStatus($orderId, $status);

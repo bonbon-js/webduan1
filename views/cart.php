@@ -41,20 +41,48 @@
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <?php 
-                                            // Xử lý ảnh base64 nếu cần
-                                            $imgSrc = $item['image'];
-                                            if (strpos($imgSrc, 'assets/') === 0) {
-                                                // Nếu là đường dẫn tương đối, chuyển thành base64 giống home
-                                                if (file_exists(PATH_ROOT . $imgSrc)) {
-                                                    $data = file_get_contents(PATH_ROOT . $imgSrc);
-                                                    $type = pathinfo(PATH_ROOT . $imgSrc, PATHINFO_EXTENSION);
-                                                    $imgSrc = 'data:image/' . $type . ';base64,' . base64_encode($data);
-                                                } else {
-                                                    $imgSrc = BASE_URL . $imgSrc;
+                                            // Xử lý ảnh sử dụng helper function
+                                            $imgSrc = getProductImageUrl($item['image'] ?? '', true);
+                                            
+                                            // Nếu ảnh vẫn rỗng và có product_id, thử lấy từ database
+                                            if (empty($imgSrc) && !empty($item['id'])) {
+                                                require_once PATH_MODEL . 'ProductModel.php';
+                                                $productModel = new ProductModel();
+                                                $product = $productModel->getProductById((int)$item['id']);
+                                                if ($product) {
+                                                    $productImage = $product['image'] ?? '';
+                                                    if (!$productImage) {
+                                                        $images = $productModel->getProductImages((int)$item['id']);
+                                                        if (!empty($images)) {
+                                                            $productImage = $images[0]['image_url'] ?? '';
+                                                        }
+                                                    }
+                                                    
+                                                    // Nếu có variant, ưu tiên ảnh variant
+                                                    if (!empty($item['variant_id'])) {
+                                                        $variantImages = $productModel->getVariantImages((int)$item['variant_id']);
+                                                        if (!empty($variantImages)) {
+                                                            $productImage = $variantImages[0]['image_url'] ?? $productImage;
+                                                        }
+                                                    } elseif (!empty($item['size']) || !empty($item['color'])) {
+                                                        $variant = $productModel->getVariantByValueNames((int)$item['id'], $item['size'] ?? null, $item['color'] ?? null);
+                                                        if ($variant && !empty($variant['image_url'])) {
+                                                            $productImage = $variant['image_url'];
+                                                        }
+                                                    }
+                                                    
+                                                    if ($productImage) {
+                                                        $imgSrc = getProductImageUrl($productImage, true);
+                                                    }
                                                 }
                                             }
+                                            
+                                            // Nếu vẫn không có ảnh, dùng placeholder
+                                            if (empty($imgSrc)) {
+                                                $imgSrc = BASE_URL . 'assets/images/logo.png';
+                                            }
                                             ?>
-                                            <img src="<?= $imgSrc ?>" alt="<?= $item['name'] ?>" class="cart-product-img">
+                                            <img src="<?= $imgSrc ?>" alt="<?= $item['name'] ?>" class="cart-product-img" onerror="this.src='<?= BASE_URL ?>assets/images/logo.png'; this.onerror=null;">
                                             <div>
                                                 <a href="#" class="cart-product-name"><?= $item['name'] ?></a>
                                                 <small class="text-muted d-block">Size: <?= $item['size'] ?? 'M' ?> | Màu: <?= $item['color'] ?? 'Black' ?></small>
