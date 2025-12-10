@@ -120,3 +120,75 @@ if (!function_exists('getPDO')) {
     }
 }
 
+/**
+ * Hàm xử lý URL ảnh sản phẩm - chuyển đổi đường dẫn tương đối thành URL đầy đủ hoặc base64
+ * @param string|null $imageUrl Đường dẫn ảnh (có thể là tương đối, URL đầy đủ, hoặc base64)
+ * @param bool $useBase64 Nếu true, chuyển thành base64 (giống home page), nếu false thì dùng BASE_URL
+ * @return string URL ảnh đầy đủ hoặc base64 data URL
+ */
+if (!function_exists('getProductImageUrl')) {
+    function getProductImageUrl(?string $imageUrl, bool $useBase64 = false): string
+    {
+        if (empty($imageUrl)) {
+            return '';
+        }
+        
+        // Nếu đã là data URL (base64) hoặc URL đầy đủ (http/https), trả về nguyên
+        if (strpos($imageUrl, 'data:image/') === 0 || strpos($imageUrl, 'http://') === 0 || strpos($imageUrl, 'https://') === 0) {
+            return $imageUrl;
+        }
+        
+        // Nếu là đường dẫn tương đối bắt đầu bằng assets/
+        if (strpos($imageUrl, 'assets/') === 0) {
+            $filePath = PATH_ROOT . $imageUrl;
+            if (file_exists($filePath)) {
+                if ($useBase64) {
+                    // Chuyển thành base64 giống home page
+                    $data = file_get_contents($filePath);
+                    $type = pathinfo($filePath, PATHINFO_EXTENSION);
+                    return 'data:image/' . $type . ';base64,' . base64_encode($data);
+                } else {
+                    // Dùng BASE_URL
+                    return BASE_URL . $imageUrl;
+                }
+            } else {
+                // File không tồn tại, trả về URL tương đối
+                return BASE_URL . $imageUrl;
+            }
+        }
+        
+        // Nếu là đường dẫn tương đối khác (không bắt đầu bằng assets/)
+        if (!strpos($imageUrl, '://')) {
+            // Thử kiểm tra file tồn tại
+            $filePath = PATH_ROOT . $imageUrl;
+            if (file_exists($filePath)) {
+                if ($useBase64) {
+                    $data = file_get_contents($filePath);
+                    $type = pathinfo($filePath, PATHINFO_EXTENSION);
+                    return 'data:image/' . $type . ';base64,' . base64_encode($data);
+                } else {
+                    return BASE_URL . $imageUrl;
+                }
+            } else {
+                // Nếu file không tồn tại, thử thêm assets/uploads/
+                $filePath = PATH_ROOT . 'assets/uploads/' . $imageUrl;
+                if (file_exists($filePath)) {
+                    if ($useBase64) {
+                        $data = file_get_contents($filePath);
+                        $type = pathinfo($filePath, PATHINFO_EXTENSION);
+                        return 'data:image/' . $type . ';base64,' . base64_encode($data);
+                    } else {
+                        return BASE_URL . 'assets/uploads/' . $imageUrl;
+                    }
+                } else {
+                    // Không tìm thấy file, trả về URL với BASE_URL
+                    return BASE_URL . $imageUrl;
+                }
+            }
+        }
+        
+        // Trường hợp còn lại, trả về nguyên
+        return $imageUrl;
+    }
+}
+

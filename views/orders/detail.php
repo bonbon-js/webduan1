@@ -132,11 +132,11 @@ error_log("Order detail page - currentOrderId: $currentOrderId, order['id']: " .
                 <?php if (!empty($returnData)): ?>
                     <div class="order-summary-card mb-4">
                         <h5 class="fw-bold mb-3">
-                            <i class="bi bi-info-circle me-2"></i>Trả hàng
+                            <i class="bi bi-info-circle me-2"></i>Hoàn hàng
                         </h5>
                         <div class="alert alert-warning py-2 mb-3">
                             <div class="d-flex flex-column gap-1">
-                                <div><strong>Trả hàng:</strong> <?= htmlspecialchars(ReturnRequestModel::statusLabel($returnData['status'])) ?></div>
+                                <div><strong>Hoàn hàng:</strong> <?= htmlspecialchars(ReturnRequestModel::statusLabel($returnData['status'])) ?></div>
                                 <?php if (!empty($returnData['reason'])): ?>
                                     <div class="small text-muted">Lý do: <?= htmlspecialchars($returnData['reason']) ?></div>
                                 <?php endif; ?>
@@ -168,18 +168,19 @@ error_log("Order detail page - currentOrderId: $currentOrderId, order['id']: " .
                 <?php endif; ?>
 
                 <?php
-                    $canReturn = in_array($order['status'], [OrderModel::STATUS_DELIVERED, OrderModel::STATUS_COMPLETED], true);
+                    // Chỉ cho phép yêu cầu hoàn hàng khi đơn đã COMPLETED (sau khi user ấn "Tôi đã nhận hàng")
+                    $canReturn = ($order['status'] ?? '') === OrderModel::STATUS_COMPLETED;
                     $deliveredAt = $order['updated_at'] ?? $order['created_at'] ?? null;
                     $within3Days = $deliveredAt ? (time() - strtotime($deliveredAt) <= 3 * 24 * 3600) : false;
                     $returnAllowed = $canReturn && $within3Days && empty($returnData);
                 ?>
                 <?php if ($returnAllowed): ?>
                     <div class="order-summary-card mt-4">
-                        <h5 class="fw-bold mb-3">Yêu cầu trả hàng</h5>
+                        <h5 class="fw-bold mb-3">Yêu cầu hoàn hàng</h5>
                         <form id="returnRequestForm" enctype="multipart/form-data">
                             <input type="hidden" name="order_id" value="<?= $currentOrderId ?>">
                             <div class="mb-3">
-                                <label class="form-label small text-uppercase">Lý do trả hàng</label>
+                                <label class="form-label small text-uppercase">Lý do hoàn hàng</label>
                                 <select class="form-select" name="reason" required>
                                     <option value="">-- Chọn lý do --</option>
                                     <option value="Sản phẩm bị lỗi">Sản phẩm bị lỗi</option>
@@ -199,12 +200,12 @@ error_log("Order detail page - currentOrderId: $currentOrderId, order['id']: " .
                                 <input type="file" name="evidences[]" class="form-control" accept="image/*,video/*" multiple required>
                                 <small class="text-muted">Tối đa 5 file, mỗi file ≤ 10MB. Hỗ trợ ảnh/video.</small>
                             </div>
-                            <button type="submit" class="btn btn-outline-dark w-100">Gửi yêu cầu trả hàng</button>
+                            <button type="submit" class="btn btn-outline-dark w-100">Gửi yêu cầu hoàn hàng</button>
                         </form>
                     </div>
                 <?php elseif (!empty($returnData) && !in_array($returnData['status'], ['refunded', 'rejected', 'cancelled'], true)): ?>
                     <div class="order-summary-card mt-4">
-                        <h5 class="fw-bold mb-3">Trạng thái trả hàng</h5>
+                        <h5 class="fw-bold mb-3">Trạng thái hoàn hàng</h5>
                         <p class="mb-2">Trạng thái: <strong><?= htmlspecialchars(ReturnRequestModel::statusLabel($returnData['status'])) ?></strong></p>
                         <?php if (!empty($returnData['reject_reason'])): ?>
                             <p class="text-danger small mb-2">Lý do từ chối: <?= nl2br(htmlspecialchars($returnData['reject_reason'])) ?></p>
@@ -274,10 +275,14 @@ error_log("Order detail page - currentOrderId: $currentOrderId, order['id']: " .
                                     <tr>
                                         <td>
                                             <div class="d-flex align-items-center">
-                                                <?php if (!empty($item['image_url'])): ?>
-                                                    <img src="<?= htmlspecialchars($item['image_url']) ?>" 
+                                                <?php 
+                                                $itemImage = getProductImageUrl($item['image_url'] ?? '');
+                                                if (!empty($itemImage)): 
+                                                ?>
+                                                    <img src="<?= htmlspecialchars($itemImage) ?>" 
                                                          alt="<?= htmlspecialchars($item['product_name']) ?>" 
-                                                         class="me-3 thumb-80">
+                                                         class="me-3 thumb-80"
+                                                         onerror="this.src='<?= BASE_URL ?>assets/images/logo.png'; this.onerror=null;">
                                                 <?php else: ?>
                                                     <div class="me-3 placeholder-80-box">
                                                         <i class="bi bi-image text-muted"></i>
@@ -911,18 +916,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 const data = await resp.json();
                 if (data.success) {
-                    toastSuccess('Đã gửi yêu cầu trả hàng');
+                    toastSuccess('Đã gửi yêu cầu hoàn hàng');
                     setTimeout(() => location.reload(), 1000);
                 } else {
                     toastError(data.message || 'Không thể gửi yêu cầu');
                     btn.disabled = false;
-                    btn.textContent = 'Gửi yêu cầu trả hàng';
+                    btn.textContent = 'Gửi yêu cầu hoàn hàng';
                 }
             } catch (err) {
                 console.error(err);
                 toastError('Có lỗi xảy ra');
                 btn.disabled = false;
-                btn.textContent = 'Gửi yêu cầu trả hàng';
+                btn.textContent = 'Gửi yêu cầu hoàn hàng';
             }
         });
     }

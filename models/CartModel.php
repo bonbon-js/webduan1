@@ -125,6 +125,13 @@ class CartModel extends BaseModel
     {
         $cartId = $this->getOrCreateCartIdByUserId($userId);
         
+        // Đảm bảo cột image_url tồn tại trong product_variants
+        try {
+            $this->pdo->exec("ALTER TABLE product_variants ADD COLUMN IF NOT EXISTS image_url VARCHAR(255) NULL");
+        } catch (PDOException $e) {
+            // Cột đã tồn tại hoặc không thể thêm, bỏ qua
+        }
+        
         $sql = "SELECT 
                     ci.cart_item_id,
                     ci.product_id,
@@ -132,7 +139,9 @@ class CartModel extends BaseModel
                     ci.quantity,
                     p.product_name,
                     p.price,
-                    pi.image_url as product_image,
+                    COALESCE(pv.image_url, pi.image_url, 
+                        (SELECT image_url FROM product_images WHERE product_id = p.product_id ORDER BY is_primary DESC LIMIT 1)
+                    ) as product_image,
                     pv.sku,
                     pv.additional_price,
                     pv.stock,
@@ -140,14 +149,14 @@ class CartModel extends BaseModel
                     MAX(CASE WHEN a.attribute_name = 'Color' THEN av.value_name END) as color
                 FROM cart_items ci
                 JOIN products p ON ci.product_id = p.product_id
-                LEFT JOIN product_images pi ON p.product_id = pi.product_id AND pi.is_primary = 1
                 LEFT JOIN product_variants pv ON ci.variant_id = pv.variant_id
+                LEFT JOIN product_images pi ON p.product_id = pi.product_id AND pi.is_primary = 1
                 LEFT JOIN product_attribute_values pav ON pv.variant_id = pav.variant_id
                 LEFT JOIN attribute_values av ON pav.value_id = av.value_id
                 LEFT JOIN attributes a ON av.attribute_id = a.attribute_id
                 WHERE ci.cart_id = :cart_id
                 GROUP BY ci.cart_item_id, ci.product_id, ci.variant_id, ci.quantity, 
-                         p.product_name, p.price, pi.image_url, pv.sku, pv.additional_price, pv.stock
+                         p.product_name, p.price, pv.image_url, pi.image_url, pv.sku, pv.additional_price, pv.stock
                 ORDER BY ci.cart_item_id DESC";
         
         $stmt = $this->pdo->prepare($sql);
@@ -180,6 +189,9 @@ class CartModel extends BaseModel
             $color = $item['color'] ?? null;
             $key = $item['product_id'] . '_' . ($size ?? 'null') . '_' . ($color ?? 'null');
             
+            // Lấy ảnh - ưu tiên variant image, sau đó product image
+            $productImage = $item['product_image'] ?? '';
+            
             // Nếu merge và item đã tồn tại, cộng số lượng
             if ($merge && isset($_SESSION['cart'][$key])) {
                 $_SESSION['cart'][$key]['quantity'] += (int)$item['quantity'];
@@ -189,7 +201,7 @@ class CartModel extends BaseModel
                     'variant_id' => $item['variant_id'],
                     'name' => $item['product_name'],
                     'price' => $finalPrice,
-                    'image' => $item['product_image'] ?? '',
+                    'image' => $productImage,
                     'quantity' => (int)$item['quantity'],
                     'size' => $size,
                     'color' => $color,

@@ -1554,19 +1554,11 @@ function searchAndSelectAddress(provinceName, districtName, wardName, callback) 
                         <div class="order-items mb-4">
                             <?php foreach ($cart as $item): ?>
                                 <?php 
-                                $imgSrc = $item['image'];
-                                if (strpos($imgSrc, 'assets/') === 0) {
-                                    if (file_exists(PATH_ROOT . $imgSrc)) {
-                                        $data = file_get_contents(PATH_ROOT . $imgSrc);
-                                        $type = pathinfo(PATH_ROOT . $imgSrc, PATHINFO_EXTENSION);
-                                        $imgSrc = 'data:image/' . $type . ';base64,' . base64_encode($data);
-                                    } else {
-                                        $imgSrc = BASE_URL . $imgSrc;
-                                    }
-                                }
+                                // Xử lý ảnh sử dụng helper function
+                                $imgSrc = getProductImageUrl($item['image'] ?? '', true);
                                 ?>
                                 <div class="order-summary-item">
-                                    <img src="<?= $imgSrc ?>" alt="<?= $item['name'] ?>" class="order-img">
+                                    <img src="<?= $imgSrc ?>" alt="<?= $item['name'] ?>" class="order-img" onerror="this.src='<?= BASE_URL ?>assets/images/logo.png'">
                                     <div class="order-info">
                                         <span class="order-name"><?= $item['name'] ?></span>
                                         <div class="order-meta">

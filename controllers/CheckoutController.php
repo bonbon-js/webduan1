@@ -171,6 +171,10 @@ class CheckoutController
         $items = [];
         $hasFlashSaleItem = false;
 
+        // Load ProductModel để lấy ảnh sản phẩm đúng cách
+        require_once PATH_MODEL . 'ProductModel.php';
+        $productModel = new ProductModel();
+
         // Chuyển dữ liệu giỏ hàng thành payload để lưu vào DB
         foreach ($cart as $item) {
             $lineTotal = $item['price'] * $item['quantity'];
@@ -183,14 +187,43 @@ class CheckoutController
                 exit;
             }
             
+            // Lấy ảnh sản phẩm đúng cách từ database
+            $productId = (int)($item['id'] ?? 0);
+            $size = $item['size'] ?? null;
+            $color = $item['color'] ?? null;
+            $productImage = $item['image'] ?? null;
+            
+            // Nếu có product_id, lấy ảnh từ database để đảm bảo đúng
+            if ($productId > 0) {
+                $product = $productModel->getProductById($productId);
+                if ($product) {
+                    // Lấy ảnh sản phẩm
+                    $productImage = $product['image'] ?? '';
+                    if (!$productImage) {
+                        $images = $productModel->getProductImages($productId);
+                        if (!empty($images)) {
+                            $productImage = $images[0]['image_url'] ?? '';
+                        }
+                    }
+                    
+                    // Nếu có variant, ưu tiên ảnh variant
+                    if ($size || $color) {
+                        $variant = $productModel->getVariantByValueNames($productId, $size, $color);
+                        if ($variant && !empty($variant['image_url'])) {
+                            $productImage = $variant['image_url'];
+                        }
+                    }
+                }
+            }
+            
             $items[] = [
-                'product_id'    => $item['id'] ?? null,
+                'product_id'    => $productId > 0 ? $productId : null,
                 'product_name'  => trim($item['name']),
-                'variant_size'  => $item['size'] ?? null,
-                'variant_color' => $item['color'] ?? null,
+                'variant_size'  => $size,
+                'variant_color' => $color,
                 'quantity'      => (int)($item['quantity'] ?? 1),
                 'unit_price'    => (float)($item['price'] ?? 0),
-                'image_url'     => $item['image'] ?? null,
+                'image_url'     => $productImage,
             ];
 
             // Phát hiện sản phẩm Flash Sale (nếu giỏ hàng có đánh dấu)

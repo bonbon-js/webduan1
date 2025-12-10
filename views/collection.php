@@ -31,18 +31,18 @@
                     <div class="row g-4">
                         <?php foreach ($collection['products'] as $product): 
                             $productId = (int)($product['product_id'] ?? 0);
-                            // Thử nhiều cách để lấy hình ảnh
+                            // Lấy ảnh sử dụng helper function
                             $imageUrl = '';
                             if (!empty($product['image_url'])) {
-                                $imageUrl = $product['image_url'];
+                                $imageUrl = getProductImageUrl($product['image_url'], false);
                             } elseif (!empty($product['image'])) {
-                                $imageUrl = $product['image'];
+                                $imageUrl = getProductImageUrl($product['image'], false);
                             } elseif (!empty($product['primary_image'])) {
-                                $imageUrl = $product['primary_image'];
+                                $imageUrl = getProductImageUrl($product['primary_image'], false);
                             }
                             // Nếu vẫn không có, thử lấy từ BASE_URL
                             if (empty($imageUrl) && $productId > 0) {
-                                // Fallback: sử dụng placeholder hoặc lấy từ API
+                                // Fallback: sử dụng placeholder
                                 $imageUrl = BASE_URL . 'assets/images/logo.png';
                             }
                             $price = (float)($product['price'] ?? 0);

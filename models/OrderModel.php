@@ -608,6 +608,63 @@ class OrderModel extends BaseModel
         }
     }
 
+    // Khôi phục tồn kho khi hủy đơn hàng
+    public function restoreStock(int $orderId): void
+    {
+        try {
+            // Lấy tất cả items của đơn hàng
+            $items = $this->getItems($orderId);
+            
+            if (empty($items)) {
+                return;
+            }
+            
+            // Load ProductModel để khôi phục tồn kho
+            require_once PATH_MODEL . 'ProductModel.php';
+            $productModel = new ProductModel();
+            
+            foreach ($items as $item) {
+                $productId = (int)($item['product_id'] ?? 0);
+                $quantity = (int)($item['quantity'] ?? 0);
+                $size = $item['variant_size'] ?? null;
+                $color = $item['variant_color'] ?? null;
+                
+                if ($productId > 0 && $quantity > 0) {
+                    // Tìm variant_id từ size và color
+                    $variant = $productModel->getVariantByValueNames($productId, $size, $color);
+                    
+                    if ($variant && isset($variant['variant_id'])) {
+                        // Khôi phục tồn kho từ product_variants
+                        $variantId = (int)$variant['variant_id'];
+                        $updateStmt = $this->pdo->prepare("
+                            UPDATE product_variants 
+                            SET stock = stock + :quantity 
+                            WHERE variant_id = :variant_id
+                        ");
+                        $updateStmt->execute([
+                            ':quantity' => $quantity,
+                            ':variant_id' => $variantId
+                        ]);
+                    } else {
+                        // Không có variant, khôi phục tồn kho từ products table
+                        $updateStmt = $this->pdo->prepare("
+                            UPDATE products 
+                            SET stock = stock + :quantity 
+                            WHERE product_id = :product_id
+                        ");
+                        $updateStmt->execute([
+                            ':quantity' => $quantity,
+                            ':product_id' => $productId
+                        ]);
+                    }
+                }
+            }
+        } catch (Throwable $e) {
+            // Log lỗi nhưng không throw để không ảnh hưởng đến việc hủy đơn
+            error_log('Error restoring stock for order ' . $orderId . ': ' . $e->getMessage());
+        }
+    }
+
     // Sinh mã đơn độc nhất dạng BBxxxx
     private function generateOrderCode(): string
     {

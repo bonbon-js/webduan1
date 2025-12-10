@@ -229,6 +229,9 @@ class OrderController
             $reason = $reasonOther;
         }
 
+        // Khôi phục tồn kho trước khi hủy đơn
+        $this->orderModel->restoreStock($orderId);
+
         // Hủy trực tiếp: chuyển sang trạng thái cancelled
         $this->orderModel->updateStatus($orderId, OrderModel::STATUS_CANCELLED);
 
