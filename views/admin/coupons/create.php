@@ -50,8 +50,8 @@
         <div class="col-md-6">
             <label class="form-label">Loại giảm giá <span class="text-danger">*</span></label>
             <select name="discount_type" class="form-select" required>
-                <?php $type = $formData['discount_type'] ?? 'percentage'; ?>
-                <option value="percentage" <?= $type === 'percentage' ? 'selected' : '' ?>>Phần trăm (%)</option>
+                <?php $type = $formData['discount_type'] ?? 'percent'; ?>
+                <option value="percent" <?= $type === 'percent' ? 'selected' : '' ?>>Phần trăm (%)</option>
                 <option value="fixed" <?= $type === 'fixed' ? 'selected' : '' ?>>Cố định (VNĐ)</option>
             </select>
         </div>

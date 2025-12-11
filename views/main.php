@@ -436,7 +436,7 @@
 
             function renderCouponDetail(meta) {
                 const discountValue = meta.discount_value ?? '';
-                const discountType = meta.discount_type === 'percentage' ? '%' : 'đ';
+                const discountType = meta.discount_type === 'percent' ? '%' : 'đ';
                 const minOrder = meta.min_order_amount ? Number(meta.min_order_amount).toLocaleString('vi-VN') + ' đ' : 'Không yêu cầu';
                 const endDate = meta.end_date ? new Date(meta.end_date).toLocaleDateString('vi-VN') : 'Không giới hạn';
                 const maxDiscount = meta.max_discount_amount ? Number(meta.max_discount_amount).toLocaleString('vi-VN') + ' đ' : 'Không giới hạn';

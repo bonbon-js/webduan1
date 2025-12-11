@@ -723,7 +723,7 @@ function loadAvailableCoupons() {
                             item.className = 'coupon-item p-2';
                             item.onclick = () => selectCoupon(coupon);
                             
-                            const discountText = coupon.discount_type === 'percentage' 
+                            const discountText = coupon.discount_type === 'percent' 
                                 ? `Giảm ${coupon.discount_value}%` 
                                 : `Giảm ${formatCurrency(coupon.discount_value)}`;
                             

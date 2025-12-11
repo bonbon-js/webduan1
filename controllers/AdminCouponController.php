@@ -75,7 +75,7 @@ class AdminCouponController
                 'start_date' => date('Y-m-d\TH:i'),
                 'end_date' => date('Y-m-d\TH:i', strtotime('+30 days')),
                 'status' => 'active',
-                'discount_type' => 'percentage',
+                'discount_type' => 'percent',
                 'min_order_amount' => 0,
             ];
             require_once PATH_VIEW . 'admin/layout.php';
@@ -86,7 +86,7 @@ class AdminCouponController
             'code' => strtoupper(trim($_POST['code'] ?? '')),
             'name' => $_POST['name'] ?? '',
             'description' => $_POST['description'] ?? null,
-            'discount_type' => $_POST['discount_type'] ?? 'percentage',
+            'discount_type' => $_POST['discount_type'] ?? 'percent',
             'discount_value' => (float)($_POST['discount_value'] ?? 0),
             'min_order_amount' => (float)($_POST['min_order_amount'] ?? 0),
             'max_discount_amount' => ($_POST['max_discount_amount'] ?? '') === '' ? null : (float)$_POST['max_discount_amount'],
@@ -122,7 +122,7 @@ class AdminCouponController
             $errors[] = 'Vui lòng nhập đầy đủ thông tin và giá trị giảm > 0.';
         }
 
-        if ($data['discount_type'] === 'percentage') {
+        if ($data['discount_type'] === 'percent') {
             if ($data['discount_value'] < 10) {
                 $errors[] = 'Giá trị % phải từ 10% đến 100%.';
             }
@@ -152,8 +152,8 @@ class AdminCouponController
             $errors[] = 'Mã giảm giá "' . htmlspecialchars($data['code']) . '" đã tồn tại. Vui lòng chọn mã khác.';
         }
         
-        // Validate max_discount_amount khi là percentage
-        if ($data['discount_type'] === 'percentage' && $data['max_discount_amount'] !== null) {
+        // Validate max_discount_amount khi là percent
+        if ($data['discount_type'] === 'percent' && $data['max_discount_amount'] !== null) {
             if ($data['max_discount_amount'] < 0) {
                 $errors[] = 'Giảm tối đa không hợp lệ.';
             }
@@ -214,7 +214,7 @@ class AdminCouponController
             'code' => $_POST['code'] ?? '',
             'name' => $_POST['name'] ?? '',
             'description' => $_POST['description'] ?? null,
-            'discount_type' => $_POST['discount_type'] ?? 'percentage',
+            'discount_type' => $_POST['discount_type'] ?? 'percent',
             'discount_value' => (float)($_POST['discount_value'] ?? 0),
             'min_order_amount' => (float)($_POST['min_order_amount'] ?? 0),
             'max_discount_amount' => ($_POST['max_discount_amount'] ?? '') === '' ? null : (float)$_POST['max_discount_amount'],
@@ -250,7 +250,7 @@ class AdminCouponController
             $errors[] = 'Vui lòng nhập đầy đủ thông tin và giá trị giảm > 0.';
         }
 
-        if ($data['discount_type'] === 'percentage') {
+        if ($data['discount_type'] === 'percent') {
             if ($data['discount_value'] < 10) {
                 $errors[] = 'Giá trị % phải từ 10% đến 100%.';
             }
@@ -295,8 +295,8 @@ class AdminCouponController
             $errors[] = 'Mã giảm giá "' . htmlspecialchars($data['code']) . '" đã tồn tại. Vui lòng chọn mã khác.';
         }
         
-        // Validate max_discount_amount khi là percentage
-        if ($data['discount_type'] === 'percentage' && $data['max_discount_amount'] !== null) {
+        // Validate max_discount_amount khi là percent
+        if ($data['discount_type'] === 'percent' && $data['max_discount_amount'] !== null) {
             if ($data['max_discount_amount'] < 0) {
                 $errors[] = 'Giảm tối đa không hợp lệ.';
             }

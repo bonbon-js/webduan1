@@ -205,7 +205,7 @@ class CouponModel extends BaseModel
     {
         $discountAmount = 0;
         
-        if ($coupon['discount_type'] === 'percentage') {
+        if ($coupon['discount_type'] === 'percent') {
             // Giảm theo phần trăm
             $discountAmount = ($orderAmount * (float)$coupon['discount_value']) / 100;
             

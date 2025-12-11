@@ -60,7 +60,7 @@
                     <label class="form-label small text-uppercase fw-bold">Loại giảm giá</label>
                     <select name="discount_type" class="form-select" id="discountTypeFilter">
                         <option value="">Tất cả</option>
-                        <option value="percentage" <?= ($_GET['discount_type'] ?? '') === 'percentage' ? 'selected' : '' ?>>Phần trăm</option>
+                        <option value="percent" <?= ($_GET['discount_type'] ?? '') === 'percent' ? 'selected' : '' ?>>Phần trăm</option>
                         <option value="fixed" <?= ($_GET['discount_type'] ?? '') === 'fixed' ? 'selected' : '' ?>>Cố định</option>
                     </select>
                 </div>
@@ -152,11 +152,11 @@
                         <td><?= htmlspecialchars($coupon['name']) ?></td>
                         <td>
                             <span class="badge bg-info">
-                                <?= $coupon['discount_type'] === 'percentage' ? 'Phần trăm' : 'Cố định' ?>
+                                <?= $coupon['discount_type'] === 'percent' ? 'Phần trăm' : 'Cố định' ?>
                             </span>
                         </td>
                         <td>
-                            <?php if ($coupon['discount_type'] === 'percentage'): ?>
+                            <?php if ($coupon['discount_type'] === 'percent'): ?>
                                 <?= number_format($coupon['discount_value'], 0) ?>%
                             <?php else: ?>
                                 <?= number_format($coupon['discount_value'], 0, ',', '.') ?> đ
@@ -262,7 +262,7 @@
                         <div class="col-md-6">
                             <label class="form-label">Loại giảm giá <span class="text-danger">*</span></label>
                             <select class="form-select" name="discount_type" id="discountType" required>
-                                <option value="percentage">Phần trăm (%)</option>
+                                <option value="percent">Phần trăm (%)</option>
                                 <option value="fixed">Cố định (VNĐ)</option>
                             </select>
                         </div>
@@ -413,7 +413,7 @@ window.openCouponModal = function(coupon = null) {
             document.getElementById('couponCode').value = coupon.code || '';
             document.getElementById('couponName').value = coupon.name || '';
             document.getElementById('couponDescription').value = coupon.description || '';
-            document.getElementById('discountType').value = coupon.discount_type || 'percentage';
+            document.getElementById('discountType').value = coupon.discount_type || 'percent';
             document.getElementById('discountValue').value = coupon.discount_value || '';
             document.getElementById('minOrderAmount').value = coupon.min_order_amount || 0;
             document.getElementById('maxDiscountAmount').value = coupon.max_discount_amount || '';
@@ -442,7 +442,7 @@ window.openCouponModal = function(coupon = null) {
             document.getElementById('couponCode').value = '';
             document.getElementById('couponName').value = '';
             document.getElementById('couponDescription').value = '';
-            document.getElementById('discountType').value = 'percentage';
+            document.getElementById('discountType').value = 'percent';
             document.getElementById('discountValue').value = '';
             document.getElementById('minOrderAmount').value = '0';
             document.getElementById('maxDiscountAmount').value = '';

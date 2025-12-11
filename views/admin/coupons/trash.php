@@ -61,14 +61,14 @@ $deletedCoupons = $couponModel->getDeleted();
                             <td><strong><?= htmlspecialchars($coupon['code']) ?></strong></td>
                             <td><?= htmlspecialchars($coupon['name']) ?></td>
                             <td>
-                                <?php if ($coupon['discount_type'] === 'percentage'): ?>
+                                <?php if ($coupon['discount_type'] === 'percent'): ?>
                                     <span class="badge bg-info">Phần trăm</span>
                                 <?php else: ?>
                                     <span class="badge bg-primary">Cố định</span>
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <?php if ($coupon['discount_type'] === 'percentage'): ?>
+                                <?php if ($coupon['discount_type'] === 'percent'): ?>
                                     <?= number_format($coupon['discount_value'], 2) ?>%
                                 <?php else: ?>
                                     <?= number_format($coupon['discount_value'], 0, ',', '.') ?> đ

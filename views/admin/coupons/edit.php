@@ -55,9 +55,9 @@
             </div>
             <div class="col-md-6">
                 <label class="form-label">Loại giảm giá <span class="text-danger">*</span></label>
-                <?php $type = $formData['discount_type'] ?? ($coupon['discount_type'] ?? 'percentage'); ?>
+                <?php $type = $formData['discount_type'] ?? ($coupon['discount_type'] ?? 'percent'); ?>
                 <select name="discount_type" class="form-select" required>
-                    <option value="percentage" <?= $type === 'percentage' ? 'selected' : '' ?>>Phần trăm (%)</option>
+                    <option value="percent" <?= $type === 'percent' ? 'selected' : '' ?>>Phần trăm (%)</option>
                     <option value="fixed" <?= $type === 'fixed' ? 'selected' : '' ?>>Cố định (VNĐ)</option>
                 </select>
             </div>
