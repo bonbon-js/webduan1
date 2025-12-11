@@ -829,4 +829,150 @@ class OrderModel extends BaseModel
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return (int)($row['cnt'] ?? 0);
     }
+    public function getStatsByRange(string $fromDate, string $toDate): array
+    {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) AS orders FROM orders_new WHERE DATE(created_at) BETWEEN :from_date AND :to_date");
+        $stmt->execute([':from_date' => $fromDate, ':to_date' => $toDate]);
+        $ordersRow = $stmt->fetch(PDO::FETCH_ASSOC);
+        $orders = (int)($ordersRow['orders'] ?? 0);
+        $stmt2 = $this->pdo->prepare("SELECT COALESCE(SUM(total_amount),0) AS revenue FROM orders_new WHERE status = :status AND DATE(created_at) BETWEEN :from_date AND :to_date");
+        $stmt2->execute([':status' => self::STATUS_DELIVERED, ':from_date' => $fromDate, ':to_date' => $toDate]);
+        $revRow = $stmt2->fetch(PDO::FETCH_ASSOC);
+        $revenue = (float)($revRow['revenue'] ?? 0);
+        return [
+            'orders' => $orders,
+            'revenue' => $revenue,
+        ];
+    }
+    public function getStatusCounts(string $fromDate, string $toDate): array
+    {
+        $result = [];
+        foreach (array_keys(self::statuses()) as $status) {
+            $result[$status] = 0;
+        }
+        $stmt = $this->pdo->prepare("SELECT status, COUNT(*) AS cnt FROM orders_new WHERE DATE(created_at) BETWEEN :from_date AND :to_date GROUP BY status");
+        $stmt->execute([':from_date' => $fromDate, ':to_date' => $toDate]);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($rows as $row) {
+            $s = $row['status'] ?? null;
+            if ($s !== null) {
+                $result[$s] = (int)($row['cnt'] ?? 0);
+            }
+        }
+        return $result;
+    }
+    public function getTotalProductsSold(string $fromDate, string $toDate): int
+    {
+        $sql = "SELECT COALESCE(SUM(oi.quantity),0) AS qty FROM order_items oi JOIN orders_new o ON o.id = oi.order_id WHERE o.status = :status AND DATE(o.created_at) BETWEEN :from_date AND :to_date";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':status' => self::STATUS_DELIVERED, ':from_date' => $fromDate, ':to_date' => $toDate]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int)($row['qty'] ?? 0);
+    }
+    public function getTopCustomers(string $fromDate, string $toDate, int $limit = 5): array
+    {
+        $sql = "SELECT COALESCE(u.full_name, o.fullname, o.email) AS fullname, COALESCE(o.user_id, o.email) AS grp, COUNT(*) AS orders, COALESCE(SUM(o.total_amount),0) AS total_spent FROM orders_new o LEFT JOIN users u ON u.user_id = o.user_id WHERE o.status = :status AND DATE(o.created_at) BETWEEN :from_date AND :to_date GROUP BY grp, fullname ORDER BY total_spent DESC LIMIT :limit";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(':status', self::STATUS_DELIVERED, PDO::PARAM_STR);
+        $stmt->bindValue(':from_date', $fromDate, PDO::PARAM_STR);
+        $stmt->bindValue(':to_date', $toDate, PDO::PARAM_STR);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    public function getRevenueByPaymentMethod(string $fromDate, string $toDate): array
+    {
+        $sql = "SELECT payment_method, COUNT(*) AS order_count, COALESCE(SUM(total_amount),0) AS revenue FROM orders_new WHERE status = :status AND DATE(created_at) BETWEEN :from_date AND :to_date GROUP BY payment_method ORDER BY revenue DESC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':status' => self::STATUS_DELIVERED, ':from_date' => $fromDate, ':to_date' => $toDate]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    public function getReturnedOrdersCount(string $fromDate, string $toDate): int
+    {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) AS cnt FROM orders_new WHERE status = :status AND DATE(created_at) BETWEEN :from_date AND :to_date");
+        $stmt->execute([':status' => self::STATUS_RETURNED, ':from_date' => $fromDate, ':to_date' => $toDate]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int)($row['cnt'] ?? 0);
+    }
+    public function getDailyRevenue(string $fromDate, string $toDate): array
+    {
+        $sql = "SELECT DATE(created_at) AS d, COALESCE(SUM(total_amount),0) AS revenue FROM orders_new WHERE status = :status AND DATE(created_at) BETWEEN :from_date AND :to_date GROUP BY DATE(created_at) ORDER BY DATE(created_at) ASC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':status' => self::STATUS_DELIVERED, ':from_date' => $fromDate, ':to_date' => $toDate]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    public function getDailyOrders(string $fromDate, string $toDate): array
+    {
+        $sql = "SELECT DATE(created_at) AS d, COUNT(*) AS orders FROM orders_new WHERE DATE(created_at) BETWEEN :from_date AND :to_date GROUP BY DATE(created_at) ORDER BY DATE(created_at) ASC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':from_date' => $fromDate, ':to_date' => $toDate]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    public function getPaymentBreakdown(string $fromDate, string $toDate): array
+    {
+        $sql = "SELECT payment_method, COUNT(*) AS orders FROM orders_new WHERE status = :status AND DATE(created_at) BETWEEN :from_date AND :to_date GROUP BY payment_method ORDER BY orders DESC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':status' => self::STATUS_DELIVERED, ':from_date' => $fromDate, ':to_date' => $toDate]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    public function getReturnCancelChart(string $fromDate, string $toDate): array
+    {
+        $sql = "SELECT DATE(created_at) AS d, SUM(CASE WHEN status = :returned THEN 1 ELSE 0 END) AS returned, SUM(CASE WHEN status = :cancelled THEN 1 ELSE 0 END) AS cancelled FROM orders_new WHERE DATE(created_at) BETWEEN :from_date AND :to_date GROUP BY DATE(created_at) ORDER BY DATE(created_at) ASC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':returned' => self::STATUS_RETURNED, ':cancelled' => self::STATUS_CANCELLED, ':from_date' => $fromDate, ':to_date' => $toDate]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    public function getOrderMetrics(string $fromDate, string $toDate): array
+    {
+        $stmt1 = $this->pdo->prepare("SELECT COALESCE(SUM(total_amount),0) AS revenue FROM orders_new WHERE status = :status AND DATE(created_at) BETWEEN :from_date AND :to_date");
+        $stmt1->execute([':status' => self::STATUS_DELIVERED, ':from_date' => $fromDate, ':to_date' => $toDate]);
+        $revRow = $stmt1->fetch(PDO::FETCH_ASSOC);
+        $revenue = (float)($revRow['revenue'] ?? 0);
+        $stmt2 = $this->pdo->prepare("SELECT COUNT(*) AS cnt FROM orders_new WHERE status = :status AND DATE(created_at) BETWEEN :from_date AND :to_date");
+        $stmt2->execute([':status' => self::STATUS_DELIVERED, ':from_date' => $fromDate, ':to_date' => $toDate]);
+        $cntRow = $stmt2->fetch(PDO::FETCH_ASSOC);
+        $deliveredCount = (int)($cntRow['cnt'] ?? 0);
+        $aov = $deliveredCount > 0 ? ($revenue / $deliveredCount) : 0.0;
+        return ['aov' => $aov];
+    }
+    public function getReturningCustomerRate(string $fromDate, string $toDate): float
+    {
+        $validStatuses = [
+            self::STATUS_PAID,
+            self::STATUS_PENDING,
+            self::STATUS_CONFIRMED,
+            self::STATUS_PREPARING,
+            self::STATUS_HANDED_TO_SHIPPER,
+            self::STATUS_SHIPPING,
+            self::STATUS_TO_SHIP,
+            self::STATUS_DELIVERED,
+            self::STATUS_COMPLETED,
+            self::STATUS_RETURNED
+        ];
+        $placeholders = implode(',', array_fill(0, count($validStatuses), '?'));
+        $sqlTotal = "SELECT COUNT(DISTINCT user_id) AS total_customers FROM orders_new WHERE user_id IS NOT NULL AND DATE(created_at) BETWEEN ? AND ? AND status IN ($placeholders)";
+        $stmtTotal = $this->pdo->prepare($sqlTotal);
+        $paramsTotal = array_merge([$fromDate, $toDate], $validStatuses);
+        $stmtTotal->execute($paramsTotal);
+        $rowTotal = $stmtTotal->fetch(PDO::FETCH_ASSOC);
+        $totalCustomers = (int)($rowTotal['total_customers'] ?? 0);
+        if ($totalCustomers === 0) {
+            return 0.0;
+        }
+        $sqlReturning = "SELECT COUNT(DISTINCT o.user_id) AS returning_customers FROM orders_new o WHERE o.user_id IS NOT NULL AND DATE(o.created_at) BETWEEN ? AND ? AND o.status IN ($placeholders) AND EXISTS (SELECT 1 FROM orders_new o2 WHERE o2.user_id = o.user_id AND o2.status IN ($placeholders) AND o2.created_at < STR_TO_DATE(?, '%Y-%m-%d'))";
+        $stmtReturning = $this->pdo->prepare($sqlReturning);
+        $paramsReturning = array_merge([$fromDate, $toDate], $validStatuses, $validStatuses, [$fromDate]);
+        $stmtReturning->execute($paramsReturning);
+        $rowReturning = $stmtReturning->fetch(PDO::FETCH_ASSOC);
+        $returningCustomers = (int)($rowReturning['returning_customers'] ?? 0);
+        return ($returningCustomers / $totalCustomers) * 100.0;
+    }
+    public function getMonthlyRevenue(int $months = 12): array
+    {
+        $months = max(1, $months);
+        $sql = "SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, COALESCE(SUM(total_amount),0) AS revenue FROM orders_new WHERE status = :status AND created_at >= DATE_SUB(CURDATE(), INTERVAL $months MONTH) GROUP BY DATE_FORMAT(created_at, '%Y-%m') ORDER BY DATE_FORMAT(created_at, '%Y-%m') ASC";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([':status' => self::STATUS_DELIVERED]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
