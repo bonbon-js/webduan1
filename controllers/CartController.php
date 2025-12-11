@@ -289,19 +289,23 @@ class CartController
                 $availableStock = (int)($product['stock'] ?? 0);
             }
             
-            // Kiểm tra nếu vượt quá số lượng tồn kho
-            if ($quantity > $availableStock) {
+            // Lấy số lượng cũ để tính chênh lệch
+            $oldQuantity = (int)$item['quantity'];
+            
+            // Tính tồn kho thực tế: stock hiện tại (đã trừ) + số lượng cũ trong giỏ hàng
+            // Vì stock đã bị trừ khi thêm vào giỏ, nên cần cộng lại số lượng cũ để có tồn kho thực tế
+            $actualAvailableStock = $availableStock + $oldQuantity;
+            
+            // Kiểm tra nếu vượt quá số lượng tồn kho (cho phép mua đến khi hết hàng)
+            if ($quantity > $actualAvailableStock) {
                 echo json_encode([
                     'success' => false,
-                    'message' => "Số lượng tồn kho không đủ. Hiện tại còn {$availableStock} sản phẩm. Vui lòng chọn số lượng nhỏ hơn hoặc bằng {$availableStock}.",
-                    'available_stock' => $availableStock,
+                    'message' => "Số lượng tồn kho không đủ. Hiện tại còn {$actualAvailableStock} sản phẩm. Vui lòng chọn số lượng nhỏ hơn hoặc bằng {$actualAvailableStock}.",
+                    'available_stock' => $actualAvailableStock,
                     'requested_quantity' => $quantity
                 ]);
                 exit;
             }
-            
-            // Lấy số lượng cũ để tính chênh lệch
-            $oldQuantity = (int)$item['quantity'];
             $quantityDiff = $quantity - $oldQuantity;
             
             // Cập nhật số lượng trong session

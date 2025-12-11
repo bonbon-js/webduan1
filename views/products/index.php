@@ -454,7 +454,28 @@
                 if (action === 'cart') {
                     showPmToast('Đã thêm sản phẩm vào giỏ hàng!', 'success');
                 } else {
-                    window.location.href = '<?= BASE_URL ?>?action=checkout';
+                    // Mua ngay - chỉ chọn sản phẩm này để thanh toán
+                    const cartKey = res.cart_key || (productId + '_' + (size || 'null') + '_' + (color || 'null'));
+                    
+                    // Chỉ chọn sản phẩm này để thanh toán
+                    fetch('<?= BASE_URL ?>?action=cart-set-selected', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            selected_items: [cartKey]
+                        })
+                    })
+                    .then(() => {
+                        // Chuyển đến trang checkout với chỉ sản phẩm này được chọn
+                        window.location.href = '<?= BASE_URL ?>?action=checkout';
+                    })
+                    .catch(err => {
+                        console.error('Error setting selected items:', err);
+                        // Vẫn chuyển đến checkout
+                        window.location.href = '<?= BASE_URL ?>?action=checkout';
+                    });
                 }
             } else {
                 showPmToast(res.message || 'Có lỗi xảy ra', 'error');

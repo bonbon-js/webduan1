@@ -246,10 +246,15 @@ class CheckoutController
                     }
                     
                     // Kiểm tra nếu số lượng mua vượt quá số lượng tồn kho
+                    // Lưu ý: Stock đã bị trừ khi thêm vào giỏ hàng, nên cần cộng lại số lượng trong giỏ để có tồn kho thực tế
                     $requestedQuantity = (int)($item['quantity'] ?? 1);
-                    if ($requestedQuantity > $availableStock) {
+                    // Tồn kho thực tế = stock hiện tại (đã trừ) + số lượng đang có trong giỏ hàng
+                    $actualAvailableStock = $availableStock + $requestedQuantity;
+                    
+                    // Cho phép mua nếu số lượng yêu cầu <= tồn kho thực tế (cho phép mua đến khi hết hàng)
+                    if ($requestedQuantity > $actualAvailableStock) {
                         $productName = $item['name'] ?? 'Sản phẩm';
-                        set_flash('danger', "Số lượng tồn kho không đủ cho sản phẩm \"{$productName}\". Hiện tại còn {$availableStock} sản phẩm. Vui lòng giảm số lượng hoặc xóa sản phẩm khỏi giỏ hàng.");
+                        set_flash('danger', "Số lượng tồn kho không đủ cho sản phẩm \"{$productName}\". Hiện tại còn {$actualAvailableStock} sản phẩm. Vui lòng giảm số lượng hoặc xóa sản phẩm khỏi giỏ hàng.");
                         header('Location: ' . BASE_URL . '?action=cart-list');
                         exit;
                     }
