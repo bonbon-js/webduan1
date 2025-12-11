@@ -16,7 +16,7 @@
                     <div class="row g-4">
                         <div class="col-md-6">
                             <div class="contact-item d-flex align-items-start">
-                                <div class="contact-icon me-3 text-dark fs-4">
+                                <div class="contact-icon me-3 d-flex align-items-center justify-content-center bg-dark text-white rounded-3 flex-shrink-0" style="width: 60px; height: 60px; font-size: 1.5rem;">
                                     <i class="bi bi-geo-alt-fill"></i>
                                 </div>
                                 <div class="contact-details">
@@ -28,7 +28,7 @@
 
                         <div class="col-md-6">
                             <div class="contact-item d-flex align-items-start">
-                                <div class="contact-icon me-3 text-dark fs-4">
+                                <div class="contact-icon me-3 d-flex align-items-center justify-content-center bg-dark text-white rounded-3 flex-shrink-0" style="width: 60px; height: 60px; font-size: 1.5rem;">
                                     <i class="bi bi-telephone-fill"></i>
                                 </div>
                                 <div class="contact-details">
@@ -42,7 +42,7 @@
                         
                         <div class="col-md-6">
                             <div class="contact-item d-flex align-items-start">
-                                <div class="contact-icon me-3 text-dark fs-4">
+                                <div class="contact-icon me-3 d-flex align-items-center justify-content-center bg-dark text-white rounded-3 flex-shrink-0" style="width: 60px; height: 60px; font-size: 1.5rem;">
                                     <i class="bi bi-envelope-fill"></i>
                                 </div>
                                 <div class="contact-details">
@@ -56,7 +56,7 @@
                             
                         <div class="col-md-6">
                             <div class="contact-item d-flex align-items-start">
-                                <div class="contact-icon me-3 text-dark fs-4">
+                                <div class="contact-icon me-3 d-flex align-items-center justify-content-center bg-dark text-white rounded-3 flex-shrink-0" style="width: 60px; height: 60px; font-size: 1.5rem;">
                                     <i class="bi bi-clock-fill"></i>
                                 </div>
                                 <div class="contact-details">
