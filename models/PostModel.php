@@ -2,200 +2,215 @@
 
 class PostModel extends BaseModel
 {
-    public function __construct()
+    protected $table = 'posts';
+
+    public function getAll(?string $keyword = null, ?string $status = null, int $limit = 0, int $offset = 0): array
     {
-        parent::__construct();
-        $this->table = 'posts';
+        $sql = "SELECT p.*, u.full_name as author_name 
+                FROM {$this->table} p 
+                LEFT JOIN users u ON p.user_id = u.user_id 
+                WHERE 1=1";
+        $params = [];
+
+        if ($keyword) {
+            $sql .= " AND (p.title LIKE :keyword OR p.excerpt LIKE :keyword)";
+            $params['keyword'] = "%$keyword%";
+        }
+
+        if ($status) {
+            $sql .= " AND p.status = :status";
+            $params['status'] = $status;
+        }
+
+        $sql .= " ORDER BY p.created_at DESC";
+
+        if ($limit > 0) {
+            $sql .= " LIMIT $limit OFFSET $offset";
+        }
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    public function countAll(?string $keyword = null, ?string $status = null): int
+    {
+        $sql = "SELECT COUNT(*) FROM {$this->table} WHERE 1=1";
+        $params = [];
+
+        if ($keyword) {
+            $sql .= " AND (title LIKE :keyword OR excerpt LIKE :keyword)";
+            $params['keyword'] = "%$keyword%";
+        }
+
+        if ($status) {
+            $sql .= " AND status = :status";
+            $params['status'] = $status;
+        }
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return (int)$stmt->fetchColumn();
     }
 
-    /**
-     * Lấy các tin tức nổi bật (featured) để hiển thị trên trang chủ
-     * @param int $limit Số lượng tin tức cần lấy
-     * @return array
-     */
+    public function getById(int $id): ?array
+    {
+        $sql = "SELECT p.*, u.full_name as author_name 
+                FROM {$this->table} p 
+                LEFT JOIN users u ON p.user_id = u.user_id 
+                WHERE p.post_id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['id' => $id]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ?: null;
+    }
+
+    public function getBySlug(string $slug): ?array
+    {
+        $sql = "SELECT p.*, u.full_name as author_name 
+                FROM {$this->table} p 
+                LEFT JOIN users u ON p.user_id = u.user_id 
+                WHERE p.slug = :slug AND p.status = 'published'";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute(['slug' => $slug]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ?: null;
+    }
+
+    public function create(array $data): int
+    {
+        if (empty($data['slug']) && !empty($data['title'])) {
+            $data['slug'] = $this->generateSlug($data['title']);
+        }
+        $data['slug'] = $this->ensureUniqueSlug($data['slug']);
+        
+        $sql = "INSERT INTO {$this->table} (title, slug, excerpt, content, thumbnail, user_id, status, is_featured) 
+                VALUES (:title, :slug, :excerpt, :content, :thumbnail, :user_id, :status, :is_featured)";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([
+            'title'     => $data['title'],
+            'slug'      => $data['slug'],
+            'excerpt'   => $data['excerpt'] ?? null,
+            'content'   => $data['content'] ?? null,
+            'thumbnail' => $data['thumbnail'] ?? null,
+            'user_id'   => $data['user_id'] ?? null,
+            'status'    => $data['status'] ?? 'published',
+            'is_featured' => $data['is_featured'] ?? 0
+        ]);
+        
+        return (int)$this->pdo->lastInsertId();
+    }
+
+    public function update(int $id, array $data): bool
+    {
+        if (isset($data['title']) && empty($data['slug'])) {
+            $currentData = $this->getById($id);
+            if (empty($currentData['slug'])) {
+                $data['slug'] = $this->generateSlug($data['title']);
+            }
+        }
+        
+        if (!empty($data['slug'])) {
+            $data['slug'] = $this->ensureUniqueSlug($data['slug'], $id);
+        }
+
+        $fields = [];
+        $params = [':id' => $id];
+
+        // Map các trường cập nhật
+        foreach (['title', 'slug', 'excerpt', 'content', 'thumbnail', 'user_id', 'status', 'views', 'is_featured'] as $field) {
+            if (isset($data[$field])) {
+                $fields[] = "$field = :$field";
+                $params[$field] = $data[$field];
+            }
+        }
+
+        if (empty($fields)) {
+            return false;
+        }
+
+        $sql = "UPDATE {$this->table} SET " . implode(', ', $fields) . " WHERE post_id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute($params);
+    }
+    
+    public function delete(int $id): bool
+    {
+        $stmt = $this->pdo->prepare("DELETE FROM {$this->table} WHERE post_id = :id");
+        return $stmt->execute(['id' => $id]);
+    }
+
+    public function increaseViewCount(int $id): void
+    {
+        $stmt = $this->pdo->prepare("UPDATE {$this->table} SET views = views + 1 WHERE post_id = :id");
+        $stmt->execute(['id' => $id]);
+    }
+    
+    // Tiện ích Slug
+    private function generateSlug(string $string): string
+    {
+        $slug = strtolower(trim($string));
+        
+        // Chuyển ký tự tiếng Việt có dấu sang không dấu
+        $slug = preg_replace("/(á|à|ả|ã|ạ|ă|ắ|ằ|ẳ|ẵ|ặ|â|ấ|ầ|ẩ|ẫ|ậ)/", 'a', $slug);
+        $slug = preg_replace("/(é|è|ẻ|ẽ|ẹ|ê|ế|ề|ể|ễ|ệ)/", 'e', $slug);
+        $slug = preg_replace("/(i|í|ì|ỉ|ĩ|ị)/", 'i', $slug);
+        $slug = preg_replace("/(ó|ò|ỏ|õ|ọ|ô|ố|ồ|ổ|ỗ|ộ|ơ|ớ|ờ|ở|ỡ|ợ)/", 'o', $slug);
+        $slug = preg_replace("/(ú|ù|ủ|ũ|ụ|ư|ứ|ừ|ử|ữ|ự)/", 'u', $slug);
+        $slug = preg_replace("/(ý|ỳ|ỷ|ỹ|ỵ)/", 'y', $slug);
+        $slug = preg_replace("/(đ)/", 'd', $slug);
+        
+        // Remove special chars
+        $slug = preg_replace('/[^a-z0-9-]/', '-', $slug);
+        // Remove multiple dashes
+        $slug = preg_replace('/-+/', '-', $slug);
+        // Trim dashes
+        return trim($slug, '-');
+    }
+    
+    private function ensureUniqueSlug(string $slug, ?int $excludeUrlId = null): string
+    {
+        $originalSlug = $slug;
+        $counter = 1;
+        
+        while (true) {
+            $sql = "SELECT COUNT(*) FROM {$this->table} WHERE slug = :slug";
+            if ($excludeUrlId) {
+                $sql .= " AND post_id != :id";
+            }
+            
+            $stmt = $this->pdo->prepare($sql);
+            $params = ['slug' => $slug];
+            if ($excludeUrlId) {
+                $params['id'] = $excludeUrlId;
+            }
+            
+            $stmt->execute($params);
+            
+            if ($stmt->fetchColumn() == 0) {
+                break;
+            }
+            
+            $slug = $originalSlug . '-' . $counter;
+            $counter++;
+        }
+        
+        return $slug;
+    }
+
     public function getFeaturedPosts(int $limit = 3): array
     {
-        // Kiểm tra xem cột is_featured có tồn tại không
-        $stmt = $this->pdo->query("SHOW COLUMNS FROM {$this->table} LIKE 'is_featured'");
-        $hasIsFeatured = $stmt->rowCount() > 0;
-        
-        if ($hasIsFeatured) {
-            $sql = "SELECT 
-                        post_id,
-                        title,
-                        excerpt,
-                        content,
-                        thumbnail,
-                        is_featured,
-                        created_at,
-                        updated_at
-                    FROM {$this->table}
-                    WHERE is_featured = 1
-                      AND (status = 'published' OR status IS NULL)
-                    ORDER BY created_at DESC
-                    LIMIT :limit";
-        } else {
-            // Nếu chưa có cột is_featured, lấy 3 tin tức mới nhất
-            $sql = "SELECT 
-                        post_id,
-                        title,
-                        excerpt,
-                        content,
-                        thumbnail,
-                        created_at,
-                        updated_at
-                    FROM {$this->table}
-                    WHERE status = 'published' OR status IS NULL
-                    ORDER BY created_at DESC
-                    LIMIT :limit";
-        }
+        $sql = "SELECT p.*, u.full_name as author_name 
+                FROM {$this->table} p 
+                LEFT JOIN users u ON p.user_id = u.user_id 
+                WHERE p.status = 'published'
+                ORDER BY p.is_featured DESC, p.created_at DESC 
+                LIMIT :limit";
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
-        
-        $posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        // Format dữ liệu để tương thích với view hiện tại
-        $formatted = [];
-        foreach ($posts as $post) {
-            $imageUrl = $post['thumbnail'] ?? '';
-            if ($imageUrl && strpos($imageUrl, 'http') !== 0) {
-                $imageUrl = BASE_URL . $imageUrl;
-            } elseif (!$imageUrl) {
-                $imageUrl = 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=600&q=80';
-            }
-            
-            $formatted[] = [
-                'id' => $post['post_id'],
-                'title' => $post['title'] ?? '',
-                'excerpt' => $post['excerpt'] ?? mb_substr(strip_tags($post['content'] ?? ''), 0, 100) . '...',
-                'content' => $post['content'] ?? '',
-                'image' => $imageUrl,
-                'date' => $post['created_at'] ? date('d/m/Y', strtotime($post['created_at'])) : date('d/m/Y'),
-                'created_at' => $post['created_at'],
-            ];
-        }
-        
-        return $formatted;
-    }
-
-    /**
-     * Lấy tất cả tin tức (có phân trang)
-     * @param int $page Trang hiện tại
-     * @param int $perPage Số tin tức mỗi trang
-     * @return array ['posts' => [...], 'total' => int, 'totalPages' => int]
-     */
-    public function getAllPosts(int $page = 1, int $perPage = 12): array
-    {
-        $offset = ($page - 1) * $perPage;
-        
-        // Đếm tổng số tin tức
-        $countSql = "SELECT COUNT(*) as total 
-                     FROM {$this->table}
-                     WHERE status = 'published'";
-        $countStmt = $this->pdo->query($countSql);
-        $total = (int)$countStmt->fetch()['total'];
-        $totalPages = ceil($total / $perPage);
-        
-        // Lấy tin tức
-        $sql = "SELECT 
-                    post_id,
-                    title,
-                    excerpt,
-                    content,
-                    thumbnail,
-                    is_featured,
-                    created_at,
-                    updated_at
-                FROM {$this->table}
-                WHERE status = 'published' OR status IS NULL
-                ORDER BY created_at DESC
-                LIMIT :limit OFFSET :offset";
-        
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
-        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-        $stmt->execute();
-        
-        $posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        // Format dữ liệu
-        $formatted = [];
-        foreach ($posts as $post) {
-            $imageUrl = $post['thumbnail'] ?? '';
-            if ($imageUrl && strpos($imageUrl, 'http') !== 0) {
-                $imageUrl = BASE_URL . $imageUrl;
-            } elseif (!$imageUrl) {
-                $imageUrl = 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=600&q=80';
-            }
-            
-            $formatted[] = [
-                'id' => $post['post_id'],
-                'title' => $post['title'] ?? '',
-                'excerpt' => $post['excerpt'] ?? mb_substr(strip_tags($post['content'] ?? ''), 0, 150) . '...',
-                'content' => $post['content'] ?? '',
-                'image' => $imageUrl,
-                'date' => $post['created_at'] ? date('d/m/Y', strtotime($post['created_at'])) : date('d/m/Y'),
-                'created_at' => $post['created_at'],
-                'is_featured' => isset($post['is_featured']) ? (bool)$post['is_featured'] : false,
-            ];
-        }
-        
-        return [
-            'posts' => $formatted,
-            'total' => $total,
-            'totalPages' => $totalPages,
-            'currentPage' => $page,
-        ];
-    }
-
-    /**
-     * Lấy chi tiết một tin tức
-     * @param int $postId
-     * @return array|null
-     */
-    public function getPostById(int $postId): ?array
-    {
-        $sql = "SELECT 
-                    post_id,
-                    title,
-                    excerpt,
-                    content,
-                    thumbnail,
-                    is_featured,
-                    created_at,
-                    updated_at
-                FROM {$this->table}
-                WHERE post_id = :post_id
-                  AND (status = 'published' OR status IS NULL)
-                LIMIT 1";
-        
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':post_id', $postId, PDO::PARAM_INT);
-        $stmt->execute();
-        
-        $post = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if (!$post) {
-            return null;
-        }
-        
-        $imageUrl = $post['thumbnail'] ?? '';
-        if ($imageUrl && strpos($imageUrl, 'http') !== 0) {
-            $imageUrl = BASE_URL . $imageUrl;
-        }
-        
-        return [
-            'id' => $post['post_id'],
-            'title' => $post['title'] ?? '',
-            'excerpt' => $post['excerpt'] ?? '',
-            'content' => $post['content'] ?? '',
-            'image' => $imageUrl ?: null,
-            'date' => $post['created_at'] ? date('d/m/Y', strtotime($post['created_at'])) : date('d/m/Y'),
-            'created_at' => $post['created_at'],
-            'is_featured' => isset($post['is_featured']) ? (bool)$post['is_featured'] : false,
-        ];
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
-

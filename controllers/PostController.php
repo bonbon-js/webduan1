@@ -18,13 +18,15 @@ class PostController
     {
         $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
         $perPage = 12;
+        $offset = ($page - 1) * $perPage;
         
-        $result = $this->postModel->getAllPosts($page, $perPage);
+        // Lấy danh sách bài viết published
+        $posts = $this->postModel->getAll(null, 'published', $perPage, $offset);
+        $totalPosts = $this->postModel->countAll(null, 'published');
+        $totalPages = ceil($totalPosts / $perPage);
         
-        $posts = $result['posts'];
-        $total = $result['total'];
-        $totalPages = $result['totalPages'];
-        $currentPage = $result['currentPage'];
+        // Đôi khi views cần biến $currentPage
+        $currentPage = $page;
 
         // Logo cho view
         $logoUrl = BASE_URL . 'assets/images/logo.png';
@@ -51,12 +53,15 @@ class PostController
             exit;
         }
 
-        $post = $this->postModel->getPostById($postId);
+        $post = $this->postModel->getById($postId);
         
-        if (!$post) {
+        if (!$post || ($post['status'] ?? '') !== 'published') {
             header('Location: ' . BASE_URL . '?action=posts');
             exit;
         }
+        
+        // Tăng view
+        $this->postModel->increaseViewCount($postId);
 
         // Logo cho view
         $logoUrl = BASE_URL . 'assets/images/logo.png';

@@ -631,10 +631,26 @@ document.addEventListener('DOMContentLoaded', function() {
         <?php foreach ($news as $item) : ?>
             <div class="col-12 col-sm-6 col-lg-4">
                 <article class="news-card">
-                    <img src="<?= $item['image'] ?>" alt="<?= $item['title'] ?>">
-                    <p class="small text-muted mb-1"><?= $item['date'] ?></p>
-                    <h3 class="h6 mb-2"><?= $item['title'] ?></h3>
-                    <p class="small text-muted mb-0"><?= $item['excerpt'] ?></p>
+                    <a href="<?= BASE_URL ?>?action=post-detail&id=<?= $item['post_id'] ?>">
+                        <?php 
+                            $imgSrc = !empty($item['thumbnail']) ? getProductImageUrl($item['thumbnail']) : BASE_URL . 'assets/images/default.jpg';
+                        ?>
+                        <img src="<?= htmlspecialchars($imgSrc) ?>" alt="<?= htmlspecialchars($item['title']) ?>">
+                    </a>
+                    <div class="news-card-body">
+                        <p class="news-card-date">
+                            <i class="bi bi-calendar3 me-2"></i><?= date('d/m/Y', strtotime($item['created_at'])) ?>
+                        </p>
+                        <h3 class="news-card-title">
+                            <a href="<?= BASE_URL ?>?action=post-detail&id=<?= $item['post_id'] ?>" class="text-decoration-none text-dark">
+                                <?= htmlspecialchars($item['title']) ?>
+                            </a>
+                        </h3>
+                        <p class="news-card-excerpt"><?= htmlspecialchars($item['excerpt']) ?></p>
+                        <a href="<?= BASE_URL ?>?action=post-detail&id=<?= $item['post_id'] ?>" class="news-card-link">
+                            Đọc thêm <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
                 </article>
             </div>
         <?php endforeach; ?>

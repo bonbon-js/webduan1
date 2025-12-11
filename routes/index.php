@@ -158,6 +158,14 @@ match ($action) {
     'admin-contact-show' => (new AdminContactController)->show(),
     'admin-contact-reply' => (new AdminContactController)->reply(),
     'admin-contact-delete' => (new AdminContactController)->delete(),
+
+    // Quản lý bài viết (admin)
+    'admin-posts'         => (new AdminPostController)->index(),
+    'admin-post-create'   => (new AdminPostController)->create(),
+    'admin-post-store'    => (new AdminPostController)->store(),
+    'admin-post-edit'     => (new AdminPostController)->edit(),
+    'admin-post-update'   => (new AdminPostController)->update(),
+    'admin-post-delete'   => (new AdminPostController)->delete(),
     
     // Auth routes
     'show-login'         => (new AuthController)->showLogin(),

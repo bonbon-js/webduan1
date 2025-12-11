@@ -15,20 +15,23 @@
             <?php foreach ($posts as $post): ?>
                 <div class="col-12 col-sm-6 col-lg-4">
                     <article class="news-card">
-                        <a href="<?= BASE_URL ?>?action=post-detail&id=<?= $post['id'] ?>">
-                            <img src="<?= htmlspecialchars($post['image']) ?>" alt="<?= htmlspecialchars($post['title']) ?>">
+                        <a href="<?= BASE_URL ?>?action=post-detail&id=<?= $post['post_id'] ?>">
+                            <?php 
+                                $imgSrc = !empty($post['thumbnail']) ? getProductImageUrl($post['thumbnail']) : BASE_URL . 'assets/images/default.jpg';
+                            ?>
+                            <img src="<?= htmlspecialchars($imgSrc) ?>" alt="<?= htmlspecialchars($post['title']) ?>">
                         </a>
                         <div class="news-card-body">
                             <p class="news-card-date">
-                                <i class="bi bi-calendar3 me-2"></i><?= htmlspecialchars($post['date']) ?>
+                                <i class="bi bi-calendar3 me-2"></i><?= date('d/m/Y', strtotime($post['created_at'])) ?>
                             </p>
                             <h3 class="news-card-title">
-                                <a href="<?= BASE_URL ?>?action=post-detail&id=<?= $post['id'] ?>" class="text-decoration-none text-dark">
+                                <a href="<?= BASE_URL ?>?action=post-detail&id=<?= $post['post_id'] ?>" class="text-decoration-none text-dark">
                                     <?= htmlspecialchars($post['title']) ?>
                                 </a>
                             </h3>
-                            <p class="news-card-excerpt"><?= htmlspecialchars($post['excerpt']) ?></p>
-                            <a href="<?= BASE_URL ?>?action=post-detail&id=<?= $post['id'] ?>" class="news-card-link">
+                            <p class="news-card-excerpt"><?= htmlspecialchars($post['excerpt'] ?? '') ?></p>
+                            <a href="<?= BASE_URL ?>?action=post-detail&id=<?= $post['post_id'] ?>" class="news-card-link">
                                 Đọc thêm <i class="bi bi-arrow-right"></i>
                             </a>
                         </div>

@@ -16,15 +16,15 @@ require_once PATH_MODEL . 'PostModel.php';
         </nav>
 
         <!-- Hero Image with Title -->
-        <?php if ($post['image']): ?>
+        <?php if (!empty($post['thumbnail'])): ?>
             <div class="post-hero">
-                <img src="<?= htmlspecialchars($post['image']) ?>" alt="<?= htmlspecialchars($post['title']) ?>" class="post-hero-image">
+                <img src="<?= htmlspecialchars(getProductImageUrl($post['thumbnail'])) ?>" alt="<?= htmlspecialchars($post['title']) ?>" class="post-hero-image">
                 <div class="post-hero-overlay">
                     <h1 class="post-title"><?= htmlspecialchars($post['title']) ?></h1>
                     <div class="post-meta">
                         <div class="post-meta-item">
                             <i class="bi bi-calendar3"></i>
-                            <span><?= htmlspecialchars($post['date']) ?></span>
+                            <span><?= date('d/m/Y', strtotime($post['created_at'])) ?></span>
                         </div>
                     </div>
                 </div>
@@ -35,7 +35,7 @@ require_once PATH_MODEL . 'PostModel.php';
                 <div class="post-meta plain">
                     <div class="post-meta-item">
                         <i class="bi bi-calendar3"></i>
-                        <span><?= htmlspecialchars($post['date']) ?></span>
+                        <span><?= date('d/m/Y', strtotime($post['created_at'])) ?></span>
                     </div>
                 </div>
             </div>
@@ -55,10 +55,8 @@ require_once PATH_MODEL . 'PostModel.php';
                 $content = $post['content'] ?? '';
                 // Kiểm tra nếu content có HTML tags
                 if (strip_tags($content) !== $content) {
-                    // Nếu có HTML, hiển thị trực tiếp (đã được sanitize từ database)
                     echo $content;
                 } else {
-                    // Nếu là plain text, format với nl2br
                     echo nl2br(htmlspecialchars($content));
                 }
                 ?>
@@ -74,19 +72,19 @@ require_once PATH_MODEL . 'PostModel.php';
                 <div class="social-share">
                     <span class="social-share-label">Chia sẻ:</span>
                     <div class="social-share-buttons">
-                        <a href="https://www.facebook.com/sharer/sharer.php?u=<?= urlencode(BASE_URL . '?action=post-detail&id=' . $post['id']) ?>" 
+                        <a href="https://www.facebook.com/sharer/sharer.php?u=<?= urlencode(BASE_URL . '?action=post-detail&id=' . $post['post_id']) ?>" 
                            target="_blank" 
                            class="social-btn facebook"
                            title="Chia sẻ lên Facebook">
                             <i class="bi bi-facebook"></i>
                         </a>
-                        <a href="https://twitter.com/intent/tweet?url=<?= urlencode(BASE_URL . '?action=post-detail&id=' . $post['id']) ?>&text=<?= urlencode($post['title']) ?>" 
+                        <a href="https://twitter.com/intent/tweet?url=<?= urlencode(BASE_URL . '?action=post-detail&id=' . $post['post_id']) ?>&text=<?= urlencode($post['title']) ?>" 
                            target="_blank" 
                            class="social-btn twitter"
                            title="Chia sẻ lên Twitter">
                             <i class="bi bi-twitter"></i>
                         </a>
-                        <a href="https://www.linkedin.com/sharing/share-offsite/?url=<?= urlencode(BASE_URL . '?action=post-detail&id=' . $post['id']) ?>" 
+                        <a href="https://www.linkedin.com/sharing/share-offsite/?url=<?= urlencode(BASE_URL . '?action=post-detail&id=' . $post['post_id']) ?>" 
                            target="_blank" 
                            class="social-btn linkedin"
                            title="Chia sẻ lên LinkedIn">
@@ -99,11 +97,11 @@ require_once PATH_MODEL . 'PostModel.php';
 
         <!-- Related Posts -->
         <?php
-        // Lấy 3 bài viết mới nhất (trừ bài hiện tại)
         $postModel = new PostModel();
-        $allPosts = $postModel->getAllPosts(1, 4);
-        $relatedPosts = array_filter($allPosts['posts'], function($p) use ($post) {
-            return $p['id'] != $post['id'];
+        // Lấy 4 bài, trừ bài hiện tại
+        $allPosts = $postModel->getAll(null, 'published', 4);
+        $relatedPosts = array_filter($allPosts, function($p) use ($post) {
+            return $p['post_id'] != $post['post_id'];
         });
         $relatedPosts = array_slice($relatedPosts, 0, 3);
         ?>
@@ -115,19 +113,22 @@ require_once PATH_MODEL . 'PostModel.php';
                     <?php foreach ($relatedPosts as $relatedPost): ?>
                         <div class="col-12 col-md-6 col-lg-4">
                             <article class="related-post-card">
-                                <a href="<?= BASE_URL ?>?action=post-detail&id=<?= $relatedPost['id'] ?>">
-                                    <img src="<?= htmlspecialchars($relatedPost['image']) ?>" alt="<?= htmlspecialchars($relatedPost['title']) ?>">
+                                <a href="<?= BASE_URL ?>?action=post-detail&id=<?= $relatedPost['post_id'] ?>">
+                                    <?php 
+                                        $imgSrc = !empty($relatedPost['thumbnail']) ? getProductImageUrl($relatedPost['thumbnail']) : BASE_URL . 'assets/images/default.jpg';
+                                    ?>
+                                    <img src="<?= htmlspecialchars($imgSrc) ?>" alt="<?= htmlspecialchars($relatedPost['title']) ?>">
                                 </a>
                                 <div class="related-post-card-body">
                                     <p class="related-post-card-date">
-                                        <i class="bi bi-calendar3 me-2"></i><?= htmlspecialchars($relatedPost['date']) ?>
+                                        <i class="bi bi-calendar3 me-2"></i><?= date('d/m/Y', strtotime($relatedPost['created_at'])) ?>
                                     </p>
                                     <h3 class="related-post-card-title">
-                                        <a href="<?= BASE_URL ?>?action=post-detail&id=<?= $relatedPost['id'] ?>" class="text-decoration-none text-dark">
+                                        <a href="<?= BASE_URL ?>?action=post-detail&id=<?= $relatedPost['post_id'] ?>" class="text-decoration-none text-dark">
                                             <?= htmlspecialchars($relatedPost['title']) ?>
                                         </a>
                                     </h3>
-                                    <a href="<?= BASE_URL ?>?action=post-detail&id=<?= $relatedPost['id'] ?>" class="related-post-card-link">
+                                    <a href="<?= BASE_URL ?>?action=post-detail&id=<?= $relatedPost['post_id'] ?>" class="related-post-card-link">
                                         Đọc thêm <i class="bi bi-arrow-right"></i>
                                     </a>
                                 </div>
