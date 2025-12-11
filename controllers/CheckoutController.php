@@ -158,21 +158,47 @@ class CheckoutController
         $isNewCustomer = false;
         $isVipCustomer = false;
         if ($userId) {
-            // Khách mới: chưa có đơn giao thành công
-            if (method_exists($this->orderModel, 'countDeliveredOrders')) {
-                $isNewCustomer = $this->orderModel->countDeliveredOrders((int)$userId) === 0;
-            }
+            try {
+                // Khách mới: chưa có đơn giao thành công
+                if (method_exists($this->orderModel, 'countDeliveredOrders')) {
+                    $isNewCustomer = $this->orderModel->countDeliveredOrders((int)$userId) === 0;
+                }
 
-            // Xét VIP: có đơn giao thành công với tổng tiền >= 2.000.000đ
-            $userRank = $this->userModel->getRank((int)$userId) ?? 'customer';
-            $hasVipOrder = method_exists($this->orderModel, 'hasDeliveredOrderOverAmount')
-                ? $this->orderModel->hasDeliveredOrderOverAmount((int)$userId, 2000000)
-                : false;
-            if ($hasVipOrder && $userRank !== 'VIP') {
-                $this->userModel->updateRank((int)$userId, 'VIP');
-                $userRank = 'VIP';
+                // Xét VIP: có đơn giao thành công với tổng tiền >= 2.000.000đ
+                $userRank = 'customer';
+                try {
+                    $userRank = $this->userModel->getRank((int)$userId) ?? 'customer';
+                } catch (Throwable $e) {
+                    error_log('Error getting user rank: ' . $e->getMessage());
+                    $userRank = 'customer';
+                }
+                
+                $hasVipOrder = false;
+                if (method_exists($this->orderModel, 'hasDeliveredOrderOverAmount')) {
+                    try {
+                        $hasVipOrder = $this->orderModel->hasDeliveredOrderOverAmount((int)$userId, 2000000);
+                    } catch (Throwable $e) {
+                        error_log('Error checking VIP order: ' . $e->getMessage());
+                        $hasVipOrder = false;
+                    }
+                }
+                
+                if ($hasVipOrder && $userRank !== 'VIP') {
+                    try {
+                        $this->userModel->updateRank((int)$userId, 'VIP');
+                        $userRank = 'VIP';
+                    } catch (Throwable $e) {
+                        error_log('Error updating user rank: ' . $e->getMessage());
+                        // Tiếp tục với rank hiện tại
+                    }
+                }
+                $isVipCustomer = ($userRank === 'VIP');
+            } catch (Throwable $e) {
+                // Nếu có lỗi khi kiểm tra user info, tiếp tục với giá trị mặc định
+                error_log('Error checking user info in checkout: ' . $e->getMessage());
+                $isNewCustomer = false;
+                $isVipCustomer = false;
             }
-            $isVipCustomer = ($userRank === 'VIP');
         }
         $total = 0;
         $items = [];
@@ -297,51 +323,62 @@ class CheckoutController
 
         // Kiểm tra mã giảm giá từ session trước
         if (isset($_SESSION['applied_coupon'])) {
-            $appliedCoupon = $_SESSION['applied_coupon'];
-            $check = $couponModel->validateCouponDetailed(
-                $appliedCoupon['code'],
-                $total,
-                $userId ? (int)$userId : null,
-                [],
-                [],
-                $isNewCustomer,
-                false,
-                $hasFlashSaleItem,
-                $isVipCustomer
-            );
-            if ($check['ok'] && $check['coupon'] && (int)$check['coupon']['coupon_id'] === (int)$appliedCoupon['id']) {
-                $discountAmount = $check['discount']['discount_amount'];
-                $finalTotal = $check['discount']['final_amount'];
-                $couponId = (int)$check['coupon']['coupon_id'];
-                // Lưu snapshot thông tin mã giảm giá
-                $couponCode = $check['coupon']['code'];
-                $couponName = $check['coupon']['name'];
-            } else {
-                // Mã không còn hợp lệ, xóa khỏi session
+            try {
+                $appliedCoupon = $_SESSION['applied_coupon'];
+                $check = $couponModel->validateCouponDetailed(
+                    $appliedCoupon['code'],
+                    $total,
+                    $userId ? (int)$userId : null,
+                    [],
+                    [],
+                    $isNewCustomer,
+                    false,
+                    $hasFlashSaleItem,
+                    $isVipCustomer
+                );
+                if ($check['ok'] && $check['coupon'] && (int)$check['coupon']['coupon_id'] === (int)$appliedCoupon['id']) {
+                    $discountAmount = $check['discount']['discount_amount'];
+                    $finalTotal = $check['discount']['final_amount'];
+                    $couponId = (int)$check['coupon']['coupon_id'];
+                    // Lưu snapshot thông tin mã giảm giá
+                    $couponCode = $check['coupon']['code'];
+                    $couponName = $check['coupon']['name'];
+                } else {
+                    // Mã không còn hợp lệ, xóa khỏi session
+                    unset($_SESSION['applied_coupon']);
+                }
+            } catch (Throwable $e) {
+                // Nếu có lỗi khi validate coupon, bỏ qua và tiếp tục không dùng coupon
+                error_log('Error validating coupon from session: ' . $e->getMessage());
                 unset($_SESSION['applied_coupon']);
             }
         }
         
         // Nếu không có từ session, kiểm tra từ POST
         if (!$couponId && !empty($_POST['coupon_id']) && !empty($_POST['applied_coupon_code'])) {
-            $check = $couponModel->validateCouponDetailed(
-                $_POST['applied_coupon_code'],
-                $total,
-                $userId ? (int)$userId : null,
-                [],
-                [],
-                $isNewCustomer,
-                false,
-                $hasFlashSaleItem,
-                $isVipCustomer
-            );
-            if ($check['ok'] && $check['coupon'] && (int)$check['coupon']['coupon_id'] === (int)$_POST['coupon_id']) {
-                $discountAmount = $check['discount']['discount_amount'];
-                $finalTotal = $check['discount']['final_amount'];
-                $couponId = (int)$check['coupon']['coupon_id'];
-                // Lưu snapshot thông tin mã giảm giá
-                $couponCode = $check['coupon']['code'];
-                $couponName = $check['coupon']['name'];
+            try {
+                $check = $couponModel->validateCouponDetailed(
+                    $_POST['applied_coupon_code'],
+                    $total,
+                    $userId ? (int)$userId : null,
+                    [],
+                    [],
+                    $isNewCustomer,
+                    false,
+                    $hasFlashSaleItem,
+                    $isVipCustomer
+                );
+                if ($check['ok'] && $check['coupon'] && (int)$check['coupon']['coupon_id'] === (int)$_POST['coupon_id']) {
+                    $discountAmount = $check['discount']['discount_amount'];
+                    $finalTotal = $check['discount']['final_amount'];
+                    $couponId = (int)$check['coupon']['coupon_id'];
+                    // Lưu snapshot thông tin mã giảm giá
+                    $couponCode = $check['coupon']['code'];
+                    $couponName = $check['coupon']['name'];
+                }
+            } catch (Throwable $e) {
+                // Nếu có lỗi khi validate coupon, bỏ qua và tiếp tục không dùng coupon
+                error_log('Error validating coupon from POST: ' . $e->getMessage());
             }
         }
         
@@ -469,35 +506,45 @@ class CheckoutController
                 
                 // Xóa khỏi database nếu user đã đăng nhập
                 if (isset($_SESSION['user']) && isset($_SESSION['user']['id'])) {
-                    require_once PATH_MODEL . 'CartModel.php';
-                    $cartModel = new CartModel();
-                    $userId = (int)$_SESSION['user']['id'];
-                    $cartId = $cartModel->getOrCreateCartIdByUserId($userId);
-                    
-                    if (!empty($selectedItems)) {
-                        foreach ($selectedItems as $cartKey) {
-                            $parts = explode('_', $cartKey);
-                            if (count($parts) >= 1) {
-                                $productId = (int)$parts[0];
-                                $size = ($parts[1] ?? 'null') !== 'null' ? $parts[1] : null;
-                                $color = ($parts[2] ?? 'null') !== 'null' ? $parts[2] : null;
-                                
-                                $variantId = null;
-                                if ($size || $color) {
-                                    require_once PATH_MODEL . 'ProductModel.php';
-                                    $productModel = new ProductModel();
-                                    $variant = $productModel->getVariantByValueNames($productId, $size, $color);
-                                    if ($variant) {
-                                        $variantId = (int)$variant['variant_id'];
+                    try {
+                        require_once PATH_MODEL . 'CartModel.php';
+                        $cartModel = new CartModel();
+                        $userId = (int)$_SESSION['user']['id'];
+                        $cartId = $cartModel->getOrCreateCartIdByUserId($userId);
+                        
+                        if (!empty($selectedItems)) {
+                            foreach ($selectedItems as $cartKey) {
+                                try {
+                                    $parts = explode('_', $cartKey);
+                                    if (count($parts) >= 1) {
+                                        $productId = (int)$parts[0];
+                                        $size = ($parts[1] ?? 'null') !== 'null' ? $parts[1] : null;
+                                        $color = ($parts[2] ?? 'null') !== 'null' ? $parts[2] : null;
+                                        
+                                        $variantId = null;
+                                        if ($size || $color) {
+                                            require_once PATH_MODEL . 'ProductModel.php';
+                                            $productModel = new ProductModel();
+                                            $variant = $productModel->getVariantByValueNames($productId, $size, $color);
+                                            if ($variant) {
+                                                $variantId = (int)$variant['variant_id'];
+                                            }
+                                        }
+                                        
+                                        $cartItemId = $cartModel->findCartItemIdByKey($cartId, $cartKey, $variantId);
+                                        if ($cartItemId) {
+                                            $cartModel->deleteItem($cartItemId);
+                                        }
                                     }
-                                }
-                                
-                                $cartItemId = $cartModel->findCartItemIdByKey($cartId, $cartKey, $variantId);
-                                if ($cartItemId) {
-                                    $cartModel->deleteItem($cartItemId);
+                                } catch (Throwable $e) {
+                                    // Log lỗi nhưng không dừng quá trình checkout
+                                    error_log('Error deleting cart item from DB (VNPay): ' . $e->getMessage());
                                 }
                             }
                         }
+                    } catch (Throwable $e) {
+                        // Log lỗi nhưng không dừng quá trình checkout
+                        error_log('Error deleting cart from DB (VNPay): ' . $e->getMessage());
                     }
                 }
                 
@@ -587,38 +634,48 @@ class CheckoutController
             
             // Xóa khỏi database nếu user đã đăng nhập
             if (isset($_SESSION['user']) && isset($_SESSION['user']['id'])) {
-                require_once PATH_MODEL . 'CartModel.php';
-                $cartModel = new CartModel();
-                $userId = (int)$_SESSION['user']['id'];
-                $cartId = $cartModel->getOrCreateCartIdByUserId($userId);
-                
-                if (!empty($selectedItems)) {
-                    foreach ($selectedItems as $cartKey) {
-                        // Parse cartKey để tìm cart_item_id
-                        $parts = explode('_', $cartKey);
-                        if (count($parts) >= 1) {
-                            $productId = (int)$parts[0];
-                            $size = ($parts[1] ?? 'null') !== 'null' ? $parts[1] : null;
-                            $color = ($parts[2] ?? 'null') !== 'null' ? $parts[2] : null;
-                            
-                            // Tìm variant_id
-                            $variantId = null;
-                            if ($size || $color) {
-                                require_once PATH_MODEL . 'ProductModel.php';
-                                $productModel = new ProductModel();
-                                $variant = $productModel->getVariantByValueNames($productId, $size, $color);
-                                if ($variant) {
-                                    $variantId = (int)$variant['variant_id'];
+                try {
+                    require_once PATH_MODEL . 'CartModel.php';
+                    $cartModel = new CartModel();
+                    $userId = (int)$_SESSION['user']['id'];
+                    $cartId = $cartModel->getOrCreateCartIdByUserId($userId);
+                    
+                    if (!empty($selectedItems)) {
+                        foreach ($selectedItems as $cartKey) {
+                            try {
+                                // Parse cartKey để tìm cart_item_id
+                                $parts = explode('_', $cartKey);
+                                if (count($parts) >= 1) {
+                                    $productId = (int)$parts[0];
+                                    $size = ($parts[1] ?? 'null') !== 'null' ? $parts[1] : null;
+                                    $color = ($parts[2] ?? 'null') !== 'null' ? $parts[2] : null;
+                                    
+                                    // Tìm variant_id
+                                    $variantId = null;
+                                    if ($size || $color) {
+                                        require_once PATH_MODEL . 'ProductModel.php';
+                                        $productModel = new ProductModel();
+                                        $variant = $productModel->getVariantByValueNames($productId, $size, $color);
+                                        if ($variant) {
+                                            $variantId = (int)$variant['variant_id'];
+                                        }
+                                    }
+                                    
+                                    // Tìm và xóa cart_item
+                                    $cartItemId = $cartModel->findCartItemIdByKey($cartId, $cartKey, $variantId);
+                                    if ($cartItemId) {
+                                        $cartModel->deleteItem($cartItemId);
+                                    }
                                 }
-                            }
-                            
-                            // Tìm và xóa cart_item
-                            $cartItemId = $cartModel->findCartItemIdByKey($cartId, $cartKey, $variantId);
-                            if ($cartItemId) {
-                                $cartModel->deleteItem($cartItemId);
+                            } catch (Throwable $e) {
+                                // Log lỗi nhưng không dừng quá trình checkout
+                                error_log('Error deleting cart item from DB: ' . $e->getMessage());
                             }
                         }
                     }
+                } catch (Throwable $e) {
+                    // Log lỗi nhưng không dừng quá trình checkout
+                    error_log('Error deleting cart from DB: ' . $e->getMessage());
                 }
             }
             
