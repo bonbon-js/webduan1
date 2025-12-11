@@ -76,7 +76,14 @@
             <!-- Form liên hệ -->
             <div class="col-lg-8">
                 <div class="contact-form-card p-4">
-                    <h3 class="fw-bold mb-4">Gửi Tin Nhắn</h3>
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3 class="fw-bold mb-0">Gửi Tin Nhắn</h3>
+                        <?php if (isset($_SESSION['user']) && (!isset($_SESSION['user']['role']) || $_SESSION['user']['role'] !== 'admin')): ?>
+                            <a href="<?= BASE_URL ?>?action=contact-history" class="btn btn-outline-dark btn-sm">
+                                <i class="bi bi-clock-history me-1"></i>Xem lịch sử
+                            </a>
+                        <?php endif; ?>
+                    </div>
                     <form id="contactForm" method="POST" action="<?= BASE_URL ?>?action=contact-submit">
                         <div class="row g-3">
                             <div class="col-md-6">

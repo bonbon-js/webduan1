@@ -96,6 +96,10 @@
                     <i class="bi bi-ticket-perforated"></i>
                     <span>Quản lý mã giảm giá</span>
                 </a>
+                <a href="<?= BASE_URL ?>?action=admin-contacts" class="nav-item <?= $isActive(['admin-contacts', 'admin-contact-show']) ?>">
+                    <i class="bi bi-envelope"></i>
+                    <span>Quản lý liên hệ</span>
+                </a>
             <div class="mt-4 pt-4 border-top">
                     <a href="<?= BASE_URL ?>" class="nav-item">
                         <i class="bi bi-box-arrow-up-right"></i>

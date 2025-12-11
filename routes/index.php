@@ -29,6 +29,7 @@ match ($action) {
     // Contact & Collection routes
     'contact'        => (new ContactController)->index(),
     'contact-submit' => (new ContactController)->submit(),
+    'contact-history' => (new ContactController)->history(),
     'collection'     => (new CollectionController)->index(),
     
     // Cart routes
@@ -151,6 +152,12 @@ match ($action) {
     'admin-return-reject' => (new AdminReturnController)->reject(),
     'admin-return-receive' => (new AdminReturnController)->receive(),
     'admin-return-refund' => (new AdminReturnController)->refund(),
+    
+    // Quản lý liên hệ (admin)
+    'admin-contacts' => (new AdminContactController)->index(),
+    'admin-contact-show' => (new AdminContactController)->show(),
+    'admin-contact-reply' => (new AdminContactController)->reply(),
+    'admin-contact-delete' => (new AdminContactController)->delete(),
     
     // Auth routes
     'show-login'         => (new AuthController)->showLogin(),

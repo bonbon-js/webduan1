@@ -27,7 +27,7 @@ SET time_zone = "+00:00";
 -- Cấu trúc bảng cho bảng `attributes`
 --
 
-CREATE TABLE `attributes` (
+CREATE TABLE IF NOT EXISTS `attributes` (
   `attribute_id` int(11) NOT NULL,
   `attribute_name` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -46,7 +46,7 @@ INSERT INTO `attributes` (`attribute_id`, `attribute_name`) VALUES
 -- Cấu trúc bảng cho bảng `attribute_values`
 --
 
-CREATE TABLE `attribute_values` (
+CREATE TABLE IF NOT EXISTS `attribute_values` (
   `value_id` int(11) NOT NULL,
   `attribute_id` int(11) NOT NULL,
   `value_name` varchar(100) NOT NULL
@@ -76,7 +76,7 @@ INSERT INTO `attribute_values` (`value_id`, `attribute_id`, `value_name`) VALUES
 -- Cấu trúc bảng cho bảng `carts`
 --
 
-CREATE TABLE `carts` (
+CREATE TABLE IF NOT EXISTS `carts` (
   `cart_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `created_at` datetime DEFAULT NULL,
@@ -97,7 +97,7 @@ INSERT INTO `carts` (`cart_id`, `user_id`, `created_at`, `updated_at`) VALUES
 -- Cấu trúc bảng cho bảng `cart_items`
 --
 
-CREATE TABLE `cart_items` (
+CREATE TABLE IF NOT EXISTS `cart_items` (
   `cart_item_id` int(11) NOT NULL,
   `cart_id` int(11) NOT NULL,
   `product_id` int(11) NOT NULL,
@@ -124,7 +124,7 @@ INSERT INTO `cart_items` (`cart_item_id`, `cart_id`, `product_id`, `variant_id`,
 -- Cấu trúc bảng cho bảng `categories`
 --
 
-CREATE TABLE `categories` (
+CREATE TABLE IF NOT EXISTS `categories` (
   `category_id` int(11) NOT NULL,
   `category_name` varchar(100) NOT NULL,
   `description` text DEFAULT NULL,
@@ -149,7 +149,7 @@ INSERT INTO `categories` (`category_id`, `category_name`, `description`, `create
 -- Cấu trúc bảng cho bảng `coupons`
 --
 
-CREATE TABLE `coupons` (
+CREATE TABLE IF NOT EXISTS `coupons` (
   `coupon_id` int(11) NOT NULL,
   `code` varchar(50) NOT NULL,
   `name` varchar(255) DEFAULT NULL,
@@ -172,7 +172,7 @@ CREATE TABLE `coupons` (
 -- Cấu trúc bảng cho bảng `coupon_usage`
 --
 
-CREATE TABLE `coupon_usage` (
+CREATE TABLE IF NOT EXISTS `coupon_usage` (
   `id` int(11) NOT NULL,
   `coupon_id` int(11) DEFAULT NULL,
   `user_id` int(11) DEFAULT NULL,
@@ -204,7 +204,7 @@ INSERT INTO `coupon_usage` (`id`, `coupon_id`, `user_id`, `order_id`, `discount_
 -- Cấu trúc bảng cho bảng `notifications`
 --
 
-CREATE TABLE `notifications` (
+CREATE TABLE IF NOT EXISTS `notifications` (
   `id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `type` varchar(50) NOT NULL,
@@ -253,7 +253,7 @@ INSERT INTO `notifications` (`id`, `user_id`, `type`, `title`, `content`, `actio
 -- Cấu trúc bảng cho bảng `orders`
 --
 
-CREATE TABLE `orders` (
+CREATE TABLE IF NOT EXISTS `orders` (
   `order_id` int(11) NOT NULL,
   `order_date` datetime DEFAULT NULL,
   `total_amount` decimal(10,2) DEFAULT NULL,
@@ -269,7 +269,7 @@ CREATE TABLE `orders` (
 -- Cấu trúc bảng cho bảng `orders_new`
 --
 
-CREATE TABLE `orders_new` (
+CREATE TABLE IF NOT EXISTS `orders_new` (
   `id` int(11) NOT NULL,
   `order_code` varchar(50) DEFAULT NULL,
   `user_id` int(11) DEFAULT NULL,
@@ -332,7 +332,7 @@ INSERT INTO `orders_new` (`id`, `order_code`, `user_id`, `fullname`, `email`, `p
 -- Cấu trúc bảng cho bảng `order_details`
 --
 
-CREATE TABLE `order_details` (
+CREATE TABLE IF NOT EXISTS `order_details` (
   `detail_id` int(11) NOT NULL,
   `order_id` int(11) DEFAULT NULL,
   `product_id` int(11) DEFAULT NULL,
@@ -347,7 +347,7 @@ CREATE TABLE `order_details` (
 -- Cấu trúc bảng cho bảng `order_items`
 --
 
-CREATE TABLE `order_items` (
+CREATE TABLE IF NOT EXISTS `order_items` (
   `id` int(11) NOT NULL,
   `order_id` int(11) DEFAULT NULL,
   `product_id` int(11) DEFAULT NULL,
@@ -444,7 +444,7 @@ INSERT INTO `order_items` (`id`, `order_id`, `product_id`, `product_name`, `vari
 -- Cấu trúc bảng cho bảng `password_resets`
 --
 
-CREATE TABLE `password_resets` (
+CREATE TABLE IF NOT EXISTS `password_resets` (
   `reset_id` int(11) NOT NULL,
   `user_id` int(11) DEFAULT NULL,
   `token` varchar(255) DEFAULT NULL,
@@ -469,7 +469,7 @@ INSERT INTO `password_resets` (`reset_id`, `user_id`, `token`, `otp_code`, `expi
 -- Cấu trúc bảng cho bảng `posts`
 --
 
-CREATE TABLE `posts` (
+CREATE TABLE IF NOT EXISTS `posts` (
   `post_id` int(11) NOT NULL,
   `user_id` int(11) DEFAULT NULL,
   `title` varchar(200) DEFAULT NULL,
@@ -500,7 +500,7 @@ INSERT INTO `posts` (`post_id`, `user_id`, `title`, `excerpt`, `slug`, `content`
 -- Cấu trúc bảng cho bảng `products`
 --
 
-CREATE TABLE `products` (
+CREATE TABLE IF NOT EXISTS `products` (
   `product_id` int(11) NOT NULL,
   `product_name` varchar(150) DEFAULT NULL,
   `description` text DEFAULT NULL,
@@ -542,7 +542,7 @@ INSERT INTO `products` (`product_id`, `product_name`, `description`, `price`, `o
 -- Cấu trúc bảng cho bảng `product_attribute_values`
 --
 
-CREATE TABLE `product_attribute_values` (
+CREATE TABLE IF NOT EXISTS `product_attribute_values` (
   `id` int(11) NOT NULL,
   `product_id` int(11) DEFAULT NULL,
   `variant_id` int(11) DEFAULT NULL,
@@ -691,7 +691,7 @@ INSERT INTO `product_attribute_values` (`id`, `product_id`, `variant_id`, `value
 -- Cấu trúc bảng cho bảng `product_images`
 --
 
-CREATE TABLE `product_images` (
+CREATE TABLE IF NOT EXISTS `product_images` (
   `image_id` int(11) NOT NULL,
   `product_id` int(11) DEFAULT NULL,
   `image_url` varchar(255) DEFAULT NULL,
@@ -763,7 +763,7 @@ INSERT INTO `product_images` (`image_id`, `product_id`, `image_url`, `is_primary
 -- Cấu trúc bảng cho bảng `product_variants`
 --
 
-CREATE TABLE `product_variants` (
+CREATE TABLE IF NOT EXISTS `product_variants` (
   `variant_id` int(11) NOT NULL,
   `product_id` int(11) DEFAULT NULL,
   `sku` varchar(50) DEFAULT NULL,
@@ -839,7 +839,7 @@ INSERT INTO `product_variants` (`variant_id`, `product_id`, `sku`, `additional_p
 -- Cấu trúc bảng cho bảng `return_requests`
 --
 
-CREATE TABLE `return_requests` (
+CREATE TABLE IF NOT EXISTS `return_requests` (
   `id` int(11) NOT NULL,
   `order_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
@@ -873,7 +873,7 @@ INSERT INTO `return_requests` (`id`, `order_id`, `user_id`, `reason`, `note`, `i
 -- Cấu trúc bảng cho bảng `reviews`
 --
 
-CREATE TABLE `reviews` (
+CREATE TABLE IF NOT EXISTS `reviews` (
   `review_id` int(11) NOT NULL,
   `order_id` int(11) DEFAULT NULL,
   `order_item_id` int(11) DEFAULT NULL,
@@ -908,7 +908,7 @@ INSERT INTO `reviews` (`review_id`, `order_id`, `order_item_id`, `user_id`, `pro
 -- Cấu trúc bảng cho bảng `users`
 --
 
-CREATE TABLE `users` (
+CREATE TABLE IF NOT EXISTS `users` (
   `user_id` int(11) NOT NULL,
   `full_name` varchar(100) DEFAULT NULL,
   `email` varchar(100) DEFAULT NULL,
@@ -943,7 +943,7 @@ INSERT INTO `users` (`user_id`, `full_name`, `email`, `password`, `phone`, `addr
 -- Cấu trúc bảng cho bảng `user_addresses`
 --
 
-CREATE TABLE `user_addresses` (
+CREATE TABLE IF NOT EXISTS `user_addresses` (
   `address_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `fullname` varchar(255) NOT NULL,
@@ -1277,6 +1277,29 @@ ALTER TABLE `products`
 --
 ALTER TABLE `user_addresses`
   ADD CONSTRAINT `user_addresses_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `contacts`
+--
+
+CREATE TABLE IF NOT EXISTS `contacts` (
+  `contact_id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `phone` varchar(50) DEFAULT NULL,
+  `subject` varchar(255) DEFAULT NULL,
+  `message` text NOT NULL,
+  `status` enum('pending','read','replied') DEFAULT 'pending',
+  `admin_reply` text DEFAULT NULL,
+  `replied_at` datetime DEFAULT NULL,
+  `replied_by` int(11) DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`contact_id`),
+  KEY `idx_status` (`status`),
+  KEY `idx_created_at` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
