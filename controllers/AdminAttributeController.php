@@ -26,15 +26,26 @@ class AdminAttributeController
         $this->requireAdmin();
 
         $name = trim($_POST['name'] ?? '');
+        $initialValue = trim($_POST['initial_value_name'] ?? '');
         if ($name === '') {
             set_flash('danger', 'Tên thuộc tính không được để trống.');
             header('Location: ' . BASE_URL . '?action=admin-attributes');
             exit;
         }
+        if ($initialValue === '') {
+            set_flash('danger', 'Vui lòng nhập ít nhất một giá trị cho thuộc tính.');
+            header('Location: ' . BASE_URL . '?action=admin-attributes');
+            exit;
+        }
 
         try {
-            $this->attributeModel->createAttribute($name);
-            set_flash('success', 'Đã thêm thuộc tính.');
+            if (method_exists($this->attributeModel, 'attributeExists') && $this->attributeModel->attributeExists($name)) {
+                set_flash('danger', 'Thuộc tính này đã có rồi.');
+            } else {
+                $attrId = $this->attributeModel->createAttribute($name);
+                $this->attributeModel->createValue($attrId, $initialValue);
+                set_flash('success', 'Đã thêm thuộc tính và giá trị đầu tiên.');
+            }
         } catch (Throwable $exception) {
             set_flash('danger', 'Không thể thêm thuộc tính: ' . $exception->getMessage());
         }
@@ -57,8 +68,12 @@ class AdminAttributeController
         }
 
         try {
-            $this->attributeModel->updateAttribute($id, $name);
-            set_flash('success', 'Đã cập nhật thuộc tính.');
+            if (method_exists($this->attributeModel, 'attributeExistsExcept') && $this->attributeModel->attributeExistsExcept($name, $id)) {
+                set_flash('danger', 'Thuộc tính này đã có rồi.');
+            } else {
+                $this->attributeModel->updateAttribute($id, $name);
+                set_flash('success', 'Đã cập nhật thuộc tính.');
+            }
         } catch (Throwable $exception) {
             set_flash('danger', 'Không thể cập nhật: ' . $exception->getMessage());
         }
@@ -103,8 +118,22 @@ class AdminAttributeController
         }
 
         try {
-            $this->attributeModel->createValue($attributeId, $valueName);
-            set_flash('success', 'Đã thêm giá trị.');
+            // Kiểm tra trùng trước khi tạo
+            $exists = false;
+            try {
+                $stmt = (new AttributeModel())->getValuesByAttribute($attributeId);
+                foreach ($stmt as $row) {
+                    if (mb_strtolower(trim($row['value_name'])) === mb_strtolower(trim($valueName))) {
+                        $exists = true; break;
+                    }
+                }
+            } catch (Throwable $e) {}
+            if ($exists) {
+                set_flash('danger', 'Giá trị này đã có rồi.');
+            } else {
+                $this->attributeModel->createValue($attributeId, $valueName);
+                set_flash('success', 'Đã thêm giá trị.');
+            }
         } catch (Throwable $exception) {
             set_flash('danger', 'Không thể thêm giá trị: ' . $exception->getMessage());
         }

@@ -79,6 +79,10 @@
                 <label class="modal-label-strong">Tên thuộc tính</label>
                 <input type="text" name="name" id="modalAttributeName" class="form-control" required placeholder="Ví dụ: Size, Màu sắc">
             </div>
+            <div class="modal-field" id="initialValueField">
+                <label class="modal-label-strong">Giá trị đầu tiên</label>
+                <input type="text" name="initial_value_name" id="modalInitialValueName" class="form-control" required placeholder="Ví dụ: S hoặc Đỏ">
+            </div>
             <div class="modal-actions">
                 <button type="button" class="btn-cancel" onclick="closeAttributeModal()">Hủy</button>
                 <button type="submit" class="btn-submit">Lưu</button>
@@ -112,6 +116,8 @@ function showAddAttributeModal() {
     document.getElementById('attributeForm').action = '<?= BASE_URL ?>?action=admin-attribute-store';
     document.getElementById('modalAttributeId').value = '';
     document.getElementById('modalAttributeName').value = '';
+    document.getElementById('modalInitialValueName').value = '';
+    document.getElementById('initialValueField').style.display = 'block';
     document.getElementById('attributeModal').classList.add('active');
 }
 
@@ -120,6 +126,7 @@ function showEditAttributeModal(id, name) {
     document.getElementById('attributeForm').action = '<?= BASE_URL ?>?action=admin-attribute-update';
     document.getElementById('modalAttributeId').value = id;
     document.getElementById('modalAttributeName').value = name;
+    document.getElementById('initialValueField').style.display = 'none';
     document.getElementById('attributeModal').classList.add('active');
 }
 
