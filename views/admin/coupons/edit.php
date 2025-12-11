@@ -63,16 +63,16 @@
             </div>
             <div class="col-md-6">
                 <label class="form-label">Giá trị giảm <span class="text-danger">*</span></label>
-                <input type="number" name="discount_value" class="form-control" min="0" step="0.01" required value="<?= htmlspecialchars(($formData['discount_value'] ?? $coupon['discount_value']) ?? 0) ?>">
+                <input type="number" name="discount_value" class="form-control" min="0" step="0.01" required value="<?= intval(($formData['discount_value'] ?? $coupon['discount_value']) ?? 0) ?>">
             </div>
             <div class="col-md-6">
                 <label class="form-label">Đơn hàng tối thiểu (VNĐ)</label>
-                <input type="number" name="min_order_amount" class="form-control" min="0" step="1000" value="<?= htmlspecialchars(($formData['min_order_amount'] ?? $coupon['min_order_amount']) ?? 0) ?>">
+                <input type="number" name="min_order_amount" class="form-control" min="0" step="1000" value="<?= intval(($formData['min_order_amount'] ?? $coupon['min_order_amount']) ?? 0) ?>">
                 <small class="text-muted">Nếu để 0: áp dụng mọi đơn.</small>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Giảm tối đa (VNĐ) - chỉ áp dụng %</label>
-                <input type="number" name="max_discount_amount" id="maxDiscountAmount" class="form-control" min="0" step="1000" value="<?= htmlspecialchars(($formData['max_discount_amount'] ?? $coupon['max_discount_amount']) ?? '') ?>">
+                <input type="number" name="max_discount_amount" id="maxDiscountAmount" class="form-control" min="0" step="1000" value="<?= ($formData['max_discount_amount'] ?? $coupon['max_discount_amount'] ?? '') !== '' ? intval($formData['max_discount_amount'] ?? $coupon['max_discount_amount'] ?? 0) : '' ?>">
             </div>
             <div class="col-md-6">
                 <label class="form-label">Ngày bắt đầu <span class="text-danger">*</span></label>
