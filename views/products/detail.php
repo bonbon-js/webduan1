@@ -167,7 +167,17 @@
                     <label for="productQuantity">Số lượng</label>
                     <div class="quantity-input-group">
                         <button type="button" onclick="changeQuantity(-1)" aria-label="Giảm số lượng">-</button>
-                        <input type="number" id="productQuantity" name="quantity" value="1" min="1" max="999" aria-label="Số lượng sản phẩm" onchange="validateQuantity(this)">
+                        <input type="text" 
+                               inputmode="numeric" 
+                               pattern="[0-9]*"
+                               id="productQuantity" 
+                               name="quantity" 
+                               value="1" 
+                               class="form-control text-center" 
+                               aria-label="Số lượng sản phẩm" 
+                               onkeydown="if(!event.ctrlKey && !event.altKey && !event.metaKey && event.key.length === 1 && (event.key < '0' || event.key > '9')){ event.preventDefault(); this.value = '1'; }"
+                               oninput="this.value = this.value.replace(/[^0-9]/g, ''); if(parseInt(this.value) > 999) this.value = '999';"
+                               onchange="validateQuantity(this)">
                         <button type="button" onclick="changeQuantity(1)" aria-label="Tăng số lượng">+</button>
                     </div>
                 </div>
