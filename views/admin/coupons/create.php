@@ -57,7 +57,7 @@
         </div>
         <div class="col-md-6">
             <label class="form-label">Giá trị giảm <span class="text-danger">*</span></label>
-            <input type="number" name="discount_value" class="form-control" min="0" step="0.01" required placeholder="10 hoặc 50000" value="<?= htmlspecialchars($formData['discount_value'] ?? '') ?>">
+            <input type="number" name="discount_value" class="form-control" min="0" step="0.01" required placeholder="10% hoặc 100%" value="<?= htmlspecialchars($formData['discount_value'] ?? '') ?>">
         </div>
         <div class="col-md-6">
             <label class="form-label">Đơn hàng tối thiểu (VNĐ)</label>

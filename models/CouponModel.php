@@ -315,7 +315,7 @@ class CouponModel extends BaseModel
         }
         
         if ($keyword) {
-            $sql .= " AND (code LIKE :keyword OR name LIKE :keyword OR description LIKE :keyword)";
+            $sql .= " AND (code LIKE :keyword OR name LIKE :keyword)";
             $params['keyword'] = '%' . $keyword . '%';
         }
         
@@ -444,7 +444,7 @@ class CouponModel extends BaseModel
                 'id' => $coupon['coupon_id'],
                 'code' => $coupon['code'],
                 'name' => $coupon['name'],
-                'description' => $coupon['description'],
+                'description' => null,
                 'discount_type' => $coupon['discount_type'],
                 'discount_value' => $coupon['discount_value'],
                 'min_order_amount' => $coupon['min_order_amount'],
@@ -519,23 +519,16 @@ class CouponModel extends BaseModel
         }
         
         $sql = "INSERT INTO {$this->table} 
-                (code, name, description, discount_type, discount_value, min_order_amount, 
-                 max_discount_amount, start_date, end_date, usage_limit, per_user_limit,
-                 apply_scope, apply_product_ids, apply_category_ids,
-                 require_login, new_customer_only, exclude_sale_items, exclude_other_coupons,
-                 customer_group, return_on_refund, status) 
+                (code, name, discount_type, discount_value, min_order_amount, 
+                 max_discount_amount, start_date, end_date, usage_limit, status) 
                 VALUES 
-                (:code, :name, :description, :discount_type, :discount_value, :min_order_amount, 
-                 :max_discount_amount, :start_date, :end_date, :usage_limit, :per_user_limit,
-                 :apply_scope, :apply_product_ids, :apply_category_ids,
-                 :require_login, :new_customer_only, :exclude_sale_items, :exclude_other_coupons,
-                 :customer_group, :return_on_refund, :status)";
+                (:code, :name, :discount_type, :discount_value, :min_order_amount, 
+                 :max_discount_amount, :start_date, :end_date, :usage_limit, :status)";
         
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([
             'code' => strtoupper(trim($data['code'])),
             'name' => $data['name'],
-            'description' => $data['description'] ?? null,
             'discount_type' => $data['discount_type'],
             'discount_value' => $data['discount_value'],
             'min_order_amount' => $data['min_order_amount'] ?? 0,
@@ -543,16 +536,6 @@ class CouponModel extends BaseModel
             'start_date' => $data['start_date'],
             'end_date' => $data['end_date'],
             'usage_limit' => $data['usage_limit'] ?? null,
-            'per_user_limit' => $data['per_user_limit'] ?? null,
-            'apply_scope' => $data['apply_scope'] ?? 'all',
-            'apply_product_ids' => $data['apply_product_ids'] ?? null,
-            'apply_category_ids' => $data['apply_category_ids'] ?? null,
-            'require_login' => $data['require_login'] ?? 0,
-            'new_customer_only' => $data['new_customer_only'] ?? 0,
-            'exclude_sale_items' => $data['exclude_sale_items'] ?? 0,
-            'exclude_other_coupons' => $data['exclude_other_coupons'] ?? 0,
-            'customer_group' => $data['customer_group'] ?? null,
-            'return_on_refund' => $data['return_on_refund'] ?? 0,
             'status' => $data['status'] ?? 'active',
         ]);
         
@@ -574,7 +557,6 @@ class CouponModel extends BaseModel
         $sql = "UPDATE {$this->table} SET 
                 code = :code,
                 name = :name,
-                description = :description,
                 discount_type = :discount_type,
                 discount_value = :discount_value,
                 min_order_amount = :min_order_amount,
@@ -582,16 +564,6 @@ class CouponModel extends BaseModel
                 start_date = :start_date,
                 end_date = :end_date,
                 usage_limit = :usage_limit,
-                per_user_limit = :per_user_limit,
-                apply_scope = :apply_scope,
-                apply_product_ids = :apply_product_ids,
-                apply_category_ids = :apply_category_ids,
-                require_login = :require_login,
-                new_customer_only = :new_customer_only,
-                exclude_sale_items = :exclude_sale_items,
-                exclude_other_coupons = :exclude_other_coupons,
-                customer_group = :customer_group,
-                return_on_refund = :return_on_refund,
                 status = :status
                 WHERE coupon_id = :coupon_id";
         
@@ -600,7 +572,6 @@ class CouponModel extends BaseModel
             'coupon_id' => $couponId,
             'code' => strtoupper(trim($data['code'])),
             'name' => $data['name'],
-            'description' => $data['description'] ?? null,
             'discount_type' => $data['discount_type'],
             'discount_value' => $data['discount_value'],
             'min_order_amount' => $data['min_order_amount'] ?? 0,
@@ -608,16 +579,6 @@ class CouponModel extends BaseModel
             'start_date' => $data['start_date'],
             'end_date' => $data['end_date'],
             'usage_limit' => $data['usage_limit'] ?? null,
-            'per_user_limit' => $data['per_user_limit'] ?? null,
-            'apply_scope' => $data['apply_scope'] ?? 'all',
-            'apply_product_ids' => $data['apply_product_ids'] ?? null,
-            'apply_category_ids' => $data['apply_category_ids'] ?? null,
-            'require_login' => $data['require_login'] ?? 0,
-            'new_customer_only' => $data['new_customer_only'] ?? 0,
-            'exclude_sale_items' => $data['exclude_sale_items'] ?? 0,
-            'exclude_other_coupons' => $data['exclude_other_coupons'] ?? 0,
-            'customer_group' => $data['customer_group'] ?? null,
-            'return_on_refund' => $data['return_on_refund'] ?? 0,
             'status' => $data['status'] ?? 'active',
         ]);
     }

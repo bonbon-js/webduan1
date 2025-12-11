@@ -1005,6 +1005,12 @@ ALTER TABLE `coupons`
   ADD UNIQUE KEY `code` (`code`);
 
 --
+-- Thêm cột deleted_at cho soft delete (thùng rác)
+--
+ALTER TABLE `coupons`
+  ADD COLUMN `deleted_at` datetime DEFAULT NULL AFTER `updated_at`;
+
+--
 -- Chỉ mục cho bảng `coupon_usage`
 --
 ALTER TABLE `coupon_usage`

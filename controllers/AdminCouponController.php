@@ -123,11 +123,11 @@ class AdminCouponController
         }
 
         if ($data['discount_type'] === 'percentage') {
-            if ($data['discount_value'] <= 0) {
-                $errors[] = 'Giá trị % phải lớn hơn 0.';
+            if ($data['discount_value'] < 10) {
+                $errors[] = 'Giá trị % phải từ 10% đến 100%.';
             }
             if ($data['discount_value'] > 100) {
-                $errors[] = 'Giá trị % không được vượt quá 100.';
+                $errors[] = 'Giá trị % không được vượt quá 100%.';
             }
         } else {
             // Cố định tiền: không dùng max_discount_amount
@@ -171,6 +171,11 @@ class AdminCouponController
 
         // Đảm bảo KHÔNG có id trong data
         unset($data['id'], $data['coupon_id'], $data['couponId']);
+        // Xóa các trường không tồn tại trong database
+        unset($data['description'], $data['per_user_limit'], $data['apply_scope'], 
+              $data['apply_product_ids'], $data['apply_category_ids'], $data['require_login'],
+              $data['new_customer_only'], $data['exclude_sale_items'], $data['exclude_other_coupons'],
+              $data['customer_group'], $data['return_on_refund']);
         
         try {
             $couponId = $this->couponModel->create($data);
@@ -246,11 +251,11 @@ class AdminCouponController
         }
 
         if ($data['discount_type'] === 'percentage') {
-            if ($data['discount_value'] <= 0) {
-                $errors[] = 'Giá trị % phải lớn hơn 0.';
+            if ($data['discount_value'] < 10) {
+                $errors[] = 'Giá trị % phải từ 10% đến 100%.';
             }
             if ($data['discount_value'] > 100) {
-                $errors[] = 'Giá trị % không được vượt quá 100.';
+                $errors[] = 'Giá trị % không được vượt quá 100%.';
             }
         } else {
             // Cố định tiền: không dùng max_discount_amount
@@ -320,6 +325,11 @@ class AdminCouponController
             // vì thông tin mã giảm giá (code, name, discount_amount) đã được lưu snapshot
             // vào bảng orders tại thời điểm đặt hàng (coupon_code, coupon_name, discount_amount).
             // Các đơn hàng đã đặt sẽ luôn hiển thị thông tin mã giảm giá tại thời điểm đặt hàng.
+            // Xóa các trường không tồn tại trong database
+            unset($data['description'], $data['per_user_limit'], $data['apply_scope'], 
+                  $data['apply_product_ids'], $data['apply_category_ids'], $data['require_login'],
+                  $data['new_customer_only'], $data['exclude_sale_items'], $data['exclude_other_coupons'],
+                  $data['customer_group'], $data['return_on_refund']);
             $this->couponModel->update($couponId, $data);
             set_flash('success', 'Cập nhật mã giảm giá thành công.');
         } catch (Throwable $exception) {
@@ -350,14 +360,16 @@ class AdminCouponController
                 exit;
             }
 
-            // Nếu mã đã có lượt sử dụng, không cho xóa – chuyển sang ngừng hoạt động
-            if (!empty($coupon['used_count']) && (int)$coupon['used_count'] > 0) {
-                $this->couponModel->update($couponId, array_merge($coupon, ['status' => 'inactive']));
-                set_flash('warning', 'Mã đã có lượt sử dụng, chuyển sang trạng thái ngừng hoạt động.');
-            } else {
-            $this->couponModel->delete($couponId);
-            set_flash('success', 'Xóa mã giảm giá thành công.');
+            // Kiểm tra nếu mã đã bị xóa (trong thùng rác)
+            if (!empty($coupon['deleted_at'])) {
+                set_flash('warning', 'Mã giảm giá đã được xóa vào thùng rác.');
+                header('Location: ' . BASE_URL . '?action=admin-coupons');
+                exit;
             }
+
+            // Luôn soft delete (cho vào thùng rác) thay vì xóa vĩnh viễn
+            $this->couponModel->delete($couponId);
+            set_flash('success', 'Đã xóa mã giảm giá vào thùng rác.');
         } catch (Throwable $exception) {
             set_flash('danger', 'Không thể xóa: ' . $exception->getMessage());
         }

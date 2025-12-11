@@ -275,7 +275,7 @@
                                    required 
                                    min="0" 
                                    step="0.01"
-                                   placeholder="10 hoặc 50000">
+                                   placeholder="10% hoặc 100%">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Đơn hàng tối thiểu (VNĐ)</label>
