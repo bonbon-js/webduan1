@@ -145,7 +145,20 @@
     <?php if ($flash): ?>
         <div class="container mt-3">
             <div class="alert alert-<?= htmlspecialchars($flash['type']) ?>">
-                <?= htmlspecialchars($flash['message']) ?>
+                <?php
+                $message = htmlspecialchars($flash['message']);
+                // Nếu có order_id trong flash data, thay "tại đây" bằng link
+                if (!empty($flash['data']['order_id'])) {
+                    $orderId = (int)$flash['data']['order_id'];
+                    $orderDetailUrl = BASE_URL . '?action=order-detail&id=' . $orderId;
+                    $message = str_replace(
+                        'tại đây',
+                        '<a href="' . htmlspecialchars($orderDetailUrl) . '" class="alert-link fw-bold">tại đây</a>',
+                        $message
+                    );
+                }
+                echo $message;
+                ?>
             </div>
         </div>
     <?php endif; ?>

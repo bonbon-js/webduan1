@@ -39,11 +39,12 @@ if (!function_exists('upload_file')) {
  * Flash message: lưu 1 lần
  */
 if (!function_exists('set_flash')) {
-    function set_flash(string $type, string $message): void
+    function set_flash(string $type, string $message, array $data = []): void
     {
         $_SESSION['flash'] = [
             'type'    => $type,
             'message' => $message,
+            'data'    => $data,
         ];
     }
 }

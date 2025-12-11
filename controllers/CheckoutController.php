@@ -622,7 +622,7 @@ class CheckoutController
                 }
             }
             
-            set_flash('success', 'Đặt hàng thành công! Chúng tôi sẽ liên hệ để xác nhận. Bạn có thể theo dõi trạng thái đơn hàng tại đây.');
+            set_flash('success', 'Đặt hàng thành công! Chúng tôi sẽ liên hệ để xác nhận. Bạn có thể theo dõi trạng thái đơn hàng tại đây.', ['order_id' => $orderId]);
             
             // Kiểm tra nếu là AJAX request thì trả về JSON
             $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
