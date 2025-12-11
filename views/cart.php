@@ -90,8 +90,22 @@
                                         </div>
                                     </td>
                                     <td><?= number_format($item['price'], 0, ',', '.') ?><span style="vertical-align: baseline; margin-left: 2px;">đ</span></td>
-                                    <td>
-                                        <span class="qty-display"><?= $item['quantity'] ?></span>
+                                    <td style="width: 120px;">
+                                        <div class="d-flex align-items-center justify-content-center mx-auto" style="border: 1px solid #e0e0e0; width: fit-content;">
+                                            <button class="btn btn-link text-dark text-decoration-none p-0 rounded-0 d-flex align-items-center justify-content-center" 
+                                                    type="button" 
+                                                    style="width: 30px; height: 32px; border-right: 1px solid #e0e0e0;" 
+                                                    onclick="updateQty('<?= htmlspecialchars($cartKey) ?>', -1)">-</button>
+                                            <input type="number" class="form-control text-center qty-input border-0 rounded-0 shadow-none p-0" 
+                                                   value="<?= $item['quantity'] ?>" min="1" 
+                                                   style="width: 40px; height: 32px; font-weight: 500;"
+                                                   onchange="updateQtyManual('<?= htmlspecialchars($cartKey) ?>', this)" 
+                                                   data-original-qty="<?= $item['quantity'] ?>">
+                                            <button class="btn btn-link text-dark text-decoration-none p-0 rounded-0 d-flex align-items-center justify-content-center" 
+                                                    type="button" 
+                                                    style="width: 30px; height: 32px; border-left: 1px solid #e0e0e0;" 
+                                                    onclick="updateQty('<?= htmlspecialchars($cartKey) ?>', 1)">+</button>
+                                        </div>
                                     </td>
                                     <td class="fw-bold"><?= number_format($item['price'] * $item['quantity'], 0, ',', '.') ?><span style="vertical-align: baseline; margin-left: 2px;">đ</span></td>
                                     <td>
@@ -236,21 +250,14 @@
 function updateQty(cartKey, change) {
     const row = document.querySelector(`tr[data-cart-key="${cartKey}"]`);
     const input = row.querySelector('.qty-input');
-    const originalQty = parseInt(row.dataset.itemQuantity) || parseInt(input.value);
-    let newQty = parseInt(input.value) + change;
+    let currentQty = parseInt(input.value);
+    if (isNaN(currentQty)) currentQty = 1;
     
-    // Không cho phép tăng số lượng
-    if (change > 0) {
-        alert('Bạn không thể tăng số lượng sản phẩm. Chỉ có thể giảm số lượng.');
-        return;
-    }
+    let newQty = currentQty + change;
     
     if (newQty < 1) return;
-    if (newQty > originalQty) {
-        // Đảm bảo không vượt quá số lượng ban đầu
-        newQty = originalQty;
-        input.value = originalQty;
-    }
+    
+    input.value = newQty;
     
     // Gọi API cập nhật
     fetch('<?= BASE_URL ?>?action=cart-update', {
@@ -266,67 +273,42 @@ function updateQty(cartKey, change) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Cập nhật giá trị input số lượng
-            input.value = newQty;
-            
             // Cập nhật data attributes và tổng tiền
-            // Đảm bảo lấy giá đúng từ data attribute (loại bỏ các ký tự không phải số nếu có)
             const itemPrice = parseFloat(row.dataset.itemPrice) || 0;
-            if (isNaN(itemPrice) || itemPrice <= 0) {
-                console.error('Invalid item price:', row.dataset.itemPrice);
-                return;
-            }
             const itemTotal = itemPrice * newQty;
             row.dataset.itemQuantity = newQty;
             row.dataset.itemTotal = itemTotal;
             
-            // Cập nhật hiển thị tổng tiền của item (cột thứ 5: Checkbox, Sản phẩm, Giá, Số lượng, Tổng, Xóa)
+            // Cập nhật hiển thị tổng tiền của item
             const totalCell = row.querySelector('td:nth-child(5)');
             if (totalCell) {
                 totalCell.innerHTML = formatCurrency(itemTotal);
             }
             
-            // Cập nhật tổng tiền nếu item được chọn
-            const checkbox = row.querySelector('.cart-item-checkbox');
-            if (checkbox && checkbox.checked) {
-                updateBuyTotal();
-            } else {
-                // Nếu không được chọn, vẫn cập nhật tổng tiền để đồng bộ
-                updateBuyTotal();
+            updateBuyTotal();
+            if (typeof updateCartCount === 'function') {
+                updateCartCount();
             }
         } else {
-            // Hiển thị thông báo lỗi chi tiết
             const errorMsg = data.message || 'Có lỗi xảy ra khi cập nhật số lượng';
             alert(errorMsg);
             
-            // Nếu có thông tin về stock, tự động điều chỉnh số lượng
             if (data.available_stock !== undefined) {
                 const availableStock = parseInt(data.available_stock);
                 if (availableStock > 0) {
                     input.value = availableStock;
-                    // Cập nhật lại với số lượng đã điều chỉnh bằng cách gọi API trực tiếp
-                    fetch('<?= BASE_URL ?>?action=cart-update', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ cart_key: cartKey, quantity: availableStock })
-                    }).then(r => r.json()).then(d => {
-                        if (d.success) {
-                            location.reload(); // Reload để đồng bộ
-                        }
-                    });
+                    updateQtyManual(cartKey, input); // Gọi lại để update về max stock
                 } else {
-                    // Khôi phục giá trị cũ nếu hết hàng
-                    input.value = Math.max(1, parseInt(input.value) - change);
+                    input.value = currentQty;
                 }
             } else {
-                // Khôi phục giá trị cũ nếu có lỗi
-                input.value = Math.max(1, parseInt(input.value) - change);
+                input.value = currentQty;
             }
         }
     })
     .catch(err => {
         console.error('Error:', err);
-        alert('Có lỗi xảy ra khi cập nhật số lượng');
+        input.value = currentQty;
     });
 }
 
@@ -334,18 +316,11 @@ function updateQty(cartKey, change) {
 function updateQtyManual(cartKey, input) {
     let newQty = parseInt(input.value);
     const row = document.querySelector(`tr[data-cart-key="${cartKey}"]`);
-    const originalQty = parseInt(row.dataset.itemQuantity) || parseInt(input.value);
+    // const originalQty = parseInt(row.dataset.itemQuantity) || parseInt(input.value);
     
-    // Validate input - không cho phép tăng số lượng, chỉ cho phép giảm
     if (isNaN(newQty) || newQty < 1) {
         input.value = 1;
         newQty = 1;
-    } else if (newQty > originalQty) {
-        // Nếu số lượng nhập vào lớn hơn số lượng ban đầu, đặt lại bằng số lượng ban đầu
-        input.value = originalQty;
-        newQty = originalQty;
-        alert('Bạn không thể tăng số lượng sản phẩm. Chỉ có thể giảm số lượng.');
-        return;
     }
     
     // Call API to update
@@ -376,6 +351,9 @@ function updateQtyManual(cartKey, input) {
             
             // Update buy total if item is selected
             updateBuyTotal();
+            if (typeof updateCartCount === 'function') {
+                updateCartCount();
+            }
         } else {
             // Hiển thị thông báo lỗi chi tiết
             const errorMsg = data.message || 'Có lỗi xảy ra khi cập nhật số lượng';
@@ -386,20 +364,33 @@ function updateQtyManual(cartKey, input) {
                 const availableStock = parseInt(data.available_stock);
                 if (availableStock > 0) {
                     input.value = availableStock;
-                    // Cập nhật lại với số lượng đã điều chỉnh bằng cách gọi API trực tiếp
-                    fetch('<?= BASE_URL ?>?action=cart-update', {
+                    // Fix: Đệ quy gián tiếp có thể gây lặp vô hạn nếu logic không đúng.
+                    // Tốt nhất chỉ update UI và reload nếu cần.
+                    // Ở đây đơn giản update UI về stock max.
+                    // updateQtyManual(cartKey, input); // Avoid recursion
+                    row.dataset.itemQuantity = availableStock; 
+                     // Cập nhật lại với số lượng đã điều chỉnh bằng cách gọi API trực tiếp (nhưng không gọi lại function này)
+                     fetch('<?= BASE_URL ?>?action=cart-update', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ cart_key: cartKey, quantity: availableStock })
                     }).then(r => r.json()).then(d => {
                         if (d.success) {
-                            location.reload(); // Reload để đồng bộ
+                             const itemPrice = parseFloat(row.dataset.itemPrice) || 0;
+                             const itemTotal = itemPrice * availableStock;
+                             row.dataset.itemQuantity = availableStock;
+                             row.dataset.itemTotal = itemTotal;
+                             const totalCell = row.querySelector('td:nth-child(5)');
+                             if (totalCell) totalCell.innerHTML = formatCurrency(itemTotal);
+                             updateBuyTotal();
                         }
                     });
                 } else {
-                    // Nếu hết hàng, đặt về 1
-                    input.value = 1;
+                    input.value = 1; // Default
                 }
+            } else {
+                 // Revert to old valid value? Khó biết, tạm thời để nguyên hoặc xử lý sau.
+                 // Tốt nhất là reload page để sync.
             }
         }
     })
