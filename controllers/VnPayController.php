@@ -198,7 +198,7 @@ class VnPayController
             unset($_SESSION['selected_cart_items']);
             unset($_SESSION['applied_coupon']);
             
-            set_flash('success', 'Thanh toán thành công! Đơn hàng #' . $order['order_code'] . ' của bạn đã được xác nhận.');
+            set_flash('success', 'Đặt hàng thành công! Chúng tôi sẽ liên hệ để xác nhận. Bạn có thể theo dõi trạng thái đơn hàng tại đây.', ['order_id' => $orderId]);
             header('Location: ' . BASE_URL . '?action=order-detail&id=' . $orderId . '&payment_success=1');
             exit;
         } else {
