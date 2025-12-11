@@ -1619,4 +1619,53 @@ class ProductModel extends BaseModel
             return false;
         }
     }
+
+
+    public function deleteMany(array $ids): bool
+    {
+        if (empty($ids)) return false;
+        if (!$this->hasDeletedAtColumn()) return false;
+        
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $sql = "UPDATE {$this->table} SET deleted_at = NOW() WHERE product_id IN ($placeholders)";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute($ids);
+    }
+
+    public function restoreMany(array $ids): bool
+    {
+        if (empty($ids)) return false;
+        if (!$this->hasDeletedAtColumn()) return false;
+        
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $sql = "UPDATE {$this->table} SET deleted_at = NULL WHERE product_id IN ($placeholders)";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute($ids);
+    }
+
+    public function restoreAll(): bool
+    {
+        if (!$this->hasDeletedAtColumn()) return false;
+        $sql = "UPDATE {$this->table} SET deleted_at = NULL WHERE deleted_at IS NOT NULL";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute();
+    }
+    
+    public function forceDeleteMany(array $ids): bool
+    {
+        $success = true;
+        foreach ($ids as $id) {
+            $result = $this->forceDeleteProduct($id);
+            if (!$result) $success = false;
+        }
+        return $success;
+    }
+    
+    public function emptyTrash(): bool
+    {
+        if (!$this->hasDeletedAtColumn()) return false;
+        $stmt = $this->pdo->query("SELECT product_id FROM {$this->table} WHERE deleted_at IS NOT NULL");
+        $ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        return $this->forceDeleteMany($ids);
+    }
 }

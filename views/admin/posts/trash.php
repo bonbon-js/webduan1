@@ -1,25 +1,25 @@
 <div class="container-fluid">
-    <form method="POST" action="<?= BASE_URL ?>?action=admin-coupon-bulk-trash" id="bulkForm">
+    <form method="POST" action="<?= BASE_URL ?>?action=admin-post-bulk-trash" id="bulkForm">
         <!-- Page Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h1 class="h3 mb-0 text-gray-800">Thùng rác mã giảm giá</h1>
-                <p class="text-muted mb-0 small mt-1">Quản lý mã giảm giá đã xóa tạm thời</p>
+                <h1 class="h3 mb-0 text-gray-800">Thùng rác bài viết</h1>
+                <p class="text-muted mb-0 small mt-1">Quản lý bài viết đã xóa tạm thời</p>
             </div>
             <div class="d-flex gap-2">
-                <?php if (!empty($coupons)): ?>
-                    <a href="<?= BASE_URL ?>?action=admin-coupon-restore-all" 
+                <?php if (!empty($posts)): ?>
+                    <a href="<?= BASE_URL ?>?action=admin-post-restore-all" 
                        class="btn btn-outline-success" 
-                       onclick="return confirm('Khôi phục tất cả mã giảm giá trong thùng rác?');">
+                       onclick="return confirm('Khôi phục tất cả bài viết trong thùng rác?');">
                         <i class="bi bi-reply-all me-1"></i>Khôi phục tất cả
                     </a>
-                    <a href="<?= BASE_URL ?>?action=admin-coupon-empty-trash" 
+                    <a href="<?= BASE_URL ?>?action=admin-post-empty-trash" 
                        class="btn btn-outline-danger" 
                        onclick="return confirm('Bạn có chắc muốn xóa sạch thùng rác? Hành động này KHÔNG THỂ khôi phục!');">
                         <i class="bi bi-trash me-1"></i>Xóa sạch thùng rác
                     </a>
                 <?php endif; ?>
-                <a href="<?= BASE_URL ?>?action=admin-coupons" class="btn btn-secondary">
+                <a href="<?= BASE_URL ?>?action=admin-posts" class="btn btn-secondary">
                     <i class="bi bi-arrow-left me-1"></i>Quay lại
                 </a>
             </div>
@@ -28,12 +28,12 @@
         <!-- Bulk Action Toolbar -->
         <div class="card shadow mb-3 border-primary" id="bulkToolbar" style="display: none;">
              <div class="card-body py-2 d-flex align-items-center justify-content-between bg-primary bg-opacity-10">
-                 <span class="fw-medium text-primary"><span id="selectedCount">0</span> mã giảm giá đang được chọn</span>
+                 <span class="fw-medium text-primary"><span id="selectedCount">0</span> bài viết đang được chọn</span>
                  <div class="btn-group">
                      <button type="submit" name="bulk_action" value="restore" class="btn btn-primary btn-sm">
                          <i class="bi bi-arrow-counterclockwise me-1"></i>Khôi phục đã chọn
                      </button>
-                     <button type="submit" name="bulk_action" value="delete" class="btn btn-danger btn-sm" onclick="return confirm('Xóa vĩnh viễn các mã đã chọn?');">
+                     <button type="submit" name="bulk_action" value="delete" class="btn btn-danger btn-sm" onclick="return confirm('Xóa vĩnh viễn các bài viết đã chọn?');">
                          <i class="bi bi-x-lg me-1"></i>Xóa vĩnh viễn đã chọn
                      </button>
                  </div>
@@ -53,16 +53,16 @@
                                    </div>
                                 </th>
                                 <th style="width: 5%">ID</th>
-                                <th>Mã code</th>
-                                <th>Tên mã</th>
-                                <th>Loại giảm</th>
-                                <th>Giá trị</th>
+                                <th style="width: 100px">Hình ảnh</th>
+                                <th style="width: 30%">Tiêu đề</th>
+                                <th>Tác giả</th>
+                                <th>Trạng thái</th>
                                 <th>Ngày xóa</th>
                                 <th class="text-end pe-4">Hành động</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php if (empty($coupons)): ?>
+                            <?php if (empty($posts)): ?>
                                 <tr>
                                     <td colspan="8" class="text-center py-5 text-muted">
                                         <i class="bi bi-trash display-4 d-block mb-3"></i>
@@ -70,49 +70,51 @@
                                     </td>
                                 </tr>
                             <?php else: ?>
-                                <?php foreach ($coupons as $coupon): ?>
+                                <?php foreach ($posts as $post): ?>
                                     <tr>
                                         <td class="ps-4">
                                             <div class="form-check">
-                                                <input class="form-check-input item-check" type="checkbox" name="ids[]" value="<?= $coupon['coupon_id'] ?>">
+                                                <input class="form-check-input item-check" type="checkbox" name="ids[]" value="<?= $post['post_id'] ?>">
                                             </div>
                                         </td>
-                                        <td>#<?= $coupon['coupon_id'] ?></td>
+                                        <td>#<?= $post['post_id'] ?></td>
                                         <td>
-                                            <span class="badge bg-light text-dark border font-monospace">
-                                                <?= htmlspecialchars($coupon['code']) ?>
+                                            <?php if (!empty($post['thumbnail'])): ?>
+                                                <img src="<?= htmlspecialchars(getProductImageUrl($post['thumbnail'])) ?>" 
+                                                     alt="" class="rounded" 
+                                                     style="width: 60px; height: 40px; object-fit: cover;">
+                                            <?php else: ?>
+                                                <div class="bg-light rounded d-flex align-items-center justify-content-center text-muted" 
+                                                     style="width: 60px; height: 40px;">
+                                                    <i class="bi bi-image"></i>
+                                                </div>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <div class="fw-medium text-truncate" style="max-width: 300px;">
+                                                <?= htmlspecialchars($post['title']) ?>
+                                            </div>
+                                        </td>
+                                        <td><?= htmlspecialchars($post['author_name'] ?? 'Ẩn danh') ?></td>
+                                        <td>
+                                            <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">
+                                                Deleted
                                             </span>
                                         </td>
-                                        <td><?= htmlspecialchars($coupon['name']) ?></td>
-                                        <td>
-                                            <?php if ($coupon['discount_type'] == 'percent'): ?>
-                                                <span class="badge bg-info">Phần trăm</span>
-                                            <?php else: ?>
-                                                <span class="badge bg-success">Cố định</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <?php if ($coupon['discount_type'] == 'percent'): ?>
-                                                <?= number_format($coupon['discount_value'], 0) ?>%
-                                            <?php else: ?>
-                                                <?= number_format($coupon['discount_value'], 0, ',', '.') ?> đ
-                                            <?php endif; ?>
-                                        </td>
-                                        <td><?= date('d/m/Y H:i', strtotime($coupon['deleted_at'])) ?></td>
+                                        <td><?= date('d/m/Y H:i', strtotime($post['updated_at'])) ?></td>
                                         <td class="text-end pe-4">
                                             <div class="btn-group">
-                                                <form method="POST" action="<?= BASE_URL ?>?action=admin-coupon-restore" class="d-inline">
-                                                    <input type="hidden" name="coupon_id" value="<?= $coupon['coupon_id'] ?>">
-                                                    <button type="submit" class="btn btn-outline-success btn-sm" title="Khôi phục">
-                                                        <i class="bi bi-arrow-counterclockwise"></i>
-                                                    </button>
-                                                </form>
-                                                <form method="POST" action="<?= BASE_URL ?>?action=admin-coupon-force-delete" class="d-inline ms-1" onsubmit="return confirm('Bạn có chắc muốn xóa vĩnh viễn?');">
-                                                    <input type="hidden" name="coupon_id" value="<?= $coupon['coupon_id'] ?>">
-                                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Xóa vĩnh viễn">
-                                                        <i class="bi bi-x-lg"></i>
-                                                    </button>
-                                                </form>
+                                                <a href="<?= BASE_URL ?>?action=admin-post-restore&id=<?= $post['post_id'] ?>" 
+                                                   class="btn btn-outline-success btn-sm"
+                                                   title="Khôi phục">
+                                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                                </a>
+                                                <a href="<?= BASE_URL ?>?action=admin-post-force-delete&id=<?= $post['post_id'] ?>" 
+                                                   class="btn btn-outline-danger btn-sm"
+                                                   onclick="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn?');"
+                                                   title="Xóa vĩnh viễn">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </a>
                                             </div>
                                         </td>
                                     </tr>
@@ -151,10 +153,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (count > 0) {
             toolbar.style.display = 'block';
+            // Animation nhẹ nếu muốn
         } else {
             toolbar.style.display = 'none';
         }
         
+        // Update state of Select All checkbox
         if (selectAll) {
             selectAll.checked = count > 0 && count === itemChecks.length;
             selectAll.indeterminate = count > 0 && count < itemChecks.length;

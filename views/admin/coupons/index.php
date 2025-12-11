@@ -8,22 +8,7 @@
             <span>Quản lý mã giảm giá</span>
     </h2>
     </div>
-    <div class="admin-page-actions">
-        <a href="<?= BASE_URL ?>?action=admin-coupons-trash" class="btn btn-light-soft">
-            <i class="bi bi-trash"></i> Thùng rác
-            <?php
-            require_once PATH_MODEL . 'CouponModel.php';
-            $couponModel = new CouponModel();
-            $deletedCount = count($couponModel->getDeleted());
-            if ($deletedCount > 0):
-            ?>
-                <span class="badge bg-danger ms-1"><?= $deletedCount ?></span>
-            <?php endif; ?>
-        </a>
-        <a href="<?= BASE_URL ?>?action=admin-coupon-create" class="btn btn-light-soft">
-            <i class="bi bi-plus-circle"></i> Thêm mã giảm giá
-        </a>
-    </div>
+
 </div>
 
 <!-- Form tìm kiếm và lọc -->

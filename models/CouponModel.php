@@ -9,6 +9,19 @@ class CouponModel extends BaseModel
     {
         parent::__construct();
         $this->table = 'coupons';
+        $this->ensureDeletedAtColumn();
+    }
+
+    private function ensureDeletedAtColumn(): void
+    {
+        if (!$this->hasDeletedAtColumn()) {
+            try {
+                $this->pdo->exec("ALTER TABLE {$this->table} ADD COLUMN deleted_at DATETIME DEFAULT NULL");
+                $this->hasDeletedAtColumn = true;
+            } catch (PDOException $e) {
+                // Ignore error if column already exists or permission denied
+            }
+        }
     }
     
     /**
@@ -616,6 +629,8 @@ class CouponModel extends BaseModel
      */
     public function delete(int $couponId): void
     {
+        $this->ensureDeletedAtColumn();
+        
         if ($this->hasDeletedAtColumn()) {
             $sql = "UPDATE {$this->table} 
                     SET deleted_at = NOW() 
@@ -624,8 +639,8 @@ class CouponModel extends BaseModel
             $stmt = $this->pdo->prepare($sql);
             $stmt->execute(['coupon_id' => $couponId]);
         } else {
-            // Nếu chưa có cột deleted_at, xóa vĩnh viễn
-            $this->forceDelete($couponId);
+            // Nếu chưa có cột deleted_at, không xóa vĩnh viễn mà báo lỗi để an toàn
+            throw new Exception("Lỗi hệ thống: Bảng coupons chưa hỗ trợ thùng rác (thiếu cột deleted_at). Vui lòng báo quản trị viên.");
         }
     }
     
@@ -783,6 +798,55 @@ class CouponModel extends BaseModel
         } catch (Exception $e) {
             return [];
         }
+    }
+
+    public function deleteMany(array $ids): bool
+    {
+        if (empty($ids)) return false;
+        
+        $this->ensureDeletedAtColumn();
+        
+        if (!$this->hasDeletedAtColumn()) return false;
+        
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $sql = "UPDATE {$this->table} SET deleted_at = NOW() WHERE coupon_id IN ($placeholders)";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute($ids);
+    }
+
+    public function restoreMany(array $ids): bool
+    {
+        if (empty($ids) || !$this->hasDeletedAtColumn()) return false;
+        
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $sql = "UPDATE {$this->table} SET deleted_at = NULL WHERE coupon_id IN ($placeholders)";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute($ids);
+    }
+
+    public function restoreAll(): bool
+    {
+        if (!$this->hasDeletedAtColumn()) return false;
+        $sql = "UPDATE {$this->table} SET deleted_at = NULL WHERE deleted_at IS NOT NULL";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute();
+    }
+    
+    public function forceDeleteMany(array $ids): bool
+    {
+        if (empty($ids)) return false;
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $sql = "DELETE FROM {$this->table} WHERE coupon_id IN ($placeholders)";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute($ids);
+    }
+    
+    public function emptyTrash(): bool
+    {
+        if (!$this->hasDeletedAtColumn()) return false;
+        $sql = "DELETE FROM {$this->table} WHERE deleted_at IS NOT NULL";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute();
     }
 }
 

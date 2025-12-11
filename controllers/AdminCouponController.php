@@ -149,9 +149,13 @@ class AdminCouponController
         }
         
         // Kiểm tra trùng mã code
-        $codeCheck = $this->couponModel->getByCode($data['code']);
+        $codeCheck = $this->couponModel->getByCode($data['code'], true);
         if ($codeCheck) {
-            $errors[] = 'Mã giảm giá "' . htmlspecialchars($data['code']) . '" đã tồn tại. Vui lòng chọn mã khác.';
+            if (!empty($codeCheck['deleted_at'])) {
+                 $errors[] = 'Mã giảm giá "' . htmlspecialchars($data['code']) . '" đang nằm trong thùng rác. <a href="'.BASE_URL.'?action=admin-coupons-trash" class="fw-bold">Khôi phục tại đây</a>.';
+            } else {
+                 $errors[] = 'Mã giảm giá "' . htmlspecialchars($data['code']) . '" đã tồn tại. Vui lòng chọn mã khác.';
+            }
         }
         
         // Validate max_discount_amount khi là percent
@@ -292,9 +296,13 @@ class AdminCouponController
         }
         
         // Kiểm tra trùng mã code (trừ chính mã đó)
-        $codeCheck = $this->couponModel->getByCode($data['code']);
+        $codeCheck = $this->couponModel->getByCode($data['code'], true);
         if ($codeCheck && (int)$codeCheck['coupon_id'] !== $couponId) {
-            $errors[] = 'Mã giảm giá "' . htmlspecialchars($data['code']) . '" đã tồn tại. Vui lòng chọn mã khác.';
+             if (!empty($codeCheck['deleted_at'])) {
+                 $errors[] = 'Mã giảm giá "' . htmlspecialchars($data['code']) . '" đang nằm trong thùng rác.';
+            } else {
+                 $errors[] = 'Mã giảm giá "' . htmlspecialchars($data['code']) . '" đã tồn tại. Vui lòng chọn mã khác.';
+            }
         }
         
         // Validate max_discount_amount khi là percent
@@ -408,7 +416,7 @@ class AdminCouponController
     {
         $this->requireAdmin();
         
-        $deletedCoupons = $this->couponModel->getDeleted();
+        $coupons = $this->couponModel->getDeleted();
         
         $title = 'Thùng rác - Mã giảm giá';
         $view = 'admin/coupons/trash';
@@ -521,6 +529,53 @@ class AdminCouponController
             header('Location: ' . BASE_URL);
             exit;
         }
+    }
+
+    public function emptyTrashAction(): void
+    {
+        $this->requireAdmin();
+        $this->couponModel->emptyTrash();
+        set_flash('success', 'Đã xóa sạch thùng rác mã giảm giá.');
+        header('Location: ' . BASE_URL . '?action=admin-coupons-trash');
+        exit;
+    }
+
+    public function restoreAllAction(): void
+    {
+        $this->requireAdmin();
+        $this->couponModel->restoreAll();
+        set_flash('success', 'Đã khôi phục tất cả mã giảm giá.');
+        header('Location: ' . BASE_URL . '?action=admin-coupons-trash');
+        exit;
+    }
+
+    public function bulkTrashAction(): void
+    {
+        $this->requireAdmin();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+             header('Location: ' . BASE_URL . '?action=admin-coupons-trash');
+             exit;
+        }
+
+        $action = $_POST['bulk_action'] ?? '';
+        $ids = $_POST['ids'] ?? [];
+
+        if (empty($ids)) {
+            set_flash('warning', 'Vui lòng chọn ít nhất một mã!');
+            header('Location: ' . BASE_URL . '?action=admin-coupons-trash');
+            exit;
+        }
+
+        if ($action === 'restore') {
+            $this->couponModel->restoreMany($ids);
+            set_flash('success', 'Đã khôi phục các mã đã chọn!');
+        } elseif ($action === 'delete') {
+            $this->couponModel->forceDeleteMany($ids);
+            set_flash('success', 'Đã xóa vĩnh viễn các mã đã chọn!');
+        }
+
+        header('Location: ' . BASE_URL . '?action=admin-coupons-trash');
+        exit;
     }
 }
 

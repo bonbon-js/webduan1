@@ -573,5 +573,51 @@ class AdminProductController
             exit;
         }
     }
+    public function emptyTrashAction(): void
+    {
+        $this->requireAdmin();
+        $this->productModel->emptyTrash();
+        set_flash('success', 'Đã xóa sạch thùng rác sản phẩm.');
+        header('Location: ' . BASE_URL . '?action=admin-products-trash');
+        exit;
+    }
+
+    public function restoreAllAction(): void
+    {
+        $this->requireAdmin();
+        $this->productModel->restoreAll();
+        set_flash('success', 'Đã khôi phục tất cả sản phẩm.');
+        header('Location: ' . BASE_URL . '?action=admin-products-trash');
+        exit;
+    }
+
+    public function bulkTrashAction(): void
+    {
+        $this->requireAdmin();
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+             header('Location: ' . BASE_URL . '?action=admin-products-trash');
+             exit;
+        }
+
+        $action = $_POST['bulk_action'] ?? '';
+        $ids = $_POST['ids'] ?? []; // product_ids
+
+        if (empty($ids)) {
+            set_flash('warning', 'Vui lòng chọn ít nhất một sản phẩm!');
+            header('Location: ' . BASE_URL . '?action=admin-products-trash');
+            exit;
+        }
+
+        if ($action === 'restore') {
+            $this->productModel->restoreMany($ids);
+            set_flash('success', 'Đã khôi phục các sản phẩm đã chọn!');
+        } elseif ($action === 'delete') {
+            $this->productModel->forceDeleteMany($ids);
+            set_flash('success', 'Đã xóa vĩnh viễn các sản phẩm đã chọn!');
+        }
+
+        header('Location: ' . BASE_URL . '?action=admin-products-trash');
+        exit;
+    }
 }
 

@@ -2,9 +2,14 @@
     <!-- Page Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0 text-gray-800">Quản lý bài viết</h1>
-        <a href="<?= BASE_URL ?>?action=admin-post-create" class="btn btn-dark">
-            <i class="bi bi-plus-lg me-2"></i>Thêm bài viết mới
-        </a>
+        <div class="d-flex gap-2">
+            <a href="<?= BASE_URL ?>?action=admin-post-trash" class="btn btn-outline-secondary">
+                <i class="bi bi-trash me-2"></i>Thùng rác
+            </a>
+            <a href="<?= BASE_URL ?>?action=admin-post-create" class="btn btn-dark">
+                <i class="bi bi-plus-lg me-2"></i>Thêm bài viết mới
+            </a>
+        </div>
     </div>
 
     <!-- Filter & Search -->

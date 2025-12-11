@@ -2,7 +2,7 @@
     <div class="alert alert-danger">
         <ul class="mb-0">
             <?php foreach ($errors as $err): ?>
-                <li><?= htmlspecialchars($err) ?></li>
+                <li><?= $err ?></li>
             <?php endforeach; ?>
         </ul>
     </div>

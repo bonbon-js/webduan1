@@ -108,6 +108,9 @@ match ($action) {
     'admin-coupons-trash' => (new AdminCouponController)->trash(),
     'admin-coupon-restore' => (new AdminCouponController)->restore(),
     'admin-coupon-force-delete' => (new AdminCouponController)->forceDelete(),
+    'admin-coupon-empty-trash'  => (new AdminCouponController)->emptyTrashAction(),
+    'admin-coupon-restore-all'  => (new AdminCouponController)->restoreAllAction(),
+    'admin-coupon-bulk-trash'   => (new AdminCouponController)->bulkTrashAction(),
     
     // Quản lý danh mục
     'admin-categories'      => (new AdminCategoryController)->index(),
@@ -137,6 +140,9 @@ match ($action) {
     'admin-product-delete' => (new AdminProductController)->delete(),
     'admin-product-restore' => (new AdminProductController)->restore(),
     'admin-product-force-delete' => (new AdminProductController)->forceDelete(),
+    'admin-product-empty-trash' => (new AdminProductController)->emptyTrashAction(),
+    'admin-product-restore-all' => (new AdminProductController)->restoreAllAction(),
+    'admin-product-bulk-trash'  => (new AdminProductController)->bulkTrashAction(),
     'admin-product-variant-store' => (new AdminProductController)->storeVariant(),
     'admin-product-variant-update' => (new AdminProductController)->updateVariant(),
     'admin-product-variant-delete' => (new AdminProductController)->deleteVariant(),
@@ -166,6 +172,12 @@ match ($action) {
     'admin-post-edit'     => (new AdminPostController)->edit(),
     'admin-post-update'   => (new AdminPostController)->update(),
     'admin-post-delete'   => (new AdminPostController)->delete(),
+    'admin-post-trash'        => (new AdminPostController)->trash(),
+    'admin-post-restore'      => (new AdminPostController)->restore(),
+    'admin-post-force-delete' => (new AdminPostController)->forceDelete(),
+    'admin-post-empty-trash'  => (new AdminPostController)->emptyTrashAction(),
+    'admin-post-restore-all'  => (new AdminPostController)->restoreAllAction(),
+    'admin-post-bulk-trash'   => (new AdminPostController)->bulkTrashAction(),
     
     // Auth routes
     'show-login'         => (new AuthController)->showLogin(),

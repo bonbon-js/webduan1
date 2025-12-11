@@ -20,6 +20,8 @@ class PostModel extends BaseModel
         if ($status) {
             $sql .= " AND p.status = :status";
             $params['status'] = $status;
+        } else {
+            $sql .= " AND p.status != 'trash'";
         }
 
         $sql .= " ORDER BY p.created_at DESC";
@@ -46,6 +48,8 @@ class PostModel extends BaseModel
         if ($status) {
             $sql .= " AND status = :status";
             $params['status'] = $status;
+        } else {
+            $sql .= " AND status != 'trash'";
         }
 
         $stmt = $this->pdo->prepare($sql);
@@ -141,6 +145,20 @@ class PostModel extends BaseModel
         return $stmt->execute(['id' => $id]);
     }
 
+    public function softDelete(int $id): bool
+    {
+        $sql = "UPDATE {$this->table} SET status = 'trash' WHERE post_id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute(['id' => $id]);
+    }
+    
+    public function restore(int $id): bool
+    {
+        $sql = "UPDATE {$this->table} SET status = 'draft' WHERE post_id = :id";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute(['id' => $id]);
+    }
+
     public function increaseViewCount(int $id): void
     {
         $stmt = $this->pdo->prepare("UPDATE {$this->table} SET views = views + 1 WHERE post_id = :id");
@@ -212,5 +230,37 @@ class PostModel extends BaseModel
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function deleteMany(array $ids): bool
+    {
+        if (empty($ids)) return false;
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $sql = "DELETE FROM {$this->table} WHERE post_id IN ($placeholders)";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute($ids);
+    }
+
+    public function restoreMany(array $ids): bool
+    {
+        if (empty($ids)) return false;
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $sql = "UPDATE {$this->table} SET status = 'draft' WHERE post_id IN ($placeholders)";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute($ids);
+    }
+
+    public function emptyTrash(): bool
+    {
+        $sql = "DELETE FROM {$this->table} WHERE status = 'trash'";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute();
+    }
+
+    public function restoreAll(): bool
+    {
+        $sql = "UPDATE {$this->table} SET status = 'draft' WHERE status = 'trash'";
+        $stmt = $this->pdo->prepare($sql);
+        return $stmt->execute();
     }
 }
