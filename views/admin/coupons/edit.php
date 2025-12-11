@@ -51,7 +51,7 @@
             </div>
             <div class="col-12">
                 <label class="form-label">Mô tả</label>
-                <textarea name="description" class="form-control" rows="2"><?= htmlspecialchars(($formData['description'] ?? $coupon['description']) ?? '') ?></textarea>
+                <textarea name="description" class="form-control" rows="2"><?= htmlspecialchars(($formData['description'] ?? $coupon['description'] ?? '')) ?></textarea>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Loại giảm giá <span class="text-danger">*</span></label>
@@ -86,12 +86,12 @@
             </div>
             <div class="col-md-6">
                 <label class="form-label">Giới hạn số lần sử dụng</label>
-                <input type="number" name="usage_limit" class="form-control" min="1" value="<?= htmlspecialchars(($formData['usage_limit'] ?? $coupon['usage_limit']) ?? '') ?>" placeholder="Để trống nếu không giới hạn">
+                <input type="number" name="usage_limit" class="form-control" min="1" value="<?= htmlspecialchars(($formData['usage_limit'] ?? $coupon['usage_limit'] ?? '')) ?>" placeholder="Để trống nếu không giới hạn">
                 <small class="text-muted">Ví dụ: 5 lượt tổng toàn hệ thống.</small>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Giới hạn mỗi khách hàng</label>
-                <input type="number" name="per_user_limit" id="perUserLimit" class="form-control" min="1" value="<?= htmlspecialchars(($formData['per_user_limit'] ?? $coupon['per_user_limit']) ?? '') ?>" placeholder="Để trống nếu không giới hạn">
+                <input type="number" name="per_user_limit" id="perUserLimit" class="form-control" min="1" value="<?= htmlspecialchars(($formData['per_user_limit'] ?? $coupon['per_user_limit'] ?? '')) ?>" placeholder="Để trống nếu không giới hạn">
                 <small class="text-muted">Ví dụ: 1 = mỗi khách dùng 1 lần. Không được lớn hơn tổng lượt.</small>
             </div>
             <div class="col-md-6">
@@ -114,14 +114,14 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="1" id="newCustomerOnly" name="new_customer_only" <?= !empty($formData['new_customer_only'] ?? $coupon['new_customer_only']) ? 'checked' : '' ?>>
+                            <input class="form-check-input" type="checkbox" value="1" id="newCustomerOnly" name="new_customer_only" <?= !empty($formData['new_customer_only'] ?? $coupon['new_customer_only'] ?? 0) ? 'checked' : '' ?>>
                             <label class="form-check-label" for="newCustomerOnly">Chỉ khách mới</label>
                             <small class="text-muted d-block">Khách mới = chưa có đơn giao thành công.</small>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="1" id="returnOnRefund" name="return_on_refund" <?= !empty($formData['return_on_refund'] ?? $coupon['return_on_refund']) ? 'checked' : '' ?>>
+                            <input class="form-check-input" type="checkbox" value="1" id="returnOnRefund" name="return_on_refund" <?= !empty($formData['return_on_refund'] ?? $coupon['return_on_refund'] ?? 0) ? 'checked' : '' ?>>
                             <label class="form-check-label" for="returnOnRefund">Hoàn lượt khi hoàn tiền</label>
                         </div>
                     </div>
