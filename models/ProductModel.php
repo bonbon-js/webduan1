@@ -119,7 +119,7 @@ class ProductModel extends BaseModel
                     p.product_name,
                     p.description,
                     p.price,
-                    p.stock,
+                    COALESCE((SELECT SUM(pv.stock) FROM product_variants pv WHERE pv.product_id = p.product_id), p.stock) AS stock,
                     c.category_name,
                     c.category_id";
         
@@ -488,16 +488,50 @@ class ProductModel extends BaseModel
         $this->pdo->beginTransaction();
 
         try {
+            // Validate bắt buộc
+            $sku  = trim($variantData['sku'] ?? '');
+            $stock = (int)($variantData['stock'] ?? 0);
+            $imageUrl = trim($variantData['image_url'] ?? '');
+            if ($sku === '') {
+                throw new InvalidArgumentException('Mã SKU bắt buộc.');
+            }
+            if ($stock <= 0) {
+                throw new InvalidArgumentException('Tồn kho biến thể phải lớn hơn 0.');
+            }
+            if ($imageUrl === '') {
+                throw new InvalidArgumentException('Ảnh biến thể bắt buộc.');
+            }
+
+            // Chặn trùng SKU theo sản phẩm
+            $checkSku = $this->pdo->prepare("SELECT COUNT(*) AS cnt FROM product_variants WHERE product_id = :pid AND LOWER(TRIM(sku)) = LOWER(TRIM(:sku))");
+            $checkSku->bindValue(':pid', $productId, PDO::PARAM_INT);
+            $checkSku->bindValue(':sku', $sku, PDO::PARAM_STR);
+            $checkSku->execute();
+            if ((int)($checkSku->fetch(PDO::FETCH_ASSOC)['cnt'] ?? 0) > 0) {
+                throw new InvalidArgumentException('SKU này đã tồn tại trong sản phẩm.');
+            }
+
+            // Chặn trùng tổ hợp giá trị thuộc tính (ví dụ size + color)
+            $existingVariantIds = $this->getVariantIdsByProduct($productId);
+            sort($valueIds);
+            foreach ($existingVariantIds as $vid) {
+                $vals = $this->getValueIdsByVariant($vid);
+                sort($vals);
+                if ($vals === $valueIds) {
+                    throw new InvalidArgumentException('Thuộc tính này (tổ hợp size/color) đã có rồi.');
+                }
+            }
+
             $stmt = $this->pdo->prepare("
                 INSERT INTO product_variants (product_id, sku, additional_price, stock, image_url)
                 VALUES (:product_id, :sku, :additional_price, :stock, :image_url)
             ");
             $stmt->execute([
                 ':product_id' => $productId,
-                ':sku' => $variantData['sku'] ?? null,
+                ':sku' => $sku,
                 ':additional_price' => $variantData['additional_price'] ?? 0,
-                ':stock' => $variantData['stock'] ?? 0,
-                ':image_url' => $variantData['image_url'] ?? null,
+                ':stock' => $stock,
+                ':image_url' => $imageUrl,
             ]);
 
             $variantId = (int)$this->pdo->lastInsertId();
@@ -613,6 +647,14 @@ class ProductModel extends BaseModel
         $stmt->execute();
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         return $row ? (int)$row['product_id'] : null;
+    }
+
+    private function getValueIdsByVariant(int $variantId): array
+    {
+        $stmt = $this->pdo->prepare("SELECT value_id FROM product_attribute_values WHERE variant_id = :variant_id ORDER BY value_id");
+        $stmt->bindValue(':variant_id', $variantId, PDO::PARAM_INT);
+        $stmt->execute();
+        return array_map(fn($row) => (int)$row['value_id'], $stmt->fetchAll(PDO::FETCH_ASSOC));
     }
 
     private function syncVariantAttributeValues(int $productId, int $variantId, array $valueIds): void
@@ -901,7 +943,9 @@ class ProductModel extends BaseModel
 			if ($priceMin !== null) $conditions[] = 'p.price >= :price_min';
 			if ($priceMax !== null) $conditions[] = 'p.price <= :price_max';
 
-			$whereSql = $conditions ? (' WHERE ' . implode(' AND ', $conditions)) : '';
+            // Ẩn các sản phẩm chưa có thuộc tính/biến thể
+            $conditions[] = "EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = p.product_id)";
+            $whereSql = ' WHERE ' . implode(' AND ', $conditions);
 
 			$sql = "SELECT COUNT(*) AS total FROM {$this->table} p" . $whereSql;
 			$stmt = $this->pdo->prepare($sql);
@@ -929,7 +973,9 @@ class ProductModel extends BaseModel
 			}
 			if ($priceMin !== null) $conditions[] = 'p.price >= :price_min';
 			if ($priceMax !== null) $conditions[] = 'p.price <= :price_max';
-			$whereSql = $conditions ? (' WHERE ' . implode(' AND ', $conditions)) : '';
+            // Ẩn các sản phẩm chưa có thuộc tính/biến thể
+            $conditions[] = "EXISTS (SELECT 1 FROM product_variants pv WHERE pv.product_id = p.product_id)";
+            $whereSql = ' WHERE ' . implode(' AND ', $conditions);
 
 			// Sắp xếp theo độ liên quan nếu có keyword
 			$orderBy = 'p.created_at DESC';

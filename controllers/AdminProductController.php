@@ -64,6 +64,15 @@ class AdminProductController
         // Thuộc tính sản phẩm (size, color)
         $attributes = $this->productModel->getProductAttributes($id);
         $variants   = $this->productModel->getVariantsDetailed($id);
+        // Tính tổng tồn kho
+        $totalStock = 0;
+        if (!empty($variants)) {
+            foreach ($variants as $v) {
+                $totalStock += (int)($v['stock'] ?? 0);
+            }
+        } else {
+            $totalStock = (int)($product['stock'] ?? 0);
+        }
 
         $title = 'Chi tiết sản phẩm';
         $view  = 'admin/products/show';
@@ -129,6 +138,7 @@ class AdminProductController
             if ($productId > 0) {
                 $this->notifyNewProduct($productId, $payload);
                 set_flash('success', 'Đã tạo sản phẩm thành công. Bạn có thể thêm biến thể ngay bây giờ.');
+                set_flash('warning', 'Sản phẩm chưa có thuộc tính/biến thể nên chưa được hiển thị để bán. Vui lòng thêm thuộc tính và biến thể.');
                 error_log("AdminProductController::store - Successfully created product_id: " . $productId);
                 header('Location: ' . BASE_URL . '?action=admin-product-edit&id=' . $productId);
             } else {
@@ -282,26 +292,34 @@ class AdminProductController
             'additional_price' => $this->toFloat($_POST['additional_price'] ?? 0),
             'stock' => (int)($_POST['stock'] ?? 0),
         ];
-        // Upload ảnh biến thể (tùy chọn)
-        if (isset($_FILES['variant_image']) && $_FILES['variant_image']['error'] === UPLOAD_ERR_OK) {
-            $imageUrl = $this->handleImageUpload($_FILES['variant_image']);
-            if (!$imageUrl) {
-                set_flash('danger', 'Không thể upload ảnh biến thể. Vui lòng thử lại.');
-                header('Location: ' . BASE_URL . '?action=admin-product-edit&id=' . $productId);
-                exit;
-            }
-            $variantData['image_url'] = $imageUrl;
+        // YÊU CẦU phải có ảnh biến thể
+        if (!isset($_FILES['variant_image']) || $_FILES['variant_image']['error'] !== UPLOAD_ERR_OK) {
+            set_flash('danger', 'Vui lòng tải lên ảnh biến thể.');
+            header('Location: ' . BASE_URL . '?action=admin-product-edit&id=' . $productId);
+            exit;
         }
+        $imageUrl = $this->handleImageUpload($_FILES['variant_image']);
+        if (!$imageUrl) {
+            set_flash('danger', 'Không thể upload ảnh biến thể. Vui lòng thử lại.');
+            header('Location: ' . BASE_URL . '?action=admin-product-edit&id=' . $productId);
+            exit;
+        }
+        $variantData['image_url'] = $imageUrl;
         $valueIds = $this->collectAttributeValues($_POST['attribute_values'] ?? []);
 
         if (empty($valueIds)) {
-            set_flash('danger', 'Vui lòng chọn ít nhất một thuộc tính cho biến thể.');
+            set_flash('danger', 'Vui lòng chọn đầy đủ thuộc tính (ví dụ: size, màu).');
             header('Location: ' . BASE_URL . '?action=admin-product-edit&id=' . $productId);
             exit;
         }
 
         // Đảm bảo KHÔNG có id trong variantData
         unset($variantData['id'], $variantData['variant_id'], $variantData['variantId']);
+        if ($variantData['sku'] === '' || $variantData['stock'] <= 0) {
+            set_flash('danger', 'SKU bắt buộc và tồn kho phải > 0.');
+            header('Location: ' . BASE_URL . '?action=admin-product-edit&id=' . $productId);
+            exit;
+        }
         
         try {
             $this->productModel->createVariant($productId, $variantData, $valueIds);

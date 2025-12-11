@@ -43,11 +43,7 @@
                 </div>
                 <div class="col-md-6">
                     <label class="form-label text-muted small">Tồn kho</label>
-                    <?php if (!empty($variants ?? [])): ?>
-                        <div class="fw-bold text-muted">Quản lý theo biến thể</div>
-                    <?php else: ?>
-                        <div class="fw-bold"><?= htmlspecialchars($product['stock'] ?? 0) ?></div>
-                    <?php endif; ?>
+                    <div class="fw-bold text-primary"><?= number_format((int)($totalStock ?? 0)) ?></div>
                 </div>
                 <div class="col-12">
                     <label class="form-label text-muted small">Mô tả</label>

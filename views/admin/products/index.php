@@ -79,14 +79,13 @@
                 <th>Giá gốc</th>
                 <th>Giá khuyến mãi</th>
                 <th>Tồn kho</th>
-                <th>Trạng thái</th>
                 <th>Thao tác</th>
             </tr>
         </thead>
         <tbody>
             <?php if (empty($products)): ?>
                 <tr>
-                    <td colspan="9" class="text-center py-5 text-muted">
+                    <td colspan="8" class="text-center py-5 text-muted">
                         <i class="bi bi-inbox empty-icon-lg"></i>
                         <div>Chưa có sản phẩm nào</div>
                     </td>
@@ -137,9 +136,6 @@
                         </td>
                         <td>
                             <span class="stock-amount"><?= htmlspecialchars($product['stock'] ?? 0) ?></span>
-                        </td>
-                        <td>
-                            <span class="status-badge active">Hoạt động</span>
                         </td>
                         <td>
                             <div class="action-buttons">

@@ -109,9 +109,6 @@
                             <li><a class="dropdown-item" href="<?= BASE_URL ?>?action=profile">Thông tin cá nhân</a></li>
                             <?php if (!isset($_SESSION['user']['role']) || $_SESSION['user']['role'] !== 'admin'): ?>
                                 <li><a class="dropdown-item" href="<?= BASE_URL ?>?action=order-history">Đơn hàng của tôi</a></li>
-                                <li><a class="dropdown-item" href="<?= BASE_URL ?>?action=contact-history">
-                                    <i class="bi bi-envelope me-1"></i>Lịch sử liên hệ
-                                </a></li>
                             <?php endif; ?>
                             <?php if (($_SESSION['user']['role'] ?? null) === 'admin'): ?>
                                 <li><hr class="dropdown-divider"></li>

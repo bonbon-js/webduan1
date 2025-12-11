@@ -195,8 +195,8 @@ $productId = $isEditing ? (int)$product['id'] : null;
             
             <div class="form-grid-3-compact">
                 <div>
-                    <label class="form-label">SKU</label>
-                    <input type="text" name="sku" class="form-control" placeholder="Mã SKU (tùy chọn)">
+                    <label class="form-label">SKU <span class="text-danger">*</span></label>
+                    <input type="text" name="sku" class="form-control" placeholder="Mã SKU" required>
                 </div>
                 <div>
                     <label class="form-label">Giá cộng thêm (VNĐ)</label>
@@ -207,9 +207,9 @@ $productId = $isEditing ? (int)$product['id'] : null;
                     <input type="number" min="0" name="stock" class="form-control" value="0" required>
                 </div>
                 <div>
-                    <label class="form-label">Ảnh biến thể</label>
-                    <input type="file" name="variant_image" accept="image/*" class="form-control">
-                    <small class="text-muted">Tùy chọn. JPG/PNG/GIF, tối đa 5MB</small>
+                    <label class="form-label">Ảnh biến thể <span class="text-danger">*</span></label>
+                    <input type="file" name="variant_image" accept="image/*" class="form-control" required>
+                    <small class="text-muted">Bắt buộc. JPG/PNG/GIF, tối đa 5MB</small>
                 </div>
             </div>
 

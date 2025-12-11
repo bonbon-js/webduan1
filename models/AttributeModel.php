@@ -62,8 +62,31 @@ class AttributeModel extends BaseModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function attributeExists(string $name): bool
+    {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) AS cnt FROM {$this->table} WHERE LOWER(TRIM(attribute_name)) = LOWER(TRIM(:name))");
+        $stmt->bindValue(':name', $name, PDO::PARAM_STR);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int)($row['cnt'] ?? 0) > 0;
+    }
+
+    public function attributeExistsExcept(string $name, int $exceptId): bool
+    {
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) AS cnt FROM {$this->table} WHERE LOWER(TRIM(attribute_name)) = LOWER(TRIM(:name)) AND attribute_id <> :id");
+        $stmt->bindValue(':name', $name, PDO::PARAM_STR);
+        $stmt->bindValue(':id', $exceptId, PDO::PARAM_INT);
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int)($row['cnt'] ?? 0) > 0;
+    }
+
     public function createAttribute(string $name): int
     {
+        // Kiểm tra trùng tên
+        if ($this->attributeExists($name)) {
+            throw new InvalidArgumentException('Thuộc tính này đã tồn tại.');
+        }
         // Đảm bảo không có id trong data
         $data = ['attribute_name' => $name];
         $data = $this->removePrimaryKeyFromData($data, $this->table);
@@ -112,6 +135,15 @@ class AttributeModel extends BaseModel
 
     public function createValue(int $attributeId, string $valueName): int
     {
+        // Kiểm tra trùng giá trị theo attribute
+        $check = $this->pdo->prepare("SELECT COUNT(*) AS cnt FROM attribute_values WHERE attribute_id = :attribute_id AND LOWER(TRIM(value_name)) = LOWER(TRIM(:value_name))");
+        $check->bindValue(':attribute_id', $attributeId, PDO::PARAM_INT);
+        $check->bindValue(':value_name', $valueName, PDO::PARAM_STR);
+        $check->execute();
+        $exists = (int)($check->fetch(PDO::FETCH_ASSOC)['cnt'] ?? 0) > 0;
+        if ($exists) {
+            throw new InvalidArgumentException('Giá trị thuộc tính này đã tồn tại.');
+        }
         // Đảm bảo không có id trong data
         $data = ['attribute_id' => $attributeId, 'value_name' => $valueName];
         $data = $this->removePrimaryKeyFromData($data, 'attribute_values');
