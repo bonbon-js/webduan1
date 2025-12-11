@@ -77,8 +77,14 @@ $deletedCoupons = $couponModel->getDeleted();
                             <td><?= number_format($coupon['min_order_amount'], 0, ',', '.') ?> đ</td>
                             <td>
                                 <small>
-                                    <?= date('d/m/Y', strtotime($coupon['start_date'])) ?><br>
-                                    đến <?= date('d/m/Y', strtotime($coupon['end_date'])) ?>
+                                    <?php 
+                                        $endDate = strtotime($coupon['end_date']);
+                                        if ($endDate > strtotime('+50 years')) {
+                                            echo '<span class="badge bg-success">Không giới hạn</span>';
+                                        } else {
+                                            echo date('d/m/Y', strtotime($coupon['start_date'])) . '<br>đến ' . date('d/m/Y', $endDate);
+                                        }
+                                    ?>
                                 </small>
                             </td>
                             <td>

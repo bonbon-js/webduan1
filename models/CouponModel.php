@@ -299,6 +299,7 @@ class CouponModel extends BaseModel
         ?string $discountTypeFilter = null,
         ?string $createdFrom = null,
         ?string $createdTo = null,
+        ?string $durationTypeFilter = null,
         bool $includeDeleted = false
     ): array
     {
@@ -333,6 +334,20 @@ class CouponModel extends BaseModel
             if ($createdTo) {
                 $sql .= " AND created_at <= :created_to";
                 $params['created_to'] = $createdTo . ' 23:59:59';
+            }
+        }
+        
+        // Lọc theo thời hạn (vô hạn / có hạn)
+        if ($durationTypeFilter) {
+            // Sử dụng mốc 50 năm để xác định "vô hạn"
+            $fiftyYears = date('Y-m-d H:i:s', strtotime('+50 years'));
+            
+            if ($durationTypeFilter === 'unlimited') {
+                $sql .= " AND end_date > :fifty_years";
+                $params['fifty_years'] = $fiftyYears;
+            } elseif ($durationTypeFilter === 'limited') {
+                $sql .= " AND end_date <= :fifty_years";
+                $params['fifty_years'] = $fiftyYears;
             }
         }
         

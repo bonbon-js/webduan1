@@ -65,6 +65,14 @@
                     </select>
                 </div>
                 <div class="col-md-2">
+                    <label class="form-label small text-uppercase fw-bold">Thời hạn</label>
+                    <select name="duration_type" class="form-select" id="durationTypeFilter">
+                        <option value="">Tất cả</option>
+                        <option value="unlimited" <?= ($_GET['duration_type'] ?? '') === 'unlimited' ? 'selected' : '' ?>>Vô hạn</option>
+                        <option value="limited" <?= ($_GET['duration_type'] ?? '') === 'limited' ? 'selected' : '' ?>>Có hạn</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
                     <label class="form-label small text-uppercase fw-bold">Từ ngày</label>
                     <input type="date" name="created_from" class="form-control" value="<?= htmlspecialchars($_GET['created_from'] ?? '') ?>">
                 </div>
@@ -168,8 +176,14 @@
                         </td>
                         <td>
                             <small>
-                                <?= date('d/m/Y', strtotime($coupon['start_date'])) ?><br>
-                                đến <?= date('d/m/Y', strtotime($coupon['end_date'])) ?>
+                                <?php 
+                                    $endDate = strtotime($coupon['end_date']);
+                                    if ($endDate > strtotime('+50 years')) {
+                                        echo '<span class="badge bg-success">Không giới hạn</span>';
+                                    } else {
+                                        echo date('d/m/Y', strtotime($coupon['start_date'])) . '<br>đến ' . date('d/m/Y', $endDate);
+                                    }
+                                ?>
                             </small>
                         </td>
                         <td>

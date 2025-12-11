@@ -22,6 +22,7 @@ class AdminCouponController
         $discountTypeFilter = $_GET['discount_type'] ?? '';
         $createdFrom = $_GET['created_from'] ?? '';
         $createdTo = $_GET['created_to'] ?? '';
+        $durationTypeFilter = $_GET['duration_type'] ?? '';
 
         // Chuẩn bị dữ liệu products, categories cho dropdown
         require_once PATH_MODEL . 'ProductModel.php';
@@ -36,7 +37,8 @@ class AdminCouponController
             $statusFilter ?: null,
             $discountTypeFilter ?: null,
             $createdFrom ?: null,
-            $createdTo ?: null
+            $createdTo ?: null,
+            $durationTypeFilter ?: null
         );
 
         // Đồng bộ trạng thái tự động: nếu hết hạn thì chuyển sang ngừng hoạt động

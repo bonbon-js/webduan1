@@ -70,11 +70,17 @@
         </div>
         <div class="col-md-6">
             <label class="form-label">Ngày bắt đầu <span class="text-danger">*</span></label>
-            <input type="datetime-local" name="start_date" class="form-control" required value="<?= htmlspecialchars($formData['start_date'] ?? date('Y-m-d\TH:i')) ?>">
+            <input type="datetime-local" name="start_date" id="startDateInput" class="form-control" required value="<?= htmlspecialchars($formData['start_date'] ?? date('Y-m-d\TH:i')) ?>">
         </div>
         <div class="col-md-6">
             <label class="form-label">Ngày kết thúc <span class="text-danger">*</span></label>
-            <input type="datetime-local" name="end_date" class="form-control" required value="<?= htmlspecialchars($formData['end_date'] ?? date('Y-m-d\TH:i', strtotime('+30 days'))) ?>">
+            <input type="datetime-local" name="end_date" id="endDateInput" class="form-control" value="<?= htmlspecialchars($formData['end_date'] ?? date('Y-m-d\TH:i', strtotime('+30 days'))) ?>">
+            <div class="form-check mt-2">
+                <input class="form-check-input" type="checkbox" id="unlimitedEndDate" name="unlimited_end_date">
+                <label class="form-check-label" for="unlimitedEndDate">
+                    Không giới hạn thời gian
+                </label>
+            </div>
         </div>
         <div class="col-md-6">
             <label class="form-label">Giới hạn số lần sử dụng</label>
@@ -164,6 +170,40 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    function toggleUnlimitedEndDate() {
+        const unlimitedCheckbox = document.getElementById('unlimitedEndDate');
+        const endDateInput = document.getElementById('endDateInput');
+        const startDateInput = document.getElementById('startDateInput');
+        
+        if (!unlimitedCheckbox || !endDateInput || !startDateInput) return;
+        
+        if (unlimitedCheckbox.checked) {
+            // Ngày kết thúc: +100 năm
+            endDateInput.readOnly = true;
+            endDateInput.value = new Date(new Date().setFullYear(new Date().getFullYear() + 100)).toISOString().slice(0, 16);
+            endDateInput.style.opacity = '0.5';
+            endDateInput.style.pointerEvents = 'none';
+
+            // Ngày bắt đầu: Set về hiện tại và khóa lại
+            startDateInput.readOnly = true;
+             startDateInput.value = new Date().toISOString().slice(0, 16); // Lấy thời gian hiện tại
+            startDateInput.style.opacity = '0.5';
+            startDateInput.style.pointerEvents = 'none';
+        } else {
+            // Enable lại input
+            endDateInput.readOnly = false;
+            // Reset về 30 ngày sau
+            endDateInput.value = new Date(Date.now() + 30*24*60*60*1000).toISOString().slice(0, 16);
+            endDateInput.style.opacity = '1';
+            endDateInput.style.pointerEvents = 'auto';
+
+            // Enable lại Start Date
+            startDateInput.readOnly = false;
+            startDateInput.style.opacity = '1';
+            startDateInput.style.pointerEvents = 'auto';
+        }
+    }
+
     if (discountType) {
         discountType.addEventListener('change', toggleMaxDiscount);
         toggleMaxDiscount();
@@ -177,6 +217,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if (newCustomerOnly) {
         newCustomerOnly.addEventListener('change', syncNewCustomerLock);
         syncNewCustomerLock();
+    }
+
+    // Handle unlimited end date checkbox
+    const unlimitedEndDate = document.getElementById('unlimitedEndDate');
+    if (unlimitedEndDate) {
+        unlimitedEndDate.addEventListener('change', toggleUnlimitedEndDate);
     }
 });
 </script>

@@ -77,12 +77,27 @@
             <div class="col-md-6">
                 <label class="form-label">Ngày bắt đầu <span class="text-danger">*</span></label>
                 <?php $sd = $formData['start_date'] ?? $coupon['start_date']; ?>
-                <input type="datetime-local" name="start_date" class="form-control" required value="<?= htmlspecialchars(str_replace(' ', 'T', substr($sd, 0, 16))) ?>">
+                <input type="datetime-local" name="start_date" id="startDateInput" class="form-control" required value="<?= htmlspecialchars(str_replace(' ', 'T', substr($sd, 0, 16))) ?>">
             </div>
             <div class="col-md-6">
                 <label class="form-label">Ngày kết thúc <span class="text-danger">*</span></label>
                 <?php $ed = $formData['end_date'] ?? $coupon['end_date']; ?>
-                <input type="datetime-local" name="end_date" class="form-control" required value="<?= htmlspecialchars(str_replace(' ', 'T', substr($ed, 0, 16))) ?>">
+                <input type="datetime-local" name="end_date" id="endDateInput" class="form-control" value="<?= htmlspecialchars(str_replace(' ', 'T', substr($ed, 0, 16))) ?>">
+                <div class="form-check mt-2">
+                    <?php 
+                    // Check if end date is far in the future (>50 years from now)
+                    $isUnlimited = false;
+                    if ($ed) {
+                        $endTimestamp = strtotime($ed);
+                        $fiftyYearsFromNow = strtotime('+50 years');
+                        $isUnlimited = $endTimestamp > $fiftyYearsFromNow;
+                    }
+                    ?>
+                    <input class="form-check-input" type="checkbox" id="unlimitedEndDate" name="unlimited_end_date" <?= $isUnlimited ? 'checked' : '' ?>>
+                    <label class="form-check-label" for="unlimitedEndDate">
+                        Không giới hạn thời gian
+                    </label>
+                </div>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Giới hạn số lần sử dụng</label>
@@ -175,6 +190,41 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    function toggleUnlimitedEndDate() {
+        const unlimitedCheckbox = document.getElementById('unlimitedEndDate');
+        const endDateInput = document.getElementById('endDateInput');
+        const startDateInput = document.getElementById('startDateInput');
+        
+        if (!unlimitedCheckbox || !endDateInput || !startDateInput) return;
+        
+        if (unlimitedCheckbox.checked) {
+            // End Date -> 100 years
+            endDateInput.readOnly = true;
+            endDateInput.value = new Date(new Date().setFullYear(new Date().getFullYear() + 100)).toISOString().slice(0, 16);
+            endDateInput.style.opacity = '0.5';
+            endDateInput.style.pointerEvents = 'none';
+            
+            // Start Date -> Now & Lock
+            startDateInput.readOnly = true;
+            // Chỉ set lại start date nếu người dùng CHỦ ĐỘNG check vào checkbox này
+            // (tránh ghi đè khi mới load trang, nhưng logic này nằm trong event handler change nên ok)
+            startDateInput.value = new Date().toISOString().slice(0, 16);
+            startDateInput.style.opacity = '0.5';
+            startDateInput.style.pointerEvents = 'none';
+        } else {
+            // Unlock End Date
+            endDateInput.readOnly = false;
+            endDateInput.value = new Date(Date.now() + 30*24*60*60*1000).toISOString().slice(0, 16);
+            endDateInput.style.opacity = '1';
+            endDateInput.style.pointerEvents = 'auto';
+            
+            // Unlock Start Date
+            startDateInput.readOnly = false;
+            startDateInput.style.opacity = '1';
+            startDateInput.style.pointerEvents = 'auto';
+        }
+    }
+
     if (discountType) {
         discountType.addEventListener('change', toggleMaxDiscount);
         toggleMaxDiscount();
@@ -188,6 +238,29 @@ document.addEventListener('DOMContentLoaded', function() {
     if (newCustomerOnly) {
         newCustomerOnly.addEventListener('change', syncNewCustomerLock);
         syncNewCustomerLock();
+    }
+
+    // Handle unlimited end date checkbox
+    const unlimitedEndDate = document.getElementById('unlimitedEndDate');
+    const endDateInput = document.getElementById('endDateInput');
+    const startDateInput = document.getElementById('startDateInput');
+
+    if (unlimitedEndDate) {
+        unlimitedEndDate.addEventListener('change', toggleUnlimitedEndDate);
+        
+        // Initialize on page load - if checkbox is checked, disable input
+        if (unlimitedEndDate.checked) {
+            if (endDateInput) {
+                endDateInput.readOnly = true;
+                endDateInput.style.opacity = '0.5';
+                endDateInput.style.pointerEvents = 'none';
+            }
+            if (startDateInput) {
+                startDateInput.readOnly = true;
+                startDateInput.style.opacity = '0.5';
+                startDateInput.style.pointerEvents = 'none';
+            }
+        }
     }
 });
 </script>

@@ -51,7 +51,9 @@ class CouponController
             $orderModel = new OrderModel();
             $userModel = new UserModel();
 
-            if (method_exists($orderModel, 'countDeliveredOrders')) {
+            if (method_exists($orderModel, 'countValidOrders')) {
+                $isNewCustomer = $orderModel->countValidOrders((int)$userId) === 0;
+            } elseif (method_exists($orderModel, 'countDeliveredOrders')) {
                 $isNewCustomer = $orderModel->countDeliveredOrders((int)$userId) === 0;
             }
 
