@@ -403,18 +403,39 @@ class CheckoutController
 
         $paymentMethod = $_POST['payment_method'] ?? 'cod';
         
+        // Kiểm tra nếu là AJAX request
+        $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+        
         // Nếu thanh toán qua VNPay
         if ($paymentMethod === 'banking') {
             // Kiểm tra xem VNPay đã được cấu hình chưa
             if (!defined('VNPAY_TMN_CODE') || empty(VNPAY_TMN_CODE)) {
-                set_flash('warning', 'Hệ thống thanh toán VNPay chưa được cấu hình. Vui lòng chọn phương thức thanh toán khác.');
+                $errorMessage = 'Hệ thống thanh toán VNPay chưa được cấu hình. Vui lòng chọn phương thức thanh toán khác.';
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode([
+                        'success' => false,
+                        'message' => $errorMessage
+                    ]);
+                    exit;
+                }
+                set_flash('warning', $errorMessage);
                 header('Location: ' . BASE_URL . '?action=checkout');
                 exit;
             }
             
             $vnpayPath = PATH_ROOT . 'libs/VnPay.php';
             if (!file_exists($vnpayPath)) {
-                set_flash('danger', 'Không tìm thấy file VNPay. Vui lòng thử lại sau.');
+                $errorMessage = 'Không tìm thấy file VNPay. Vui lòng thử lại sau.';
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode([
+                        'success' => false,
+                        'message' => $errorMessage
+                    ]);
+                    exit;
+                }
+                set_flash('danger', $errorMessage);
                 header('Location: ' . BASE_URL . '?action=checkout');
                 exit;
             }
@@ -497,13 +518,39 @@ class CheckoutController
                 // Lưu order_id vào session để xử lý sau
                 $_SESSION['pending_vnpay_order'] = $orderId;
                 
-                // Redirect đến VNPay
+                // Nếu là AJAX request, trả về JSON với redirect URL
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode([
+                        'success' => true,
+                        'order_id' => $orderId,
+                        'total_amount' => $finalTotal,
+                        'payment_method' => 'banking',
+                        'redirect_url' => $vnpayUrl,
+                        'message' => 'Đang chuyển hướng đến trang thanh toán VNPay...'
+                    ]);
+                    exit;
+                }
+                
+                // Redirect đến VNPay (non-AJAX)
                 header('Location: ' . $vnpayUrl);
                 exit;
             } catch (Throwable $exception) {
                 // Log lỗi để debug
                 error_log('Checkout VNPay Error: ' . $exception->getMessage());
-                set_flash('danger', 'Có lỗi xảy ra khi tạo đơn hàng: ' . $exception->getMessage());
+                $errorMessage = 'Có lỗi xảy ra khi tạo đơn hàng: ' . $exception->getMessage();
+                
+                // Nếu là AJAX request, trả về JSON
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode([
+                        'success' => false,
+                        'message' => $errorMessage
+                    ]);
+                    exit;
+                }
+                
+                set_flash('danger', $errorMessage);
                 header('Location: ' . BASE_URL . '?action=checkout');
                 exit;
             }

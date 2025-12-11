@@ -1305,7 +1305,13 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data) {
                     if (data.success) {
-                        // Hiển thị modal thành công
+                        // Nếu là thanh toán chuyển khoản (banking), redirect đến VNPay
+                        if (data.payment_method === 'banking' && data.redirect_url) {
+                            window.location.href = data.redirect_url;
+                            return;
+                        }
+                        
+                        // Hiển thị modal thành công cho COD
                         showSuccessModal(data.order_id, data.total_amount, data.redirect_url || '<?= BASE_URL ?>?action=order-detail&id=' + data.order_id);
                     } else {
                         alert(data.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
