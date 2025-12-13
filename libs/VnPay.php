@@ -48,8 +48,8 @@ class VnPay
 
         $vnp_TxnRef = $params['txn_ref'] ?? time(); // Mã đơn hàng
         $vnp_OrderInfo = $params['order_info'] ?? 'Thanh toan don hang';
-        $vnp_OrderType = $params['order_type'] ?? 'other';
-        $vnp_Amount = (int)($params['amount'] * 100); // VNPay yêu cầu số tiền nhân 100
+        $vnp_OrderType = $params['order_type'] ?? 'billpayment';
+        $vnp_Amount = (int)round($params['amount'] * 100); // VNPay yêu cầu số tiền nhân 100
         
         // Validate số tiền
         if ($vnp_Amount <= 0) {
@@ -86,7 +86,13 @@ class VnPay
         // 2. IPN URL không phải localhost (VNPay không thể truy cập localhost)
         $enableIpn = defined('VNPAY_ENABLE_IPN') ? VNPAY_ENABLE_IPN : !$isLocalhost;
         if ($enableIpn && !empty($vnp_IpnUrl)) {
-            $inputData["vnp_IpnUrl"] = $vnp_IpnUrl;
+            $parsed = parse_url($vnp_IpnUrl);
+            $schemeOk = isset($parsed['scheme']) && strtolower($parsed['scheme']) === 'https';
+            $host = $parsed['host'] ?? '';
+            $hostOk = $host && stripos($host, 'localhost') === false && stripos($host, '127.0.0.1') === false;
+            if ($schemeOk && $hostOk) {
+                $inputData["vnp_IpnUrl"] = $vnp_IpnUrl;
+            }
         }
 
         // Thêm BankCode nếu có
@@ -111,7 +117,7 @@ class VnPay
 
         // Tạo chữ ký bảo mật
         $vnp_SecureHash = hash_hmac('sha512', $hashdata, $vnp_HashSecret);
-        $vnp_Url = $vnp_Url . "?" . $query . "vnp_SecureHash=" . $vnp_SecureHash;
+        $vnp_Url = $vnp_Url . "?" . $query . "vnp_SecureHash=" . $vnp_SecureHash . "&vnp_SecureHashType=SHA512";
 
         // Log để debug (chỉ trong môi trường development)
         if (defined('DEBUG') && DEBUG) {

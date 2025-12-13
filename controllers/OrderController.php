@@ -273,7 +273,7 @@ class OrderController
         require_once PATH_ROOT . 'libs/VnPay.php';
         $vnp = new VnPay();
 
-        $txnRef = $orderId . '_' . time();
+        $txnRef = $orderId . time();
         $amount = (float)($order['total_amount'] ?? 0);
         $orderInfo = 'Thanh toan don hang #' . ($order['order_code'] ?? $orderId);
         // Điều hướng về vnpay-return kèm order_id để chắc chắn mapping được đơn

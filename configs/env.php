@@ -42,4 +42,5 @@ define('VNPAY_TMN_CODE', '1ZGKCU42');
 define('VNPAY_HASH_SECRET', 'Z4VL78GMY70MK3S4E624BLLRFODGMQGG'); 
 define('VNPAY_URL', 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'); 
 define('VNPAY_IPN_URL', BASE_URL . '?action=vnpay-ipn'); 
-define('VNPAY_ENABLE_IPN', true); // Trên hosting thì BẬT cái này lên
+define('VNPAY_ENABLE_IPN', false);
+define('DEBUG', true);

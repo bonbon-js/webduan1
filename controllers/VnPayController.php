@@ -51,10 +51,12 @@ class VnPayController
                 exit;
             }
             
-            // Lấy order_id từ vnp_TxnRef (format: orderId_timestamp)
+            // Lấy order_id từ vnp_TxnRef (orderId là tiền tố số)
             $txnRef = $result['txn_ref'] ?? '';
-            $orderIdParts = explode('_', $txnRef);
-            $orderId = (int)($orderIdParts[0] ?? 0);
+            $orderId = 0;
+            if (preg_match('/^(\d+)/', (string)$txnRef, $m)) {
+                $orderId = (int)$m[1];
+            }
             
             if (!$orderId) {
                 $returnData = [
@@ -144,8 +146,9 @@ class VnPayController
         // Nếu không có order_id trong query, thử lấy từ vnp_TxnRef
         if (!$orderId && isset($_GET['vnp_TxnRef'])) {
             $txnRef = $_GET['vnp_TxnRef'];
-            $orderIdParts = explode('_', $txnRef);
-            $orderId = (int)($orderIdParts[0] ?? 0);
+            if (preg_match('/^(\d+)/', (string)$txnRef, $m)) {
+                $orderId = (int)$m[1];
+            }
         }
         
         if (!$orderId) {

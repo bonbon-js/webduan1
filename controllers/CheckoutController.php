@@ -561,7 +561,7 @@ class CheckoutController
                 }
                 
                 $vnpayUrl = $vnpay->createPaymentUrl([
-                    'txn_ref' => $orderId . '_' . time(),
+                    'txn_ref' => $orderId . time(),
                     'amount' => $finalTotal,
                     'order_info' => $orderInfo,
                     'return_url' => BASE_URL . '?action=vnpay-return&order_id=' . $orderId,
