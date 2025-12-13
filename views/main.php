@@ -17,6 +17,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
     <link href="<?= BASE_URL ?>assets/css/style.css" rel="stylesheet">
+    <link href="<?= BASE_URL ?>assets/css/mobile-menu.css" rel="stylesheet">
 
     <!-- Latest compiled JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -26,6 +27,13 @@
 
     <header class="border-bottom">
         <div class="container header-container d-flex justify-content-between align-items-center">
+            <!-- Mobile Menu Toggle -->
+            <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Menu">
+                <span></span>
+                <span></span>
+<span></span>
+            </button>
+
             <a class="navbar-brand d-flex align-items-center text-decoration-none" href="<?= BASE_URL ?>">
                 <?php 
                 $logoPath = PATH_ROOT . 'assets/images/logo.png';
@@ -39,7 +47,7 @@
                 <?php endif; ?>
             </a>
 
-            <nav class="nav text-uppercase small">
+            <nav class="nav text-uppercase small desktop-nav">
                 <a class="text-decoration-none text-dark" href="<?= BASE_URL ?>?action=products">Sản phẩm</a>
                 <a class="text-decoration-none text-dark" href="<?= BASE_URL ?>?action=collection">Bộ sưu tập</a>
                 <a class="text-decoration-none text-dark" href="<?= BASE_URL ?>?action=posts">Tin tức</a>
@@ -100,7 +108,7 @@
                 <?php endif; ?>
 
                 <?php if (isset($_SESSION['user'])): ?>
-                    <div class="dropdown">
+                    <div class="dropdown user-dropdown-desktop">
                         <a class="text-dark dropdown-toggle text-decoration-none" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Tài khoản">
                             <i class="bi bi-person-circle"></i>
                             <span class="ms-1 small"><?= $_SESSION['user']['fullname'] ?? 'User' ?></span>
@@ -119,7 +127,7 @@
                         </ul>
                     </div>
                 <?php else: ?>
-                    <a class="text-dark" href="<?= BASE_URL ?>?action=show-login" title="Đăng nhập"><i class="bi bi-person-circle"></i></a>
+                    <a class="text-dark user-icon-desktop" href="<?= BASE_URL ?>?action=show-login" title="Đăng nhập"><i class="bi bi-person-circle"></i></a>
                 <?php endif; ?>
                 
                 <?php if (!isset($_SESSION['user']['role']) || $_SESSION['user']['role'] !== 'admin'): ?>
@@ -138,6 +146,72 @@
                 <?php endif; ?>
             </div>
         </div>
+
+        <!-- Mobile Navigation Drawer -->
+        <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
+        <nav class="mobile-nav" id="mobileNav">
+            <div class="mobile-nav-header">
+                <span class="mobile-nav-title">MENU</span>
+                <button class="mobile-nav-close" id="mobileNavClose" aria-label="Đóng menu">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="mobile-nav-body">
+                <?php if (isset($_SESSION['user'])): ?>
+                <div class="mobile-user-info">
+                    <i class="bi bi-person-circle"></i>
+                    <span><?= $_SESSION['user']['fullname'] ?? 'User' ?></span>
+                </div>
+                <?php endif; ?>
+                
+                <a href="<?= BASE_URL ?>?action=products" class="mobile-nav-item">
+                    <i class="bi bi-grid"></i>
+                    <span>Sản phẩm</span>
+                </a>
+                <a href="<?= BASE_URL ?>?action=collection" class="mobile-nav-item">
+                    <i class="bi bi-collection"></i>
+                    <span>Bộ sưu tập</span>
+                </a>
+                <a href="<?= BASE_URL ?>?action=posts" class="mobile-nav-item">
+                    <i class="bi bi-newspaper"></i>
+                    <span>Tin tức</span>
+                </a>
+                <a href="<?= BASE_URL ?>?action=contact" class="mobile-nav-item">
+                    <i class="bi bi-envelope"></i>
+                    <span>Liên hệ</span>
+                </a>
+                
+                <?php if (isset($_SESSION['user'])): ?>
+                <div class="mobile-nav-divider"></div>
+                <a href="<?= BASE_URL ?>?action=profile" class="mobile-nav-item">
+                    <i class="bi bi-person"></i>
+                    <span>Thông tin cá nhân</span>
+                </a>
+                <?php if (!isset($_SESSION['user']['role']) || $_SESSION['user']['role'] !== 'admin'): ?>
+                <a href="<?= BASE_URL ?>?action=order-history" class="mobile-nav-item">
+                    <i class="bi bi-box-seam"></i>
+                    <span>Đơn hàng của tôi</span>
+                </a>
+                <?php endif; ?>
+                <?php if (($_SESSION['user']['role'] ?? null) === 'admin'): ?>
+                <a href="<?= BASE_URL ?>?action=admin-dashboard" class="mobile-nav-item">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Quản lý</span>
+                </a>
+                <?php endif; ?>
+                <a href="<?= BASE_URL ?>?action=logout" class="mobile-nav-item text-danger">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Đăng xuất</span>
+                </a>
+                <?php else: ?>
+                <div class="mobile-nav-divider"></div>
+                <a href="<?= BASE_URL ?>?action=show-login" class="mobile-nav-item">
+                    <i class="bi bi-box-arrow-in-right"></i>
+                    <span>Đăng nhập</span>
+                </a>
+                <?php endif; ?>
+            </div>
+        </nav>
     </header>
 
     <?php $flash = get_flash(); ?>
@@ -648,6 +722,136 @@
             fetchNotifications();
             setInterval(fetchNotifications, 60000);
         });
+    </script>
+
+    <script>
+        // Mobile Menu Toggle
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const mobileNav = document.getElementById('mobileNav');
+        const mobileNavOverlay = document.getElementById('mobileNavOverlay');
+        const mobileNavClose = document.getElementById('mobileNavClose');
+
+        function openMobileMenu() {
+            mobileNav.classList.add('active');
+            mobileNavOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMobileMenu() {
+            mobileNav.classList.remove('active');
+            mobileNavOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        if (mobileMenuToggle) {
+            mobileMenuToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                openMobileMenu();
+            });
+        }
+
+        if (mobileNavClose) {
+            mobileNavClose.addEventListener('click', function(e) {
+                e.preventDefault();
+                closeMobileMenu();
+            });
+        }
+
+        if (mobileNavOverlay) {
+            mobileNavOverlay.addEventListener('click', function() {
+                closeMobileMenu();
+            });
+        }
+
+        // Close mobile menu when clicking on a link
+        const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
+        mobileNavItems.forEach(item => {
+            item.addEventListener('click', function() {
+                closeMobileMenu();
+            });
+        });
+
+        // Close mobile menu on ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && mobileNav.classList.contains('active')) {
+                closeMobileMenu();
+            }
+        });
+    </script>
+
+    <script>
+        // Dynamic Logo Color Change based on background
+        function updateLogoColor() {
+            const header = document.querySelector('header');
+            const logoText = document.querySelector('.logo-text');
+            const logoImage = document.querySelector('.logo-image');
+            
+            if (!header) return;
+            
+            // Get header position
+            const headerRect = header.getBoundingClientRect();
+            const headerBottom = headerRect.bottom;
+            
+            // Check if header is over dark background
+            // Get element at center of header
+            const centerX = window.innerWidth / 2;
+            const centerY = headerBottom - 10;
+            const elementBelow = document.elementFromPoint(centerX, centerY);
+            
+            if (elementBelow) {
+                // Get background color of element below header
+                const bgColor = window.getComputedStyle(elementBelow).backgroundColor;
+                const computedBg = window.getComputedStyle(elementBelow.closest('section, div, main') || elementBelow).backgroundColor;
+                
+                // Check if background is dark (hero section, etc.)
+                const isDark = isColorDark(computedBg) || isColorDark(bgColor) || 
+                              elementBelow.classList.contains('hero') || 
+                              elementBelow.closest('.hero') ||
+                              elementBelow.classList.contains('dark-section');
+                
+                // Change logo color
+                if (isDark) {
+                    if (logoText) {
+                        logoText.style.color = '#fff';
+                        logoText.style.textShadow = '0 2px 8px rgba(0, 0, 0, 0.3)';
+                    }
+                    if (logoImage) {
+                        logoImage.style.filter = 'brightness(0) invert(1) drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3))';
+                    }
+                } else {
+                    if (logoText) {
+                        logoText.style.color = '#000';
+                        logoText.style.textShadow = '0 3px 8px rgba(0, 0, 0, 0.15)';
+                    }
+                    if (logoImage) {
+                        logoImage.style.filter = 'drop-shadow(0 2px 8px rgba(0, 0, 0, 0.15))';
+                    }
+                }
+            }
+        }
+        
+        // Helper function to check if color is dark
+        function isColorDark(color) {
+            if (!color || color === 'transparent' || color === 'rgba(0, 0, 0, 0)') return false;
+            
+            // Parse RGB values
+            const rgb = color.match(/\d+/g);
+            if (!rgb || rgb.length < 3) return false;
+            
+            // Calculate brightness
+            const brightness = (parseInt(rgb[0]) * 299 + parseInt(rgb[1]) * 587 + parseInt(rgb[2]) * 114) / 1000;
+            return brightness < 128;
+        }
+        
+        // Run on scroll and load
+        if (window.innerWidth <= 992) {
+            window.addEventListener('scroll', updateLogoColor);
+            window.addEventListener('load', updateLogoColor);
+            window.addEventListener('resize', updateLogoColor);
+            
+            // Initial check
+            setTimeout(updateLogoColor, 100);
+        }
     </script>
 
 </body>

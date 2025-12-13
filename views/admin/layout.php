@@ -11,9 +11,20 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
-    <link href="<?= BASE_URL ?>assets/css/style.css" rel="stylesheet">
+    <link href="<?= BASE_URL ?>/assets/css/style.css" rel="stylesheet">
+    <link href="<?= BASE_URL ?>/assets/css/admin-mobile.css" rel="stylesheet">
 </head>
 <body>
+    <!-- Mobile Toggle Button -->
+    <button class="admin-mobile-toggle" id="adminMobileToggle" aria-label="Toggle menu">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+    <!-- Sidebar Overlay -->
+    <div class="admin-sidebar-overlay" id="adminSidebarOverlay"></div>
+
     <header class="admin-header">
         <button class="admin-menu-toggle d-md-none" type="button" id="adminMenuToggle" aria-label="Toggle menu">
             <i class="bi bi-list"></i>
@@ -32,8 +43,6 @@
             </ul>
         </div>
     </header>
-
-    <div class="admin-sidebar-overlay" id="adminSidebarOverlay"></div>
 
     <div class="d-flex">
         <aside class="admin-sidebar" id="adminSidebar">
@@ -134,25 +143,56 @@
     <script>
         // Admin sidebar toggle for mobile
         document.addEventListener('DOMContentLoaded', function() {
-            const menuToggle = document.getElementById('adminMenuToggle');
+            const mobileToggle = document.getElementById('adminMobileToggle');
             const sidebar = document.getElementById('adminSidebar');
             const overlay = document.getElementById('adminSidebarOverlay');
             
-            if (menuToggle && sidebar) {
-                menuToggle.addEventListener('click', function() {
-                    sidebar.classList.toggle('show');
-                    if (overlay) {
-                        overlay.classList.toggle('show');
+            function openSidebar() {
+                if (sidebar) sidebar.classList.add('active');
+                if (overlay) overlay.classList.add('active');
+                if (mobileToggle) mobileToggle.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+            
+            function closeSidebar() {
+                if (sidebar) sidebar.classList.remove('active');
+                if (overlay) overlay.classList.remove('active');
+                if (mobileToggle) mobileToggle.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+            
+            if (mobileToggle) {
+                mobileToggle.addEventListener('click', function() {
+                    if (sidebar && sidebar.classList.contains('active')) {
+                        closeSidebar();
+                    } else {
+                        openSidebar();
                     }
                 });
-                
-                if (overlay) {
-                    overlay.addEventListener('click', function() {
-                        sidebar.classList.remove('show');
-                        overlay.classList.remove('show');
-                    });
-                }
             }
+            
+            if (overlay) {
+                overlay.addEventListener('click', closeSidebar);
+            }
+            
+            // Close sidebar when clicking on a link
+            if (sidebar) {
+                const sidebarLinks = sidebar.querySelectorAll('.nav-item');
+                sidebarLinks.forEach(link => {
+                    link.addEventListener('click', function() {
+                        if (window.innerWidth <= 992) {
+                            closeSidebar();
+                        }
+                    });
+                });
+            }
+            
+            // Close on ESC key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && sidebar && sidebar.classList.contains('active')) {
+                    closeSidebar();
+                }
+            });
         });
     </script>
 </body>

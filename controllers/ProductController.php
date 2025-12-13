@@ -313,15 +313,21 @@ class ProductController
         $size = isset($_GET['size']) ? trim($_GET['size']) : '';
         $color = isset($_GET['color']) ? trim($_GET['color']) : '';
         
-        if (!$productId || ($size === '' && $color === '')) {
-            echo json_encode(['success' => false, 'message' => 'Missing parameters']);
+        if (!$productId) {
+            echo json_encode(['success' => false, 'message' => 'Missing product_id']);
             exit;
         }
 		
 		require_once PATH_MODEL . 'ProductModel.php';
 		$productModel = new ProductModel();
 		
-        $stock = $productModel->getVariantStock($productId, $size ?: null, $color ?: null);
+        // Nếu không có size/color, trả về tổng tồn kho của sản phẩm
+        if ($size === '' && $color === '') {
+            $product = $productModel->getProductById($productId);
+            $stock = (int)($product['stock'] ?? 0);
+        } else {
+            $stock = $productModel->getVariantStock($productId, $size ?: null, $color ?: null);
+        }
 		
 		echo json_encode([
 			'success' => true,

@@ -36,6 +36,26 @@ class AdminProductController
             });
         }
         
+        // Lọc theo tồn kho nếu có
+        $stockFilter = trim($_GET['stock_filter'] ?? '');
+        if ($stockFilter) {
+            $products = array_filter($products, function($product) use ($stockFilter) {
+                $stock = (int)($product['stock'] ?? 0);
+                switch ($stockFilter) {
+                    case 'out_of_stock':
+                        return $stock <= 0;
+                    case 'low_stock':
+                        return $stock > 0 && $stock <= 10;
+                    case 'medium_stock':
+                        return $stock > 10 && $stock <= 50;
+                    case 'in_stock':
+                        return $stock > 50;
+                    default:
+                        return true;
+                }
+            });
+        }
+        
         $categories = $this->categoryModel->getAllCategories();
 
         $title = 'Quản lý sản phẩm';

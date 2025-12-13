@@ -154,7 +154,8 @@
                     </div>
                 </div>
 
-                <!-- Stock Info -->
+
+                <!-- Stock Info - Always visible -->
                 <div class="mb-3">
                     <p class="small text-muted mb-0">
                         <i class="bi bi-box-seam"></i> 
@@ -162,7 +163,8 @@
                     </p>
                 </div>
 
-                <!-- Quantity Selector -->
+                <?php if (!isset($_SESSION['user']['role']) || $_SESSION['user']['role'] !== 'admin'): ?>
+                <!-- Quantity Selector - Only for customers -->
                 <div class="quantity-selector" id="productQuantitySection">
                     <label for="productQuantity">Số lượng</label>
                     <div class="quantity-input-group">
@@ -172,8 +174,7 @@
                     </div>
                 </div>
 
-                <!-- Actions -->
-                <?php if (!isset($_SESSION['user']['role']) || $_SESSION['user']['role'] !== 'admin'): ?>
+                <!-- Actions - Only for customers -->
                 <div id="productActionButtons">
                     <button type="button" class="btn btn-add-to-cart" onclick="addToCart()">Thêm vào giỏ hàng</button>
                     <button type="button" class="btn btn-buy-now" onclick="buyNow()">Mua ngay</button>
@@ -184,8 +185,9 @@
                     </a>
                 </div>
                 <?php else: ?>
+                <!-- Admin notice -->
                 <div class="alert alert-info">
-                    <i class="bi bi-info-circle"></i> Tài khoản quản trị chỉ có thể xem sản phẩm, không thể mua hàng.
+                    <i class="bi bi-info-circle"></i> Tài khoản quản trị chỉ có thể xem thông tin sản phẩm. Để quản lý tồn kho, vui lòng truy cập <a href="<?= BASE_URL ?>?action=admin-products" class="alert-link">trang quản trị</a>.
                 </div>
                 <?php endif; ?>
             </form>
@@ -580,7 +582,7 @@
 
     // Update product stock based on selected variant
     function updateProductStock(productId, size, color) {
-        if (!productId || (!size && !color)) return;
+        if (!productId) return;
         
         const params = new URLSearchParams({ product_id: productId });
         if (size) params.append('size', size);
@@ -597,32 +599,55 @@
                 
                 if (data.success && data.stock !== undefined) {
                     const stock = parseInt(data.stock);
-                    stockInfo.textContent = stock > 0 ? stock + ' sản phẩm' : 'Hết hàng';
-                    stockInfo.className = stock > 0 ? 'fw-bold text-success' : 'fw-bold text-danger';
                     
+                    // Hiển thị số lượng tồn kho cụ thể
                     if (stock > 0) {
-                        // Có hàng - hiện nút mua
-                        quantitySection.style.display = 'flex';
-                        actionButtons.classList.remove('d-none');
-                        outOfStockButton.classList.add('d-none');
-                        quantityInput.max = stock;
-                        if (parseInt(quantityInput.value) > stock) {
-                            quantityInput.value = stock;
-                        }
+                        stockInfo.textContent = stock + ' sản phẩm';
+                        stockInfo.className = 'fw-bold text-success';
                     } else {
-                        // Hết hàng - hiện nút xem sản phẩm tương tự
-                        quantitySection.style.display = 'none';
-                        actionButtons.classList.add('d-none');
-                        outOfStockButton.classList.remove('d-none');
+                        stockInfo.textContent = 'Hết hàng';
+                        stockInfo.className = 'fw-bold text-danger';
+                    }
+                    
+                    // Chỉ thao tác với các phần tử nếu chúng tồn tại (không phải admin)
+                    if (quantitySection && actionButtons && outOfStockButton && quantityInput) {
+                        if (stock > 0) {
+                            // Có hàng - hiện nút mua
+                            quantitySection.style.display = 'flex';
+                            actionButtons.classList.remove('d-none');
+                            outOfStockButton.classList.add('d-none');
+                            quantityInput.max = stock;
+                            if (parseInt(quantityInput.value) > stock) {
+                                quantityInput.value = stock;
+                            }
+                        } else {
+                            // Hết hàng - hiện nút xem sản phẩm tương tự
+                            quantitySection.style.display = 'none';
+                            actionButtons.classList.add('d-none');
+                            outOfStockButton.classList.remove('d-none');
+                        }
                     }
                 } else {
-                    stockInfo.textContent = 'Không xác định';
-                    stockInfo.className = 'fw-bold text-muted';
+                    // Nếu không có dữ liệu stock từ API, hiển thị thông báo chọn thuộc tính
+                    if (!size || !color) {
+                        stockInfo.textContent = 'Vui lòng chọn kích thước và màu sắc';
+                        stockInfo.className = 'fw-bold text-muted';
+                        
+                        // Chỉ ẩn các phần tử nếu chúng tồn tại
+                        if (quantitySection) quantitySection.style.display = 'none';
+                        if (actionButtons) actionButtons.classList.add('d-none');
+                        if (outOfStockButton) outOfStockButton.classList.add('d-none');
+                    } else {
+                        stockInfo.textContent = 'Không có thông tin tồn kho';
+                        stockInfo.className = 'fw-bold text-muted';
+                    }
                 }
             })
             .catch(err => {
                 console.error('Error loading stock:', err);
-                document.getElementById('productStockInfo').textContent = 'Không xác định';
+                const stockInfo = document.getElementById('productStockInfo');
+                stockInfo.textContent = 'Vui lòng chọn kích thước và màu sắc';
+                stockInfo.className = 'fw-bold text-muted';
             });
     }
 

@@ -1,0 +1,1074 @@
+/* ============================================
+   ADMIN PANEL MOBILE RESPONSIVE
+   ============================================ */
+
+/* Mobile Menu Toggle for Admin Sidebar */
+.admin-mobile-toggle {
+    display: none;
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 1200;
+    background: #fff;
+    border: none;
+    width: 45px;
+    height: 45px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.3s ease;
+}
+
+.admin-mobile-toggle span {
+    display: block;
+    width: 24px;
+    height: 3px;
+    background: #6278ff;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+.admin-mobile-toggle:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.admin-mobile-toggle.active span:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+}
+
+.admin-mobile-toggle.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.admin-mobile-toggle.active span:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+}
+
+/* Sidebar Overlay */
+.admin-sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1050;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.admin-sidebar-overlay.active {
+    opacity: 1;
+}
+
+/* Tablet and Mobile Responsive */
+@media (max-width: 992px) {
+
+    /* Show mobile toggle */
+    .admin-mobile-toggle {
+        display: flex !important;
+    }
+
+    /* Show overlay when sidebar is open */
+    .admin-sidebar-overlay {
+        display: block;
+    }
+
+    /* Admin Header - Full width */
+    .admin-header {
+        padding: 1rem 1.5rem;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1100;
+    }
+
+    /* Admin Sidebar - Slide in from left */
+    .admin-sidebar {
+        position: fixed;
+        left: -280px;
+        top: 0;
+        width: 260px;
+        height: 100vh;
+        z-index: 1150;
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .admin-sidebar.active {
+        left: 0;
+    }
+
+    /* Admin Content - Full width */
+    .admin-content {
+        margin-left: 0 !important;
+        padding: 1rem;
+        margin-top: 60px;
+        width: 100%;
+    }
+
+    /* Admin Page Header - Stack vertically */
+    .admin-page-header {
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .admin-page-header .title-wrap {
+        text-align: center;
+    }
+
+    .admin-page-header h1,
+    .admin-page-header h2,
+    .admin-page-header h3 {
+        font-size: 1.5rem;
+    }
+
+    .admin-page-actions {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Filter Bar - Stack vertically */
+    .admin-filter-bar {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    /* Tables - Horizontal scroll */
+    .admin-table {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .admin-table table {
+        min-width: 800px;
+    }
+
+    .admin-table th,
+    .admin-table td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    /* Action buttons in tables - Better alignment */
+    .admin-table td .btn-group,
+    .admin-table td .d-flex {
+        display: flex !important;
+        gap: 0.5rem;
+        justify-content: flex-start;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .admin-table td .btn {
+        margin: 0 !important;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        white-space: nowrap;
+    }
+
+    .admin-table td .btn i {
+        font-size: 1rem;
+    }
+
+    /* Action column - Fixed width */
+    .admin-table th:last-child,
+    .admin-table td:last-child {
+        min-width: 150px;
+        text-align: center;
+    }
+
+    /* Cards - Full width */
+    .card {
+        margin-bottom: 1rem;
+    }
+
+    /* Stat Cards - 2 columns */
+    .row.g-3 {
+        gap: 0.75rem !important;
+    }
+
+    .col-md-3,
+    .col-md-4,
+    .col-md-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    /* Forms - Full width inputs */
+    .form-control,
+    .form-select {
+        font-size: 16px;
+        /* Prevent zoom on iOS */
+    }
+
+    /* Buttons - Better spacing */
+    .btn {
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-group .btn {
+        margin-bottom: 0;
+    }
+
+    /* Page actions - Stack and center */
+    .admin-page-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        width: 100%;
+    }
+
+    .admin-page-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Modal - Full screen on mobile */
+    .modal-dialog {
+        margin: 0;
+        max-width: 100%;
+        height: 100vh;
+    }
+
+    .modal-content {
+        height: 100%;
+        border-radius: 0;
+    }
+}
+
+/* Mobile Only */
+@media (max-width: 768px) {
+    .admin-header {
+        padding: 0.75rem 1rem;
+    }
+
+    .admin-content {
+        padding: 0.75rem;
+    }
+
+    .admin-page-header h1,
+    .admin-page-header h2,
+    .admin-page-header h3 {
+        font-size: 1.25rem;
+    }
+
+    .admin-page-header p {
+        font-size: 0.85rem;
+    }
+
+    /* Stat Cards - 1 column on small mobile */
+    .stat-card {
+        padding: 1rem;
+    }
+
+    .stat-card .display-4 {
+        font-size: 2rem;
+    }
+
+    /* Table actions - Stack vertically and full width */
+    .admin-table td .btn-group,
+    .admin-table td .d-flex,
+    .table-actions {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+        width: 100% !important;
+    }
+
+    .admin-table td .btn,
+    .table-actions .btn {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0.625rem 0.875rem !important;
+        font-size: 0.875rem !important;
+        justify-content: center !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.5rem !important;
+    }
+
+    .admin-table td .btn i,
+    .table-actions .btn i {
+        font-size: 1rem !important;
+    }
+
+    /* Action column - Auto width */
+    .admin-table th:last-child,
+    .admin-table td:last-child {
+        min-width: auto;
+        width: 100%;
+        padding: 0.75rem !important;
+    }
+
+    /* Pagination - Smaller */
+    .pagination {
+        font-size: 0.875rem;
+    }
+
+    .pagination .page-link {
+        padding: 0.5rem 0.75rem;
+    }
+}
+
+/* Extra Small Mobile */
+@media (max-width: 576px) {
+    .admin-mobile-toggle {
+        width: 40px;
+        height: 40px;
+        top: 10px;
+        left: 10px;
+    }
+
+    .admin-mobile-toggle span {
+        width: 20px;
+        height: 2px;
+    }
+
+    .admin-sidebar {
+        width: 85%;
+        max-width: 280px;
+    }
+
+    .admin-content {
+        padding: 0.5rem;
+    }
+
+    .admin-page-header {
+        padding: 0.75rem;
+    }
+
+    .admin-page-header h1,
+    .admin-page-header h2,
+    .admin-page-header h3 {
+        font-size: 1.1rem;
+    }
+
+    /* Hide less important table columns on very small screens */
+    .admin-table .hide-mobile {
+        display: none;
+    }
+
+    /* Stack form groups vertically */
+    .row>[class*="col-"] {
+        margin-bottom: 0.75rem;
+    }
+}
+
+/* Landscape Mobile */
+@media (max-width: 992px) and (orientation: landscape) {
+    .admin-sidebar {
+        width: 220px;
+    }
+
+    .admin-content {
+        padding: 0.75rem;
+    }
+}
+
+/* Print Styles */
+@media print {
+
+    .admin-header,
+    .admin-sidebar,
+    .admin-mobile-toggle,
+    .admin-sidebar-overlay,
+    .admin-page-actions,
+    .btn,
+    .pagination {
+        display: none !important;
+    }
+
+    .admin-content {
+        margin-left: 0 !important;
+        margin-top: 0 !important;
+        padding: 0 !important;
+    }
+
+    .admin-table {
+        overflow: visible;
+    }
+
+    .admin-table table {
+        min-width: auto;
+    }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) and (pointer: coarse) {
+
+    /* Larger touch targets */
+    .btn,
+    .nav-item,
+    .table-actions a,
+    .pagination .page-link {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Remove hover effects on touch devices */
+    .nav-item:hover,
+    .btn:hover {
+        background: inherit;
+    }
+
+    /* Active states for touch */
+    .nav-item:active {
+        background: #e2e8f0;
+    }
+
+    .btn:active {
+        transform: scale(0.98);
+    }
+}
+
+/* ============================================
+   DASHBOARD & STATISTICS PAGE RESPONSIVE
+   ============================================ */
+
+@media (max-width: 992px) {
+
+    /* Dashboard Stats Grid */
+    .dashboard-stats {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 1rem;
+    }
+
+    /* Stat Cards */
+    .stat-card {
+        padding: 1.25rem;
+    }
+
+    .stat-card h6 {
+        font-size: 0.875rem;
+    }
+
+    .stat-card .display-4 {
+        font-size: 2.5rem;
+    }
+
+    /* Charts Container */
+    .chart-container {
+        height: 300px !important;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Recent Orders/Activities */
+    .recent-list {
+        max-height: 400px;
+    }
+
+    .recent-list .list-group-item {
+        padding: 0.875rem;
+        font-size: 0.875rem;
+    }
+}
+
+@media (max-width: 768px) {
+
+    /* Dashboard Stats - 1 column */
+    .dashboard-stats {
+        grid-template-columns: 1fr !important;
+    }
+
+    .stat-card .display-4 {
+        font-size: 2rem;
+    }
+
+    /* Chart height smaller */
+    .chart-container {
+        height: 250px !important;
+    }
+
+    /* Date range picker - Stack */
+    .date-range-picker {
+        flex-direction: column !important;
+        gap: 0.75rem;
+    }
+
+    .date-range-picker input {
+        width: 100% !important;
+    }
+}
+
+/* ============================================
+   PRODUCT MANAGEMENT PAGE RESPONSIVE
+   ============================================ */
+
+@media (max-width: 992px) {
+
+    /* Product Image in table */
+    .admin-table img {
+        max-width: 60px;
+        height: auto;
+    }
+
+    /* Product form - Image upload */
+    .product-image-upload {
+        flex-direction: column;
+    }
+
+    .product-image-preview {
+        width: 100%;
+        max-width: 300px;
+        margin: 0 auto 1rem;
+    }
+
+    /* Variant table */
+    .variant-table {
+        overflow-x: auto;
+    }
+
+    .variant-table table {
+        min-width: 600px;
+    }
+
+    /* Product attributes */
+    .attribute-selector {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .attribute-selector .form-group {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+
+    /* Product grid view */
+    .product-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Product card */
+    .product-card {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .product-card img {
+        width: 100%;
+        max-width: 200px;
+        margin: 0 auto 1rem;
+    }
+
+    /* Category selector */
+    .category-tree {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+}
+
+/* ============================================
+   ORDER MANAGEMENT PAGE RESPONSIVE
+   ============================================ */
+
+@media (max-width: 992px) {
+
+    /* Order status badges */
+    .order-status {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.75rem;
+    }
+
+    /* Order details card */
+    .order-details {
+        padding: 1rem;
+    }
+
+    .order-details .row {
+        margin-bottom: 0.75rem;
+    }
+
+    /* Order items table */
+    .order-items-table {
+        overflow-x: auto;
+    }
+
+    .order-items-table table {
+        min-width: 500px;
+    }
+
+    /* Order timeline */
+    .order-timeline {
+        padding-left: 1rem;
+    }
+
+    .order-timeline-item {
+        padding-left: 2rem;
+        margin-bottom: 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+
+    /* Order summary - Stack */
+    .order-summary {
+        flex-direction: column;
+    }
+
+    .order-summary-item {
+        width: 100%;
+        padding: 0.75rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    /* Order actions - Full width */
+    .order-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .order-actions .btn {
+        width: 100%;
+    }
+
+    /* Customer info card */
+    .customer-info {
+        padding: 1rem;
+    }
+
+    .customer-info .row {
+        flex-direction: column;
+    }
+}
+
+/* ============================================
+   USER MANAGEMENT PAGE RESPONSIVE
+   ============================================ */
+
+@media (max-width: 992px) {
+
+    /* User avatar */
+    .user-avatar {
+        width: 50px;
+        height: 50px;
+    }
+
+    /* User info */
+    .user-info {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    /* Role badges */
+    .role-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.625rem;
+    }
+
+    /* User form */
+    .user-form .row {
+        margin-bottom: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+
+    /* User list - Card view */
+    .user-list-item {
+        flex-direction: column;
+        text-align: center;
+        padding: 1rem;
+    }
+
+    .user-avatar {
+        margin: 0 auto 0.75rem;
+    }
+
+    /* Permissions checkboxes */
+    .permissions-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .permission-item {
+        padding: 0.75rem;
+    }
+}
+
+/* ============================================
+   COUPON MANAGEMENT PAGE RESPONSIVE
+   ============================================ */
+
+@media (max-width: 992px) {
+
+    /* Coupon card */
+    .coupon-card {
+        padding: 1rem;
+    }
+
+    .coupon-code {
+        font-size: 1.25rem;
+    }
+
+    /* Discount type selector */
+    .discount-type-selector {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .discount-type-option {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+
+    /* Coupon grid */
+    .coupon-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Coupon details */
+    .coupon-details {
+        flex-direction: column;
+    }
+
+    .coupon-details-item {
+        width: 100%;
+        padding: 0.75rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+}
+
+/* ============================================
+   CATEGORY MANAGEMENT PAGE RESPONSIVE
+   ============================================ */
+
+@media (max-width: 992px) {
+
+    /* Category tree */
+    .category-tree {
+        padding: 1rem;
+    }
+
+    .category-item {
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Category form */
+    .category-form {
+        padding: 1rem;
+    }
+
+    /* Parent category selector */
+    .parent-category-select {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+}
+
+@media (max-width: 768px) {
+
+    /* Category hierarchy - Reduce indent */
+    .category-level-1 {
+        padding-left: 1rem;
+    }
+
+    .category-level-2 {
+        padding-left: 2rem;
+    }
+
+    .category-level-3 {
+        padding-left: 3rem;
+    }
+
+    /* Category actions */
+    .category-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
+/* ============================================
+   REVIEW MANAGEMENT PAGE RESPONSIVE
+   ============================================ */
+
+@media (max-width: 992px) {
+
+    /* Review card */
+    .review-card {
+        padding: 1rem;
+    }
+
+    .review-rating {
+        font-size: 1.25rem;
+    }
+
+    /* Review content */
+    .review-content {
+        font-size: 0.875rem;
+        line-height: 1.5;
+    }
+
+    /* Review images */
+    .review-images {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+
+    /* Review list */
+    .review-list-item {
+        flex-direction: column;
+    }
+
+    .review-user-info {
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+
+    .review-images {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* Review reply */
+    .review-reply {
+        margin-left: 0;
+        padding-left: 1rem;
+        border-left: 3px solid #6278ff;
+    }
+}
+
+/* ============================================
+   POST/NEWS MANAGEMENT PAGE RESPONSIVE
+   ============================================ */
+
+@media (max-width: 992px) {
+
+    /* Post editor */
+    .post-editor {
+        padding: 1rem;
+    }
+
+    /* Featured image upload */
+    .featured-image-upload {
+        flex-direction: column;
+    }
+
+    .featured-image-preview {
+        width: 100%;
+        max-width: 400px;
+        margin: 0 auto 1rem;
+    }
+
+    /* Post meta */
+    .post-meta {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .post-meta-item {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+
+    /* Post grid */
+    .post-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Post card */
+    .post-card {
+        flex-direction: column;
+    }
+
+    .post-card img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+    }
+
+    /* WYSIWYG editor toolbar */
+    .editor-toolbar {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .editor-toolbar .btn {
+        padding: 0.5rem;
+        font-size: 0.875rem;
+    }
+}
+
+/* ============================================
+   SETTINGS PAGE RESPONSIVE
+   ============================================ */
+
+@media (max-width: 992px) {
+
+    /* Settings tabs */
+    .settings-tabs {
+        flex-direction: column;
+        border-right: none;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .settings-tab {
+        width: 100%;
+        text-align: left;
+        border-left: 3px solid transparent;
+    }
+
+    .settings-tab.active {
+        border-left-color: #6278ff;
+        border-bottom-color: transparent;
+    }
+
+    /* Settings content */
+    .settings-content {
+        padding: 1rem;
+    }
+
+    /* Settings form groups */
+    .settings-form-group {
+        margin-bottom: 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+
+    /* Settings section */
+    .settings-section {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .settings-section h4 {
+        font-size: 1.1rem;
+    }
+
+    /* Toggle switches */
+    .settings-toggle {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    /* Color pickers */
+    .color-picker-group {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+}
+
+/* ============================================
+   GENERAL IMPROVEMENTS FOR ALL ADMIN PAGES
+   ============================================ */
+
+@media (max-width: 992px) {
+
+    /* Breadcrumb */
+    .breadcrumb {
+        font-size: 0.875rem;
+        padding: 0.75rem 1rem;
+        flex-wrap: wrap;
+    }
+
+    .breadcrumb-item {
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Alert messages */
+    .alert {
+        padding: 0.875rem;
+        font-size: 0.875rem;
+    }
+
+    /* Badge */
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.625rem;
+    }
+
+    /* Dropdown menu */
+    .dropdown-menu {
+        min-width: 200px;
+        font-size: 0.875rem;
+    }
+
+    /* Tooltip */
+    .tooltip {
+        font-size: 0.75rem;
+    }
+
+    /* Progress bar */
+    .progress {
+        height: 1.25rem;
+    }
+
+    .progress-bar {
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 768px) {
+
+    /* Search bar */
+    .admin-search {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    /* Bulk actions */
+    .bulk-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .bulk-actions select,
+    .bulk-actions .btn {
+        width: 100%;
+    }
+
+    /* Export buttons */
+    .export-buttons {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .export-buttons .btn {
+        width: 100%;
+    }
+
+    /* Quick stats */
+    .quick-stats {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Info boxes */
+    .info-box {
+        flex-direction: column;
+        text-align: center;
+        padding: 1rem;
+    }
+
+    .info-box-icon {
+        margin: 0 auto 0.75rem;
+    }
+}

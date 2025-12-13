@@ -12,13 +12,100 @@
     </div>
 </div>
 
+<?php
+// Tính toán thống kê tồn kho
+$totalProducts = count($products);
+$outOfStock = 0;
+$lowStock = 0;
+$mediumStock = 0;
+$inStock = 0;
+
+foreach ($products as $p) {
+    $stock = (int)($p['stock'] ?? 0);
+    if ($stock <= 0) {
+        $outOfStock++;
+    } elseif ($stock <= 10) {
+        $lowStock++;
+    } elseif ($stock <= 50) {
+        $mediumStock++;
+    } else {
+        $inStock++;
+    }
+}
+?>
+
+<!-- Stock Statistics Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="text-muted small mb-1">Tổng sản phẩm</div>
+                        <div class="fs-4 fw-bold"><?= number_format($totalProducts) ?></div>
+                    </div>
+                    <div class="bg-primary bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-box-seam fs-3 text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="text-muted small mb-1">Hết hàng</div>
+                        <div class="fs-4 fw-bold text-danger"><?= number_format($outOfStock) ?></div>
+                    </div>
+                    <div class="bg-danger bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-x-circle-fill fs-3 text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="text-muted small mb-1">Sắp hết (≤10)</div>
+                        <div class="fs-4 fw-bold text-danger"><?= number_format($lowStock) ?></div>
+                    </div>
+                    <div class="bg-warning bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-exclamation-triangle-fill fs-3 text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="text-muted small mb-1">Còn hàng</div>
+                        <div class="fs-4 fw-bold text-success"><?= number_format($inStock) ?></div>
+                    </div>
+                    <div class="bg-success bg-opacity-10 p-3 rounded">
+                        <i class="bi bi-check-circle-fill fs-3 text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <!-- Form tìm kiếm và lọc -->
 <div class="card mb-4">
     <div class="card-body">
         <form method="GET" action="<?= BASE_URL ?>" id="searchForm">
             <input type="hidden" name="action" value="admin-products">
             <div class="row g-3">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label small text-uppercase fw-bold">Tìm kiếm</label>
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
@@ -29,7 +116,7 @@
                                value="<?= htmlspecialchars($_GET['keyword'] ?? '') ?>">
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label small text-uppercase fw-bold">Danh mục</label>
                     <select name="category" class="form-select">
                         <option value="">Tất cả danh mục</option>
@@ -43,7 +130,7 @@
                         <?php endif; ?>
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label small text-uppercase fw-bold">Mức giá</label>
                     <select name="price_range" class="form-select">
                         <option value="">Tất cả mức giá</option>
@@ -51,6 +138,16 @@
                         <option value="500000-1000000" <?= ($_GET['price_range'] ?? '') == '500000-1000000' ? 'selected' : '' ?>>500.000đ - 1.000.000đ</option>
                         <option value="1000000-2000000" <?= ($_GET['price_range'] ?? '') == '1000000-2000000' ? 'selected' : '' ?>>1.000.000đ - 2.000.000đ</option>
                         <option value="2000000-999999999" <?= ($_GET['price_range'] ?? '') == '2000000-999999999' ? 'selected' : '' ?>>Trên 2.000.000đ</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small text-uppercase fw-bold">Tồn kho</label>
+                    <select name="stock_filter" class="form-select">
+                        <option value="">Tất cả</option>
+                        <option value="out_of_stock" <?= ($_GET['stock_filter'] ?? '') == 'out_of_stock' ? 'selected' : '' ?>>Hết hàng</option>
+                        <option value="low_stock" <?= ($_GET['stock_filter'] ?? '') == 'low_stock' ? 'selected' : '' ?>>Sắp hết (≤10)</option>
+                        <option value="medium_stock" <?= ($_GET['stock_filter'] ?? '') == 'medium_stock' ? 'selected' : '' ?>>Tồn kho thấp (≤50)</option>
+                        <option value="in_stock" <?= ($_GET['stock_filter'] ?? '') == 'in_stock' ? 'selected' : '' ?>>Còn hàng</option>
                     </select>
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
@@ -135,7 +232,33 @@
                             <?php endif; ?>
                         </td>
                         <td>
-                            <span class="stock-amount"><?= htmlspecialchars($product['stock'] ?? 0) ?></span>
+                            <?php 
+                            $stockQty = (int)($product['stock'] ?? 0);
+                            $stockClass = 'text-success'; // Mặc định: đủ hàng
+                            $stockIcon = 'bi-check-circle-fill';
+                            $stockLabel = 'Còn hàng';
+                            
+                            if ($stockQty <= 0) {
+                                $stockClass = 'text-danger';
+                                $stockIcon = 'bi-x-circle-fill';
+                                $stockLabel = 'Hết hàng';
+                            } elseif ($stockQty <= 10) {
+                                $stockClass = 'text-danger';
+                                $stockIcon = 'bi-exclamation-triangle-fill';
+                                $stockLabel = 'Sắp hết';
+                            } elseif ($stockQty <= 50) {
+                                $stockClass = 'text-warning';
+                                $stockIcon = 'bi-exclamation-circle-fill';
+                                $stockLabel = 'Tồn kho thấp';
+                            }
+                            ?>
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi <?= $stockIcon ?> <?= $stockClass ?>"></i>
+                                <div>
+                                    <div class="fw-bold <?= $stockClass ?>"><?= number_format($stockQty) ?></div>
+                                    <small class="text-muted"><?= $stockLabel ?></small>
+                                </div>
+                            </div>
                         </td>
                         <td>
                             <div class="action-buttons">

@@ -1,0 +1,466 @@
+/* ============================================
+   MOBILE MENU STYLES
+   ============================================ */
+
+/* Mobile Menu Toggle Button (Hamburger) */
+.mobile-menu-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 28px;
+    height: 22px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 1001;
+    transition: all 0.3s ease;
+}
+
+.mobile-menu-toggle span {
+    display: block;
+    width: 100%;
+    height: 3px;
+    background-color: #000;
+    border-radius: 3px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-menu-toggle:hover span {
+    background-color: #333;
+}
+
+.mobile-menu-toggle.active span:nth-child(1) {
+    transform: translateY(9px) rotate(45deg);
+}
+
+.mobile-menu-toggle.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.mobile-menu-toggle.active span:nth-child(3) {
+    transform: translateY(-10px) rotate(-45deg);
+}
+
+/* Mobile Navigation Overlay */
+.mobile-nav-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 1100;
+}
+
+.mobile-nav-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Mobile Navigation Drawer */
+.mobile-nav {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 80%;
+    max-width: 320px;
+    height: 100%;
+    background: #fff;
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1101;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.mobile-nav.active {
+    left: 0;
+}
+
+/* Mobile Nav Header */
+.mobile-nav-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 1.25rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+}
+
+.mobile-nav-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #000;
+}
+
+.mobile-nav-close {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    color: #000;
+    cursor: pointer;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    border-radius: 50%;
+}
+
+.mobile-nav-close:hover {
+    background: #f1f5f9;
+    transform: rotate(90deg);
+}
+
+/* Mobile Nav Body */
+.mobile-nav-body {
+    flex: 1;
+    padding: 1rem 0;
+    overflow-y: auto;
+}
+
+/* Mobile User Info */
+.mobile-user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e2e8f0 100%);
+    border-radius: 12px;
+    margin: 0 1rem 1rem 1rem;
+}
+
+.mobile-user-info i {
+    font-size: 2rem;
+    color: #000;
+}
+
+.mobile-user-info span {
+    font-weight: 600;
+    color: #1a1a1a;
+    font-size: 1rem;
+}
+
+/* Mobile Nav Items */
+.mobile-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    color: #1a1a1a;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    border-left: 3px solid transparent;
+}
+
+.mobile-nav-item i {
+    font-size: 1.25rem;
+    width: 24px;
+    text-align: center;
+}
+
+.mobile-nav-item:hover {
+    background: #f8f9fa;
+    border-left-color: #000;
+    padding-left: 1.5rem;
+}
+
+.mobile-nav-item:active {
+    background: #e2e8f0;
+}
+
+.mobile-nav-item.text-danger {
+    color: #dc2626;
+}
+
+.mobile-nav-item.text-danger:hover {
+    background: #fee2e2;
+    border-left-color: #dc2626;
+}
+
+/* Mobile Nav Divider */
+.mobile-nav-divider {
+    height: 1px;
+    background: #e2e8f0;
+    margin: 0.75rem 1.25rem;
+}
+
+/* Responsive Breakpoints */
+
+/* Hide mobile menu by default on desktop */
+@media (min-width: 993px) {
+    .mobile-menu-toggle {
+        display: none !important;
+    }
+
+    .mobile-nav,
+    .mobile-nav-overlay {
+        display: none !important;
+    }
+
+    .desktop-nav {
+        display: flex !important;
+    }
+}
+
+/* Tablet and below */
+@media (max-width: 992px) {
+
+    /* Show mobile menu toggle */
+    .mobile-menu-toggle {
+        display: flex !important;
+        order: -1;
+        position: relative;
+        z-index: 10;
+    }
+
+    /* Hide desktop navigation */
+    .desktop-nav {
+        display: none !important;
+    }
+
+    /* Hide user dropdown text on tablet */
+    .user-dropdown-desktop .dropdown-toggle .small {
+        display: none;
+    }
+
+    /* Adjust header container for mobile layout */
+    .header-container {
+        padding: 0.75rem 1rem !important;
+        position: relative !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+    }
+
+    /* Add semi-transparent background to header on mobile */
+    header {
+        background: rgba(0, 0, 0, 0.5) !important;
+        backdrop-filter: blur(15px) !important;
+        -webkit-backdrop-filter: blur(15px) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+    }
+
+    /* CENTER logo on mobile - FORCE with !important */
+    .navbar-brand {
+        position: absolute !important;
+        left: 50% !important;
+        top: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        margin: 0 !important;
+        z-index: 5 !important;
+        /* Add bright background to make logo stand out */
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%) !important;
+        padding: 8px 20px !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3),
+            0 0 0 2px rgba(255, 255, 255, 0.2) !important;
+        border: 2px solid rgba(255, 255, 255, 0.3) !important;
+    }
+
+    /* Adjust logo size - MUCH LARGER on mobile */
+    .logo-image {
+        height: 70px !important;
+        display: block !important;
+        /* Keep logo in original color (dark) for contrast */
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) !important;
+    }
+
+    .logo-text {
+        font-size: 2rem !important;
+        display: block !important;
+        font-weight: 800 !important;
+        /* Dark color for contrast on white background */
+        color: #000 !important;
+        text-shadow: none !important;
+        letter-spacing: 3px !important;
+    }
+
+    /* Header icons on the right - also white on mobile */
+    .header-icons {
+        gap: 0.75rem !important;
+        margin-left: auto !important;
+        position: relative !important;
+        z-index: 10 !important;
+    }
+
+    .header-icons a,
+    .header-icons .dropdown-toggle,
+    .header-icons .search-icon-toggle {
+        color: #fff !important;
+    }
+
+    .header-icons i {
+        color: #fff !important;
+    }
+
+    /* Mobile menu toggle - white on mobile */
+    .mobile-menu-toggle span {
+        background-color: #fff !important;
+    }
+
+    /* Cart badge - adjust for visibility */
+    .cart-badge {
+        background-color: #fff !important;
+        color: #000 !important;
+        border: 2px solid #000 !important;
+    }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+
+    /* Further adjustments for mobile */
+    .header-container {
+        padding: 0.75rem 1rem !important;
+    }
+
+    /* Keep logo centered */
+    .navbar-brand {
+        position: absolute !important;
+        left: 50% !important;
+        top: 50% !important;
+        transform: translate(-50%, -50%) !important;
+    }
+
+    /* Logo even LARGER on smaller mobile */
+    .logo-image {
+        height: 75px !important;
+    }
+
+    .logo-text {
+        font-size: 2rem !important;
+        font-weight: 700 !important;
+    }
+
+    .header-icons {
+        gap: 0.6rem !important;
+    }
+
+    .header-icons a,
+    .header-icons .dropdown-toggle,
+    .header-icons .notif-bell {
+        font-size: 18px;
+    }
+
+    /* Hide notification bell on very small screens */
+    .notification-wrapper {
+        display: none;
+    }
+
+    /* Hide user dropdown on mobile (use mobile menu instead) */
+    .user-dropdown-desktop {
+        display: none;
+    }
+
+    .user-icon-desktop {
+        display: none;
+    }
+
+    /* Adjust search wrapper */
+    .header-search-wrapper.show {
+        width: 200px;
+    }
+
+    .header-search-input {
+        font-size: 0.85rem;
+    }
+
+    .header-search-btn {
+        width: 30px;
+        height: 30px;
+    }
+
+    /* Mobile nav adjustments */
+    .mobile-nav {
+        width: 85%;
+        max-width: 280px;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 576px) {
+
+    /* Extra small screens */
+    .header-container {
+        padding: 0.75rem 0.75rem !important;
+    }
+
+    /* Keep logo centered and LARGE */
+    .navbar-brand {
+        position: absolute !important;
+        left: 50% !important;
+        top: 50% !important;
+        transform: translate(-50%, -50%) !important;
+    }
+
+    /* Keep logo LARGE even on smallest screens */
+    .logo-image {
+        height: 70px !important;
+    }
+
+    .logo-text {
+        font-size: 1.8rem !important;
+        letter-spacing: 2px;
+        font-weight: 700 !important;
+    }
+
+    .header-icons {
+        gap: 0.5rem !important;
+    }
+
+    .cart-badge {
+        font-size: 9px;
+        height: 16px;
+        width: 16px;
+        top: -6px;
+        right: -6px;
+    }
+
+    /* Smaller search on mobile */
+    .header-search-wrapper.show {
+        width: 160px;
+    }
+
+    .search-icon-toggle {
+        font-size: 20px !important;
+    }
+
+    /* Mobile nav full width on very small screens */
+    .mobile-nav {
+        width: 90%;
+        max-width: 100%;
+    }
+
+    .mobile-nav-item {
+        padding: 0.875rem 1rem;
+        font-size: 0.95rem;
+    }
+
+    .mobile-nav-item i {
+        font-size: 1.1rem;
+    }
+
+    /* Hamburger button slightly larger */
+    .mobile-menu-toggle {
+        width: 30px;
+        height: 24px;
+    }
+
+    .mobile-menu-toggle span {
+        height: 3px;
+    }
+}
+
+/* Prevent body scroll when mobile menu is open */
+body.mobile-menu-open {
+    overflow: hidden;
+}

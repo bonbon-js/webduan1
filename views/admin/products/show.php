@@ -42,8 +42,34 @@
                     <div class="fw-bold text-primary"><?= number_format((float)($product['price'] ?? 0), 0, ',', '.') ?> VNĐ</div>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label text-muted small">Tồn kho</label>
-                    <div class="fw-bold text-primary"><?= number_format((int)($totalStock ?? 0)) ?></div>
+                    <label class="form-label text-muted small">Tồn kho tổng</label>
+                    <?php 
+                    $totalStockQty = (int)($totalStock ?? 0);
+                    $totalStockClass = 'text-success';
+                    $totalStockIcon = 'bi-check-circle-fill';
+                    $totalStockLabel = 'Còn hàng';
+                    
+                    if ($totalStockQty <= 0) {
+                        $totalStockClass = 'text-danger';
+                        $totalStockIcon = 'bi-x-circle-fill';
+                        $totalStockLabel = 'Hết hàng';
+                    } elseif ($totalStockQty <= 10) {
+                        $totalStockClass = 'text-danger';
+                        $totalStockIcon = 'bi-exclamation-triangle-fill';
+                        $totalStockLabel = 'Sắp hết';
+                    } elseif ($totalStockQty <= 50) {
+                        $totalStockClass = 'text-warning';
+                        $totalStockIcon = 'bi-exclamation-circle-fill';
+                        $totalStockLabel = 'Tồn kho thấp';
+                    }
+                    ?>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi <?= $totalStockIcon ?> <?= $totalStockClass ?> fs-5"></i>
+                        <div>
+                            <div class="fw-bold <?= $totalStockClass ?> fs-4"><?= number_format($totalStockQty) ?></div>
+                            <small class="text-muted"><?= $totalStockLabel ?></small>
+                        </div>
+                    </div>
                 </div>
                 <div class="col-12">
                     <label class="form-label text-muted small">Mô tả</label>
@@ -106,7 +132,28 @@
                         <td><?= htmlspecialchars($variantName ?: $fallbackName) ?></td>
                     <td><?= htmlspecialchars($variant['sku'] ?? '-') ?></td>
                     <td><?= number_format((float)($variant['additional_price'] ?? 0), 0, ',', '.') ?> VNĐ</td>
-                    <td class="fw-bold"><?= htmlspecialchars($variant['stock'] ?? 0) ?></td>
+                    <td>
+                        <?php 
+                        $varStockQty = (int)($variant['stock'] ?? 0);
+                        $varStockClass = 'text-success';
+                        $varStockIcon = 'bi-check-circle-fill';
+                        
+                        if ($varStockQty <= 0) {
+                            $varStockClass = 'text-danger';
+                            $varStockIcon = 'bi-x-circle-fill';
+                        } elseif ($varStockQty <= 10) {
+                            $varStockClass = 'text-danger';
+                            $varStockIcon = 'bi-exclamation-triangle-fill';
+                        } elseif ($varStockQty <= 50) {
+                            $varStockClass = 'text-warning';
+                            $varStockIcon = 'bi-exclamation-circle-fill';
+                        }
+                        ?>
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi <?= $varStockIcon ?> <?= $varStockClass ?>"></i>
+                            <span class="fw-bold <?= $varStockClass ?>"><?= number_format($varStockQty) ?></span>
+                        </div>
+                    </td>
                     <td>
                         <?php if (!empty($variant['image_url'])): ?>
                             <img src="<?= htmlspecialchars($variant['image_url']) ?>" alt="Variant image" style="max-width:70px; max-height:70px; border-radius:6px; border:1px solid #e2e8f0;">
