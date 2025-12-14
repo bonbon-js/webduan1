@@ -480,6 +480,7 @@ CREATE TABLE IF NOT EXISTS `posts` (
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   `status` varchar(20) DEFAULT NULL,
+  `views` int(11) DEFAULT 0,
   `is_featured` tinyint(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
