@@ -1277,28 +1277,72 @@ ALTER TABLE `products`
 --
 ALTER TABLE `user_addresses`
   ADD CONSTRAINT `user_addresses_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
--- --------------------------------------------------------
 
---
--- Cấu trúc bảng cho bảng `contacts`
---
 
-CREATE TABLE IF NOT EXISTS `contacts` (
-  `contact_id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(255) NOT NULL,
-  `email` varchar(255) NOT NULL,
-  `phone` varchar(50) DEFAULT NULL,
-  `subject` varchar(255) DEFAULT NULL,
-  `message` text NOT NULL,
-  `status` enum('pending','read','replied') DEFAULT 'pending',
-  `admin_reply` text DEFAULT NULL,
-  `replied_at` datetime DEFAULT NULL,
-  `replied_by` int(11) DEFAULT NULL,
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`contact_id`),
-  KEY `idx_status` (`status`),
-  KEY `idx_created_at` (`created_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+-- Thêm các ràng buộc khóa ngoại (Foreign Keys) để hiển thị quan hệ trên dbdiagram
+-- Lưu ý: Dữ liệu hiện tại phải đảm bảo tính toàn vẹn (không có ID rác) thì mới chạy được các lệnh này trên MySQL.
+
+-- 1. Liên kết Attributes
+ALTER TABLE `attribute_values` ADD CONSTRAINT `fk_attr_val_attr` FOREIGN KEY (`attribute_id`) REFERENCES `attributes` (`attribute_id`) ON DELETE CASCADE;
+
+-- 2. Liên kết Carts
+ALTER TABLE `carts` ADD CONSTRAINT `fk_carts_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+ALTER TABLE `cart_items`
+  ADD CONSTRAINT `fk_cart_items_cart` FOREIGN KEY (`cart_id`) REFERENCES `carts` (`cart_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_cart_items_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`product_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_cart_items_variant` FOREIGN KEY (`variant_id`) REFERENCES `product_variants` (`variant_id`) ON DELETE SET NULL;
+
+-- 3. Liên kết Orders (Sử dụng bảng orders_new vì bảng orders bị rỗng)
+ALTER TABLE `orders_new`
+  ADD CONSTRAINT `fk_orders_new_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_orders_new_coupons` FOREIGN KEY (`coupon_id`) REFERENCES `coupons` (`coupon_id`) ON DELETE SET NULL;
+
+ALTER TABLE `order_items`
+  ADD CONSTRAINT `fk_order_items_orders` FOREIGN KEY (`order_id`) REFERENCES `orders_new` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_order_items_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`product_id`) ON DELETE SET NULL;
+
+-- 4. Liên kết Products & Variants
+ALTER TABLE `product_variants` ADD CONSTRAINT `fk_variants_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`product_id`) ON DELETE CASCADE;
+
+ALTER TABLE `product_images` ADD CONSTRAINT `fk_images_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`product_id`) ON DELETE CASCADE;
+
+ALTER TABLE `product_attribute_values`
+  ADD CONSTRAINT `fk_pav_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`product_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_pav_variant` FOREIGN KEY (`variant_id`) REFERENCES `product_variants` (`variant_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_pav_value` FOREIGN KEY (`value_id`) REFERENCES `attribute_values` (`value_id`) ON DELETE CASCADE;
+
+-- 5. Liên kết Reviews, Returns, Notify, v.v.
+ALTER TABLE `reviews`
+  ADD CONSTRAINT `fk_reviews_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_reviews_products` FOREIGN KEY (`product_id`) REFERENCES `products` (`product_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_reviews_order_link` FOREIGN KEY (`order_id`) REFERENCES `orders_new` (`id`) ON DELETE SET NULL;
+
+ALTER TABLE `return_requests`
+  ADD CONSTRAINT `fk_returns_orders` FOREIGN KEY (`order_id`) REFERENCES `orders_new` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_returns_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+ALTER TABLE `password_resets` ADD CONSTRAINT `fk_pwd_resets_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+ALTER TABLE `coupon_usage`
+  ADD CONSTRAINT `fk_coupon_usage_coupon` FOREIGN KEY (`coupon_id`) REFERENCES `coupons` (`coupon_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_coupon_usage_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_coupon_usage_order` FOREIGN KEY (`order_id`) REFERENCES `orders_new` (`id`) ON DELETE CASCADE;
+
+ALTER TABLE `notifications` ADD CONSTRAINT `fk_notifications_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+ALTER TABLE `posts` ADD CONSTRAINT `fk_posts_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE SET NULL;
+
+-- 6. Liên kết Orders (bảng cũ) và Order Details
+-- Có vẻ bảng `orders` và `order_details` là cấu trúc cũ ít dùng, nhưng vẫn thêm FK để hiển thị đủ.
+ALTER TABLE `orders` ADD CONSTRAINT `fk_orders_coupons` FOREIGN KEY (`coupon_id`) REFERENCES `coupons` (`coupon_id`) ON DELETE SET NULL;
+
+ALTER TABLE `order_details`
+  ADD CONSTRAINT `fk_order_details_orders` FOREIGN KEY (`order_id`) REFERENCES `orders` (`order_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_order_details_products` FOREIGN KEY (`product_id`) REFERENCES `products` (`product_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_order_details_variants` FOREIGN KEY (`variant_id`) REFERENCES `product_variants` (`variant_id`) ON DELETE SET NULL;
+
+
 
 COMMIT;
 

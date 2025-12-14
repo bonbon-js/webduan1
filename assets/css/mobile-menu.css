@@ -241,37 +241,33 @@
         align-items: center !important;
     }
 
-    /* Add semi-transparent background to header on mobile */
+    /* Add white background to header on mobile */
     header {
-        background: rgba(0, 0, 0, 0.5) !important;
-        backdrop-filter: blur(15px) !important;
-        -webkit-backdrop-filter: blur(15px) !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+        background: #ffffff !important;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
     }
 
-    /* CENTER logo on mobile - FORCE with !important */
+    /* CENTER logo on mobile */
     .navbar-brand {
-        position: absolute !important;
-        left: 50% !important;
-        top: 50% !important;
-        transform: translate(-50%, -50%) !important;
+        position: relative !important;
+        left: auto !important;
+        top: auto !important;
+        transform: none !important;
         margin: 0 !important;
         z-index: 5 !important;
-        /* Add bright background to make logo stand out */
-        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%) !important;
-        padding: 8px 20px !important;
-        border-radius: 12px !important;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3),
-            0 0 0 2px rgba(255, 255, 255, 0.2) !important;
-        border: 2px solid rgba(255, 255, 255, 0.3) !important;
+        /* Remove background styles */
+        background: transparent !important;
+        padding: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
     }
 
-    /* Adjust logo size - MUCH LARGER on mobile */
+    /* Adjust logo size */
     .logo-image {
-        height: 70px !important;
+        height: 50px !important;
         display: block !important;
-        /* Keep logo in original color (dark) for contrast */
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) !important;
+        filter: none !important;
     }
 
     .logo-text {
@@ -295,16 +291,17 @@
     .header-icons a,
     .header-icons .dropdown-toggle,
     .header-icons .search-icon-toggle {
-        color: #fff !important;
+        color: #000 !important;
     }
 
     .header-icons i {
-        color: #fff !important;
+        color: #000 !important;
     }
 
     /* Mobile menu toggle - white on mobile */
+    /* Mobile menu toggle - black on mobile */
     .mobile-menu-toggle span {
-        background-color: #fff !important;
+        background-color: #000 !important;
     }
 
     /* Cart badge - adjust for visibility */
@@ -325,15 +322,15 @@
 
     /* Keep logo centered */
     .navbar-brand {
-        position: absolute !important;
-        left: 50% !important;
-        top: 50% !important;
-        transform: translate(-50%, -50%) !important;
+        position: relative !important;
+        left: auto !important;
+        top: auto !important;
+        transform: none !important;
     }
 
-    /* Logo even LARGER on smaller mobile */
+    /* Logo size */
     .logo-image {
-        height: 75px !important;
+        height: 45px !important;
     }
 
     .logo-text {
@@ -394,17 +391,17 @@
         padding: 0.75rem 0.75rem !important;
     }
 
-    /* Keep logo centered and LARGE */
+    /* Keep logo centered */
     .navbar-brand {
-        position: absolute !important;
-        left: 50% !important;
-        top: 50% !important;
-        transform: translate(-50%, -50%) !important;
+        position: relative !important;
+        left: auto !important;
+        top: auto !important;
+        transform: none !important;
     }
 
-    /* Keep logo LARGE even on smallest screens */
+    /* Keep logo size */
     .logo-image {
-        height: 70px !important;
+        height: 40px !important;
     }
 
     .logo-text {

@@ -19,5 +19,12 @@ spl_autoload_register(function ($class) {
 require_once './configs/env.php';
 require_once './configs/helper.php';
 
+// Bật thông báo lỗi nếu đang DEBUG
+if (defined('DEBUG') && DEBUG) {
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
+    error_reporting(E_ALL);
+}
+
 // Điều hướng
 require_once './routes/index.php';

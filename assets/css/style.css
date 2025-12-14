@@ -358,21 +358,6 @@ header {
     .header-search-wrapper.show {
         width: 200px;
     }
-
-    .header-search-input-container {
-        padding: 6px 12px;
-    }
-
-    .header-search-input {
-        font-size: 0.85rem;
-        padding: 6px 8px;
-    }
-
-    .header-search-btn {
-        width: 32px;
-        height: 32px;
-        margin-left: 6px;
-    }
 }
 
 /* ============================================
