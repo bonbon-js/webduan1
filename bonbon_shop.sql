@@ -501,7 +501,8 @@ INSERT INTO `posts` (`post_id`, `user_id`, `title`, `excerpt`, `slug`, `content`
 -- Cấu trúc bảng cho bảng `products`
 --
 
-CREATE TABLE IF NOT EXISTS `products` (
+DROP TABLE IF EXISTS `products`;
+CREATE TABLE `products` (
   `product_id` int(11) NOT NULL,
   `product_name` varchar(150) DEFAULT NULL,
   `description` text DEFAULT NULL,
